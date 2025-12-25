@@ -1,9 +1,9 @@
 import { Component } from '@angular/core'
-import { Point, Box} from "./lib/geometry"
-import { RgbColor } from "./lib/color"
-import { NervousNumbatSystem } from "./lib/system"
-import { ActorGroup, ActorGroupDynamic } from "./lib/actorGroup"
-import { cIntervalMillisecs, cPowerCurveFactor } from "./lib/parameters"
+import { Point, Box} from "./library/geometry"
+import { RgbColor } from "./library/color"
+import { NervousNumbatSystem } from "./library/system"
+import { ActorGroup, ActorGroupDynamic } from "./library/actorGroup"
+import { cIntervalMillisecs, cPowerCurveFactor } from "./library/parameters"
 
 @Component({
   selector: 'main-canvas',
