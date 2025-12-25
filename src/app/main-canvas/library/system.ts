@@ -2,10 +2,10 @@
 //      SYSTEM 
 // ****************************************************************************************
 
-import { Point } from "./geometry"
-import { ColorSchemes } from "./color"
+import { Point, Box } from "./geometry"
+import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
-import { ActorGroup } from "./actorGroup"
+import { ActorGroup, ActorGroupStaticBox } from "./actorGroup"
 import { cMaxIterations, cActorPickMargin, cLeftMargin, cRightMargin, cUpperMargin, cLowerMargin } from "./parameters"
 
 
@@ -44,7 +44,6 @@ export class NervousNumbatSystem {
         this.resizeCanvas()
         this.htmlElementNumIterations = document.getElementById("numIterations") as HTMLParagraphElement
     }
-
     public addActGrps(actGrps: ActorGroup[]): NervousNumbatSystem {
         actGrps.forEach(ag => this.actGrps.push(ag))
         this.colorSchemes = new ColorSchemes(this.actGrps.length)

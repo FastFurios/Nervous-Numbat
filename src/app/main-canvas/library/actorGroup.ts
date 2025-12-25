@@ -84,9 +84,9 @@ export class ActorGroupDynamic extends ActorGroup {
             this.addActor(Actor.newRandomizedActor(this.ctx, `${this.id[0]}${i}`, startBox))
     }    
     public assign2RandomObservees(bloatedActorsList: Actor[]): void {
-        console.log(bloatedActorsList.map(a => a.id))
+//      console.log(bloatedActorsList.map(a => a.id))
         this.actors.forEach(a => a.assign2RandomObservees(bloatedActorsList))
-        console.log(this.actors.map(e => `${e.id}=>[${e.observee1?.id}, ${e.observee2?.id}]\n`))
+//      console.log(this.actors.map(e => `${e.id}=>[${e.observee1?.id}, ${e.observee2?.id}]\n`))
     }
     public calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void {
         const qlty = this.avgTriangleQuality  

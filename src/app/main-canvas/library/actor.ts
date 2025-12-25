@@ -68,17 +68,13 @@ export class Actor implements CanvasObject {
         const wayToTargetP     = new LineSegment(this.ctx, this.p, targetP)
         const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
         if (wayIntersectsObserveesEdge.type != "none") { // my move crosses the observees line
-//          if (this == firstPoorQualityTriangle) console.log(`Actor ${this.id}: observees= ${this.observee1?.p} and ${this.observee2?.p}: Going from ${this.p} to ${targetP}: Way to target point crosses observees edge at ${wayIntersectsObserveesEdge.p}, switching mode from "${this.mode}" to ...`)
             this.mode = Mode.stickToCloserVertex
-//          if (this == firstPoorQualityTriangle)  console.log(`...to "${this.mode}`)
         }
         return targetP
     }
     public newPosition(otherActGrps: ActorGroup[]): Point {
         if (cAimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(cPoorTriangleQualityThreshold)) {
-//          if(!firstPoorQualityTriangle) firstPoorQualityTriangle = this
             this.mode = Mode.aimForFartherVertex 
-//           console.log(`${this.id} enduring low quality with max= ${Math.max(...this.triangleQualityLog.log)}, switching to mode= ${this.mode}`)
             this.triangleQualityLog = new Log()
          } 
         return this.newPositionTowardsVertex(otherActGrps)
@@ -96,7 +92,7 @@ export class Actor implements CanvasObject {
         this.observee1      = restOfActors1[randomInRange(0, restOfActors1.length)]
         const restOfActors2 = restOfActors1.filter(a => a !== this.observee1)
         this.observee2      = restOfActors2[randomInRange(0, restOfActors2.length)]
-        console.log(`${this.id}: just assigned observees ${this.observee1.id} and ${this.observee2.id}}`)
+//      console.log(`${this.id}: just assigned observees ${this.observee1.id} and ${this.observee2.id}}`)
     }
     public isFrozen(): boolean {
 //      return this.triangleQualityLog.avgStandardDeviation < 0.01 // cStandardDeviationThreshold
@@ -113,7 +109,6 @@ export class Actor implements CanvasObject {
     }
     private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D): void {
         if (!this.observee1 || !this.observee2) return
-//      if (this != firstPoorQualityTriangle) return
 /*?*/   if (true || this.mode == Mode.aimForFartherVertex) { 
             ctx.beginPath()
             ctx.moveTo(this.observee1.p.x, this.observee1.p.y)
@@ -121,14 +116,12 @@ export class Actor implements CanvasObject {
              ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
 
             if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
-//          ctx.lineDashOffset = 0
 
             ctx.strokeStyle = this.color.rgbString
             ctx.stroke();
             ctx.setLineDash([])
             ctx.closePath()
             ctx.font = "12px Arial"
-//          ctx.fillText(`${this.id}`, this.p.x + cTextOffset, this.p.y)
     /**/
             if (cShowActorId) {
                 ctx.font = "12px Arial"
@@ -177,12 +170,10 @@ export class Actor implements CanvasObject {
         return ((sumLen - sumDelta) / sumLen)**4
     }
     public visualize(ctx: CanvasRenderingContext2D): void {
-//      if (this != firstPoorQualityTriangle) return
         this.p.visualize(ctx, this.color, this.halo)
         if (cShowTriangle) this.visualizeEdgesAndFillTriangle(ctx)
     }
     public toString(): string {
         return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x.toFixed(0)}, ${this.observee1?.p.y.toFixed(0)}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 
-//      return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x}, ${this.observee1?.p.y}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 
     }
 }

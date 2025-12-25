@@ -1,22 +1,20 @@
-<p>main-canvas works!</p>
-<body>
-  <h1>Welcome to Nervous Numbat!</h1>
-  <p>"Living" complex systems built by magic triangles.</p>
-  <!-- <canvas id="myCanvas" width="1500" height="600"></canvas> -->
-  <div class="lineContainer">
+<h1>Welcome to Nervous Numbat!</h1>
+<p>"Living" complex systems built by magic triangles.</p>
+<!-- <canvas id="myCanvas" width="1500" height="600"></canvas> -->
+<div class="lineContainer">
+<div>
+    <canvas id="myCanvas"></canvas>
+</div>
+<div class="columnContainer">
     <div>
-      <canvas id="myCanvas"></canvas>
+    <button type="button" class="submitButton" (click)="systemSetupHandler()" (keyup.enter)="systemSetupHandler()">
+        setup & run
+    </button>
+    <p>Press space to stop & resume</p>
+    </div> 
+    <div>
+    #Iterations: <p id="numIterations">0</p>
     </div>
-    <div class="columnContainer">
-      <div>
-        <button type="button" class="submitButton" (click)="systemSetupHandler()" (keyup.enter)="systemSetupHandler()">
-            setup & run
-        </button>
-        <p>Press space to stop & resume</p>
-      </div> 
-      <div>
-        #Iterations: <p id="numIterations">0</p>
-      </div>
-    </div>
-  </div>
+</div>
+</div>
   
