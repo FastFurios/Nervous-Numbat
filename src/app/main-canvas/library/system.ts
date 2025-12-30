@@ -6,7 +6,7 @@ import { Point, Box } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupStaticBox } from "./actorGroup"
-import { cMaxIterations, cActorPickMargin, cLeftMargin, cRightMargin, cUpperMargin, cLowerMargin } from "./parameters"
+import { cMaxIterations, cActorPickMargin, cLeftMargin, cRightMargin, cUpperMargin, cLowerMargin, cShowActorJourney } from "./parameters"
 
 
 enum IterationMode {
@@ -50,8 +50,12 @@ export class NervousNumbatSystem {
         actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
         return this
     }
+    public updateParameters(isOn: boolean): void {
+        console.log(`system.updateParameter(${isOn})`)
+        this.actGrps.forEach(ag => ag.updateParameters(isOn))
+    }
     public visualize(): void {
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
+        if (!cShowActorJourney) this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
         this.actGrps.forEach(ag => ag.visualize())
     }
     public iterate(): void {

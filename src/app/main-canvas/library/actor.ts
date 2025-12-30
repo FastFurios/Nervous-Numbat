@@ -6,11 +6,11 @@ import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection } fro
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
-import { cMaxMoveDistance, cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees, cShowTriangle } from "./parameters"
+import { cMaxMoveDistance, cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
 import { Log } from "./log"
 
 export const cOpacity = 0.1
-export const cActorDotRadius = 3
+export const cActorDotRadius = 1
 const cTextOffset = 10
 const cContextMargin = 0.4
 
@@ -33,14 +33,15 @@ export class Actor implements CanvasObject {
     private halo                    = Halo.off
     private mode                    = Mode.stickToCloserVertex
 
-    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, color: RgbColor = cDefaultColor): Actor {
+    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, pShowTriangle: boolean, color: RgbColor = cDefaultColor): Actor {
         const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
         const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-        return new Actor(ctx, id, x, y, color)
+        return new Actor(ctx, id, x, y, pShowTriangle, color)
     }
 
-    constructor(public ctx: CanvasRenderingContext2D, public id: string, x: number,y: number, public color: RgbColor = cDefaultColor) {
+    constructor(public ctx: CanvasRenderingContext2D, public id: string, x: number,y: number, public pShowTriangle: boolean, public color: RgbColor = cDefaultColor) {
         this.p = new Point(ctx, x, y) 
+        console.log(`Actor.constructor: pShowTriangle= ${pShowTriangle}`)
     }
     private get twoDefinedObservees(): boolean {
         return this.observee1 != undefined && this.observee2 != undefined
@@ -109,32 +110,30 @@ export class Actor implements CanvasObject {
     }
     private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D): void {
         if (!this.observee1 || !this.observee2) return
-/*?*/   if (true || this.mode == Mode.aimForFartherVertex) { 
-            ctx.beginPath()
-            ctx.moveTo(this.observee1.p.x, this.observee1.p.y)
-            ctx.lineTo(this.p.x, this.p.y)
-             ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
+        ctx.beginPath()
+        ctx.moveTo(this.observee1.p.x, this.observee1.p.y)
+        ctx.lineTo(this.p.x, this.p.y)
+            ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
 
-            if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
+        if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
 
-            ctx.strokeStyle = this.color.rgbString
-            ctx.stroke();
-            ctx.setLineDash([])
-            ctx.closePath()
+        ctx.strokeStyle = this.color.rgbString
+        ctx.stroke();
+        ctx.setLineDash([])
+        ctx.closePath()
+        ctx.font = "12px Arial"
+/**/
+        if (cShowActorId) {
             ctx.font = "12px Arial"
-    /**/
-            if (cShowActorId) {
-                ctx.font = "12px Arial"
-                ctx.fillText(`${this.id}: ${cShowActorTriangleQuality ? (this.triangleQuality *100).toFixed(0) : ""}%, ${cShowActorMode ? this.mode : ""}`, this.p.x + cTextOffset, this.p.y)
-            }
-            if (cShowActorObservees) {
-                ctx.font = "8px Arial"
-                ctx.fillText(`=> ${this.observee1.id} and ${this.observee2.id}`, this.p.x, this.p.y + cTextOffset)
-            }
-    /**/
-            ctx.fillStyle = this.color.rgbWithOpacityString
-            ctx.fill();
+            ctx.fillText(`${this.id}: ${cShowActorTriangleQuality ? (this.triangleQuality *100).toFixed(0) : ""}%, ${cShowActorMode ? this.mode : ""}`, this.p.x + cTextOffset, this.p.y)
         }
+        if (cShowActorObservees) {
+            ctx.font = "8px Arial"
+            ctx.fillText(`=> ${this.observee1.id} and ${this.observee2.id}`, this.p.x, this.p.y + cTextOffset)
+        }
+/**/
+        ctx.fillStyle = this.color.rgbWithOpacityString
+        ctx.fill();
     }
     get triangleEdges(): [LineSegment, LineSegment, LineSegment]{
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
@@ -169,9 +168,14 @@ export class Actor implements CanvasObject {
         const sumDelta = deltaAtoB + deltaBtoC + deltaCtoA
         return ((sumLen - sumDelta) / sumLen)**4
     }
+    public updateParameters(isOn: boolean): void {
+        console.log(`actor.updateParameter(${isOn})`)
+        this.pShowTriangle = isOn
+    }
+
     public visualize(ctx: CanvasRenderingContext2D): void {
         this.p.visualize(ctx, this.color, this.halo)
-        if (cShowTriangle) this.visualizeEdgesAndFillTriangle(ctx)
+        if (this.pShowTriangle) this.visualizeEdgesAndFillTriangle(ctx)
     }
     public toString(): string {
         return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x.toFixed(0)}, ${this.observee1?.p.y.toFixed(0)}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 

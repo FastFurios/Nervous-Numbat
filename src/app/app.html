@@ -1,3 +1,38 @@
-<main-canvas></main-canvas>
 
-<router-outlet />
+<input type="file" class="file-input" (change)="onConfigFileSelected($event)"     accept=".json" #configFileUpload>
+<div class="flex-strechted-left-to-right">
+<div class="navbar">
+        <img src="../assets/numbat.jpg" alt="Nervous Numbat" height="50">
+        <span class="app-title">Lonely Lobster</span>
+        <a class="material-symbols-outlined" routerLink="home" routerLinkActive="active">home</a>
+        <i class="material-symbols-outlined" (click)="configFileUpload.click()">upload</i>
+        <a class="material-symbols-outlined" routerLink="edit" routerLinkActive="active">edit</a>
+        <a class="material-symbols-outlined" routerLink="run"  routerLinkActive="active" [style]="actionsPossible.run ? undefined : greyOut">keyboard_arrow_right</a>
+        <i class="material-symbols-outlined" [style]="actionsPossible.downloadConfig ? undefined : greyOut" (click)="onSaveFile()">download</i>
+        <i class="material-symbols-outlined" [style]="actionsPossible.discard ? undefined : greyOut" (click)="onDiscard()">delete_forever</i>
+    </div>
+    <div>
+        <div>
+            <div>Version: Frontend: Version </div>
+            <div>System: <strong> System-Name</strong></div>
+        </div>
+    </div>
+</div>
+<div class="flex-strechted-left-to-right">
+
+    <main-canvas [pShowTriangles]="pShowTriangles"></main-canvas>
+    
+    <div>
+            <div class="switch-label">
+                <label class="switch">
+<!--                <input type="checkbox" [(ngModel)]="pShowTriangle" > -->
+                    <input type="checkbox" [(ngModel)]="pShowTriangles" (ngModelChange)="onUpdateParameters($event)">
+                    <span class="slider round"></span>
+                </label>
+                Show triangles
+            </div>
+
+    </div>
+
+
+<router-outlet></router-outlet>
