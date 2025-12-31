@@ -1,7 +1,9 @@
 
+<h1>Welcome to Nervous Numbat!</h1>
+<p>"Living" complex systems built by magic triangles.</p>
 <input type="file" class="file-input" (change)="onConfigFileSelected($event)"     accept=".json" #configFileUpload>
 <div class="flex-strechted-left-to-right">
-<div class="navbar">
+    <div class="navbar">
         <img src="../assets/numbat.jpg" alt="Nervous Numbat" height="50">
         <span class="app-title">Lonely Lobster</span>
         <a class="material-symbols-outlined" routerLink="home" routerLinkActive="active">home</a>
@@ -19,20 +21,18 @@
     </div>
 </div>
 <div class="flex-strechted-left-to-right">
-
-    <main-canvas [pShowTriangles]="pShowTriangles"></main-canvas>
-    
-    <div>
-            <div class="switch-label">
-                <label class="switch">
+        <div class="switch-label">
+            <label class="switch">
 <!--                <input type="checkbox" [(ngModel)]="pShowTriangle" > -->
-                    <input type="checkbox" [(ngModel)]="pShowTriangles" (ngModelChange)="onUpdateParameters($event)">
-                    <span class="slider round"></span>
-                </label>
-                Show triangles
-            </div>
+                <input type="checkbox" [(ngModel)]="pShowTriangles" (ngModelChange)="onUpdateParameters($event)">
+                <span class="slider round"></span>
+            </label>
+            Show triangles
+        </div>
+    <main-canvas [pShowTriangles]="pShowTriangles"></main-canvas>
+</div>
 
-    </div>
+
 
 
 <router-outlet></router-outlet>

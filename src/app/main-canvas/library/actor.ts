@@ -12,7 +12,7 @@ import { Log } from "./log"
 export const cOpacity = 0.1
 export const cActorDotRadius = 1
 const cTextOffset = 10
-const cContextMargin = 0.4
+//const cContextMargin = 0.4
 
 export enum Halo {
     on  = "on",
