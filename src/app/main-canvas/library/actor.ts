@@ -8,6 +8,8 @@ import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
 import { cMaxMoveDistance, cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
 import { Log } from "./log"
+import { SystemExecParms } from "../main-canvas"
+
 
 export const cOpacity = 0.1
 export const cActorDotRadius = 1
@@ -33,15 +35,15 @@ export class Actor implements CanvasObject {
     private halo                    = Halo.off
     private mode                    = Mode.stickToCloserVertex
 
-    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, pShowTriangle: boolean, color: RgbColor = cDefaultColor): Actor {
+    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, sysExecParms: SystemExecParms, color: RgbColor = cDefaultColor): Actor {
         const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
         const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-        return new Actor(ctx, id, x, y, pShowTriangle, color)
+        return new Actor(ctx, id, x, y, sysExecParms, color)
     }
 
-    constructor(public ctx: CanvasRenderingContext2D, public id: string, x: number,y: number, public pShowTriangle: boolean, public color: RgbColor = cDefaultColor) {
+    constructor(public ctx: CanvasRenderingContext2D, public id: string, x: number,y: number, public sysExecParms: SystemExecParms, public color: RgbColor = cDefaultColor) {
         this.p = new Point(ctx, x, y) 
-        console.log(`Actor.constructor: pShowTriangle= ${pShowTriangle}`)
+        console.log(`Actor.constructor: sysExecParms.run.intervalMillisecs= ${this.sysExecParms.run.intervalMillisecs}`)
     }
     private get twoDefinedObservees(): boolean {
         return this.observee1 != undefined && this.observee2 != undefined
@@ -168,14 +170,14 @@ export class Actor implements CanvasObject {
         const sumDelta = deltaAtoB + deltaBtoC + deltaCtoA
         return ((sumLen - sumDelta) / sumLen)**4
     }
-    public updateParameters(isOn: boolean): void {
-        console.log(`actor.updateParameter(${isOn})`)
-        this.pShowTriangle = isOn
+    public updateParameters(sep: SystemExecParms): void {
+        console.log(`actor.updateParameter(): intervall= ${this.sysExecParms.run.intervalMillisecs} millisecs`)
+        this.sysExecParms = sep
     }
 
     public visualize(ctx: CanvasRenderingContext2D): void {
         this.p.visualize(ctx, this.color, this.halo)
-        if (this.pShowTriangle) this.visualizeEdgesAndFillTriangle(ctx)
+        if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(ctx)
     }
     public toString(): string {
         return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x.toFixed(0)}, ${this.observee1?.p.y.toFixed(0)}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 

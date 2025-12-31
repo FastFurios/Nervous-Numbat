@@ -1,32 +1,93 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core'
+import { FormsModule } from '@angular/forms'
+
 import { Point, Box} from "./library/geometry"
 import { ColorSchemes, RgbColor } from "./library/color"
 import { NervousNumbatSystem } from "./library/system"
 import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./library/actorGroup"
 import { cIntervalMillisecs, cPowerCurveFactor } from "./library/parameters"
 
+export type SystemExecParmsRun = {
+  intervalMillisecs: Number
+  maxIterations: number
+  maxMoveDistance: number
+  minTriangleQuality: number
+}
+export type SystemExecParmsDisplay = {
+  showActorId: boolean
+  showTriangle: boolean
+  showActorTriangleQuality: boolean
+  showActorMode: boolean
+  showActorObservees: boolean
+  showActorGroupIdAndQuality: boolean
+  showActorJourney: boolean
+  showOneActorOnlyWithTheGivenAgIndex: number | undefined
+}
+export type SystemExecParmsStrategy = {
+  poorTriangleQualityThreshold: number
+  aimAtFartherVertexOnEnduredPoorQuality: boolean
+}
+export interface SystemExecParms {
+  run:      SystemExecParmsRun 
+  display:  SystemExecParmsDisplay
+  strategy: SystemExecParmsStrategy
+ }
+
 @Component({
   selector: 'main-canvas',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './main-canvas.html',
   styleUrl: './main-canvas.css',
 })
 export class MainCanvas implements OnChanges {
-  @Input() pShowTriangles!: boolean
+  public sysExecParms!: SystemExecParms
   public system: NervousNumbatSystem | undefined = undefined
+  public pintervalMillisecs: number 
 
   constructor() {
-    console.log("Welcome from the MainCanvas component.")
+//  console.log("Welcome from the MainCanvas component.")
+    this.sysExecParms = {
+      run: {
+        intervalMillisecs: 1000000,
+        maxIterations: 1000000,
+        maxMoveDistance: 4,
+        minTriangleQuality: 1
+      },
+      display: {
+        showActorId: false,
+        showTriangle: true,
+        showActorTriangleQuality: false,
+        showActorMode: false,
+        showActorObservees: false,
+        showActorGroupIdAndQuality: false,
+        showActorJourney: false,
+        showOneActorOnlyWithTheGivenAgIndex: undefined
+      },
+      strategy: {
+        poorTriangleQualityThreshold: 0.5,
+        aimAtFartherVertexOnEnduredPoorQuality: false
+      }
+    }
+    this.pintervalMillisecs = 0.4
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-      console.log(`main-vanvas.ngOnChanges(): this.pShowTriangles= ${this.pShowTriangles}`)
+      console.log(`main-vanvas.ngOnChanges(): updating system...`)
 //    this.system?.updateParameters(changes["pShowTriangles"].currentValue)
-      this.system?.updateParameters(this.pShowTriangles)
+      this.system?.updateParameters(this.sysExecParms)
   }
 
+  public onUpdatedParameters(value: unknown): void {
+    console.log(`main-canvas.systemSetupHandler(): onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
+    console.log(this.sysExecParms)
+    this.system?.updateParameters(this.sysExecParms)
+  }
+
+
+
+
   public systemSetupHandler(): void {
-    console.log(`systemSetupHandler()`)
+    console.log(`main-canvas.systemSetupHandler()`)
 
 /**/const numActGrps = 1
 /**/const numActors = 50
@@ -47,7 +108,7 @@ export class MainCanvas implements OnChanges {
                         `Explorers-${i}`, 
                         numActors, 
                         startBox,
-                        this.pShowTriangles, 
+                        this.sysExecParms, 
                         i % 2 == 0 ? cPowerCurveFactor : 0)  // apply the cPowerCurveFactor to every actor group with even id
                     )
     }            

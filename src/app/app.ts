@@ -21,6 +21,12 @@ type ActionsPossible = {
     discard:            boolean
 }
 
+export interface SystemStructParms {
+  numActGrps: number
+  numActorsPerActGrp: number
+  powerCurveFactor: number
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, MainCanvas, FormsModule],
