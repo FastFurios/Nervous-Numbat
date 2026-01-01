@@ -1,7 +1,23 @@
 /* You can add global styles to this file, and also import other style files */
 
+.lineContainer {
+    display: flex;             /* places children horizontally */
+    justify-content: center;   /* centers them horizontally */
+    align-items: center;       /* vertically centers content */
+}  
+.columnContainer {
+    display: flex;             /* Places children horizontally */
+    flex-direction: column;
+    justify-content: center;   /* Optional: centers them horizontally */
+    align-items: center;       /* Optional: vertically centers content */
+}  
+
+
+
+
 .inputFormNumber {
-    width: 40px;
+    width: 100px;
+    margin: 3px;
     text-align: right;
     border-radius: 5px;
     border-color: rgb(158, 135, 44);

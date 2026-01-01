@@ -1,18 +1,10 @@
-    body {
-      text-align: center;
-      margin-top: 50px;
-    }
     canvas {
       border: 1px solid #000;
     }
-    .lineContainer {
-      display: flex;             /* Places children horizontally */
-      justify-content: center;   /* Optional: centers them horizontally */
-      align-items: center;       /* Optional: vertically centers content */
-    }  
-    .columnContainer {
-      display: flex;             /* Places children horizontally */
-      flex-direction: column;
-      justify-content: center;   /* Optional: centers them horizontally */
-      align-items: center;       /* Optional: vertically centers content */
-    }  
+    
+.lineContainerFlexStart {
+    display: flex;            
+    flex-direction: row;       /* arrange children horizontally */
+    justify-content: flex-start;   /* centers them horizontally */
+    align-items: center;       /* vertically centers content */
+}  

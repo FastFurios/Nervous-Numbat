@@ -17,33 +17,32 @@ enum IterationMode {
 }
 
 export class NervousNumbatSystem {
-    static  newWithActGrps(interval: number, actGrps: ActorGroup[]): NervousNumbatSystem {
-        const sys = new NervousNumbatSystem(interval)
+    static  newWithActGrps(interval: number, actGrps: ActorGroup[], canvas: HTMLCanvasElement, sysExecParms: SystemExecParms): NervousNumbatSystem {
+        const sys = new NervousNumbatSystem(interval, canvas, sysExecParms)
         sys.colorSchemes = new ColorSchemes(actGrps.length)
         actGrps.forEach(ag => sys.addActGrps([ag]))
         return sys
     }
 
     public  ctx: CanvasRenderingContext2D
-    private canvas: HTMLCanvasElement
     private actGrps: ActorGroup[] = []
     public  colorSchemes = new ColorSchemes(1)  // 1 as default
+    public  maxIterations: number = cMaxIterations
     public  doneIterations = 0
     private iterationMode  = IterationMode.iterating
     public  pickedActor: Actor | null | undefined = undefined
-    private htmlElementNumIterations: HTMLParagraphElement
+//    private htmlElementNumIterations: HTMLParagraphElement
 
-    constructor(private interval: number) {
-        this.canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-        if (!this.canvas) throw new Error("Canvas element not found")
-        const ctx = this.canvas.getContext("2d")
-        if (!ctx) throw new Error("2D context not supported or canvas already initialized")
-        this.ctx = ctx
+    constructor(private interval: number,
+                private canvas:  HTMLCanvasElement,
+                        sysExecParms: SystemExecParms) {
+
+        this.ctx = canvas.getContext('2d')!
         this.canvas.onmousedown = this.handleMouseDown.bind(this)
-        document.addEventListener("keydown", (event: KeyboardEvent): void => this.handleKeyDown(event))
+        //document.addEventListener("keydown", (event: KeyboardEvent): void => this.handleKeyDown(event))
         window.addEventListener("resize", this.resizeCanvas.bind(this))
         this.resizeCanvas()
-        this.htmlElementNumIterations = document.getElementById("numIterations") as HTMLParagraphElement
+        this.updateParameters(sysExecParms)
     }
     public addActGrps(actGrps: ActorGroup[]): NervousNumbatSystem {
         actGrps.forEach(ag => this.actGrps.push(ag))
@@ -53,22 +52,23 @@ export class NervousNumbatSystem {
     }
     public updateParameters(sep: SystemExecParms): void {
         console.log(`system.updateParameter(): propagating update...`)
+        this.maxIterations = sep.run.maxIterations
         this.actGrps.forEach(ag => ag.updateParameters(sep))
     }
     public visualize(): void {
         if (!cShowActorJourney) this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
         this.actGrps.forEach(ag => ag.visualize())
     }
-    public iterate(): void {
-        if (this.doneIterations > cMaxIterations) throw("Iterations limit reached: stopped it!")
-        if (this.actGrps[0].isFrozen())           throw(`${this.actGrps[0].id} is frozen.`)
-        this.htmlElementNumIterations.textContent = `${this.doneIterations}`    
+    public iterateOn(): void {
+        if (this.doneIterations > this.maxIterations) throw("Iterations limit reached: stopped it!")
+/*?*/   if (this.actGrps[0].isFrozen())           throw(`${this.actGrps[0].id} is frozen.`)
+//      this.htmlElementNumIterations.textContent = `${this.doneIterations}`    
         this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
         this.actGrps.forEach(ag => ag.moveActors())
         this.visualize()
         this.doneIterations++
-        if (this.iterationMode == IterationMode.iterating)
-            setTimeout(() => this.iterate(), this.interval)
+//        if (this.iterationMode == IterationMode.iterating)
+            setTimeout(() => this.iterateOn(), this.interval)
     }
     public toggleIterationsMode(): void {
         if (this.iterationMode == IterationMode.dead) return
@@ -76,11 +76,11 @@ export class NervousNumbatSystem {
             this.iterationMode = IterationMode.paused
         else {
             this.iterationMode = IterationMode.iterating
-            setTimeout(() => this.iterate(), this.interval)
+            setTimeout(() => this.iterateOn(), this.interval)
         }
     }
     public stopIterating(): void {
-        this.iterationMode = IterationMode.dead
+        this.iterationMode = IterationMode.paused
     }
     private nearbyActorsInRange(p: Point, margin: number): Actor[] {
         return this.actGrps.flatMap(ag => ag.nearbyActors(p, margin))

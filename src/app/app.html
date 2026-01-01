@@ -1,6 +1,8 @@
 
 <h1>Welcome to Nervous Numbat!</h1>
 <p>"Living" complex systems built by magic triangles.</p>
+<!--
+
 <input type="file" class="file-input" (change)="onConfigFileSelected($event)"     accept=".json" #configFileUpload>
 <div class="flex-strechted-left-to-right">
     <div class="navbar">
@@ -20,7 +22,6 @@
         </div>
     </div>
 </div>
-<!--
 <div class="flex-strechted-left-to-right">
         <div class="switch-label">
             <label class="switch">
@@ -32,8 +33,11 @@
     <main-canvas [pShowTriangles]="pShowTriangles"></main-canvas>
 </div>
 -->
-<main-canvas></main-canvas>
-
-
-
+<div>
+    <button type="button" class="submitButton" (click)="systemSetupHandler()" (keyup.enter)="systemSetupHandler()">
+        setup & run
+    </button>
+    <p>Press space to stop & resume</p>
+</div> 
+<main-canvas *ngIf="showCanvas"></main-canvas>
 <router-outlet></router-outlet>

@@ -1,26 +1,57 @@
 <!-- <canvas id="myCanvas" width="1500" height="600"></canvas> -->
 <div class="lineContainer">
     <div>
-        <canvas id="myCanvas"></canvas>
+        <canvas #myCanvas ></canvas>
     </div>
-    <div class="columnContainer">
+    <div>
         <div>
-            <button type="button" class="submitButton" (click)="systemSetupHandler()" (keyup.enter)="systemSetupHandler()">
-                setup & run
+            <button type="button" class="submitButton" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
+                {{ runResumeButtonLabel }}
             </button>
-            <p>Press space to stop & resume</p>
+            <button type="button" class="submitButton" (click)="stopIterationsHandler()">
+                Stop
+            </button>
+            <button type="button" class="submitButton" (click)="resetSystemHandler()">
+                Reset
+            </button>
         </div> 
         <div>
-            #Iterations: <p id="numIterations">0</p>
+            #Iterations: {{ system?.doneIterations }}
         </div>
-
-        <label for="intervalMillisecs">Iterations every #millisecs:</label>
-        <input type="number" 
-            class="inputFormNumber" 
-            min="1"
-            id="intervalMillisecs" 
-            [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="onUpdatedParameters($event)">
-<!--        [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="onUpdateParameters($event)"> -->
+        <div class="lineContainerFlexStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min="1"
+                id="intervalMillisecs" 
+                [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="onUpdatedParameters($event)">
+            <label for="intervalMillisecs">Iteration intervals [ms]</label>
+        </div>
+        <div class="lineContainerFlexStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min="1"
+                id="maxIterations" 
+                [(ngModel)]="sysExecParms.run.maxIterations" (ngModelChange)="onUpdatedParameters($event)">
+            <label for="intervalMillisecs">Stop after #iterations</label>
+        </div>
+        <div class="lineContainerFlexStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min="0"
+                max="1"
+                step="0.1"
+                id="minTriangleQuality" 
+                [(ngModel)]="sysExecParms.run.minTriangleQuality" (ngModelChange)="onUpdatedParameters($event)">
+            <label for="intervalMillisecs">Freeze when quality is beyond</label>
+        </div>
+        <div class="lineContainerFlexStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min="1"
+                id="maxMoveDistance" 
+                [(ngModel)]="sysExecParms.run.maxMoveDistance" (ngModelChange)="onUpdatedParameters($event)">
+            <label for="intervalMillisecs">Max move distance</label>
+        </div>
     </div>
 </div>
   

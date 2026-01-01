@@ -11,6 +11,7 @@ import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms'
 import { MainCanvas } from "./main-canvas/main-canvas";
+import { CommonModule } from '@angular/common';
 
 /** list of possible user actions */
 type ActionsPossible = {
@@ -29,7 +30,7 @@ export interface SystemStructParms {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainCanvas, FormsModule],
+  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -39,6 +40,7 @@ export class App {
   public actionsPossible: ActionsPossible
   public greyOut = "color: lightgrey;"
   public pShowTriangles: boolean = true
+  public showCanvas : boolean = false
 //  public version                = environment.version
 
   constructor() {
@@ -51,6 +53,13 @@ export class App {
       }
 
   } 
+
+
+  public systemSetupHandler(): void {
+    console.log(`app.systemSetupHandler()`)
+    this.showCanvas = !this.showCanvas
+  }
+
 
   public onUpdateParameters(value: boolean): void {
     console.log(`app.onUpdateParameters(${value})`)

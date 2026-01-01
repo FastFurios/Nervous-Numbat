@@ -6,7 +6,7 @@ import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection } fro
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
-import { cMaxMoveDistance, cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
+import { cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas"
 
@@ -66,7 +66,7 @@ export class Actor implements CanvasObject {
                                 : closestVertex  
         }
         const vectorToVertex   = new Vector(targetVertex.x - this.p.x, targetVertex.y - this.p.y)
-        const scaleFactor      = vectorToVertex.length <= cMaxMoveDistance ? 1 : cMaxMoveDistance / vectorToVertex.length  
+        const scaleFactor      = vectorToVertex.length <= this.sysExecParms.run.maxMoveDistance ? 1 : this.sysExecParms.run.maxMoveDistance / vectorToVertex.length  
         const targetP          = this.p.add(vectorToVertex.scale(scaleFactor))
         const wayToTargetP     = new LineSegment(this.ctx, this.p, targetP)
         const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
@@ -135,7 +135,7 @@ export class Actor implements CanvasObject {
         }
 /**/
         ctx.fillStyle = this.color.rgbWithOpacityString
-        ctx.fill();
+        ctx.fill()
     }
     get triangleEdges(): [LineSegment, LineSegment, LineSegment]{
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)

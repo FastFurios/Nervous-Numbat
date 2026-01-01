@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core'
+import { Component, Input, OnChanges, SimpleChanges, HostListener, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 
 import { Point, Box} from "./library/geometry"
@@ -33,22 +33,29 @@ export interface SystemExecParms {
   strategy: SystemExecParmsStrategy
  }
 
+type RunResumeButtonLabel = "Run" | "Resume"
+
 @Component({
   selector: 'main-canvas',
   imports: [FormsModule],
   templateUrl: './main-canvas.html',
   styleUrl: './main-canvas.css',
 })
-export class MainCanvas implements OnChanges {
-  public sysExecParms!: SystemExecParms
+export class MainCanvas implements AfterViewInit, OnChanges {
+  sysExecParms!: SystemExecParms
   public system: NervousNumbatSystem | undefined = undefined
-  public pintervalMillisecs: number 
+//  public pIntervalMillisecs: number 
+  public runResumeButtonLabel: RunResumeButtonLabel = "Run"
+  @ViewChild('myCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  private canvas!: HTMLCanvasElement
+  private ctx!: CanvasRenderingContext2D;
 
   constructor() {
 //  console.log("Welcome from the MainCanvas component.")
+
     this.sysExecParms = {
       run: {
-        intervalMillisecs: 1000000,
+        intervalMillisecs: cIntervalMillisecs,
         maxIterations: 1000000,
         maxMoveDistance: 4,
         minTriangleQuality: 1
@@ -68,32 +75,78 @@ export class MainCanvas implements OnChanges {
         aimAtFartherVertexOnEnduredPoorQuality: false
       }
     }
-    this.pintervalMillisecs = 0.4
+    //this.pIntervalMillisecs = 0.4
+  }
+
+  ngAfterViewInit() {
+    const canvas = this.canvasRef.nativeElement
+    const context = canvas.getContext('2d')
+
+    if (context) {
+      this.ctx = context;
+    } else {
+      throw Error('Could not get 2D context from canvas!');
+    }
+
+    this.setupSystem()
+
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+/*
       console.log(`main-vanvas.ngOnChanges(): updating system...`)
 //    this.system?.updateParameters(changes["pShowTriangles"].currentValue)
       this.system?.updateParameters(this.sysExecParms)
+*/
   }
-
   public onUpdatedParameters(value: unknown): void {
-    console.log(`main-canvas.systemSetupHandler(): onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
+    console.log(`main-canvas.onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
     console.log(this.sysExecParms)
     this.system?.updateParameters(this.sysExecParms)
   }
+/*
+  public onTest(value: unknown): void {
+    console.log(`main-canvas.onTest()`)
+  }
+
+  @HostListener("document:keydown", ["$event"])
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Space') {
+      event.preventDefault();
+      console.log('main-canvas.onKeyDown(): Space pressed!');
+    }
+  }
+*/
+  // ---------------------------------------------------------------------------------------
+  // <button> and other handlers
+  // ---------------------------------------------------------------------------------------
+
+  /** run&resume button clicked */
+  public runResumeIterationsHandler() {
+    this.system?.iterateOn()
+  }
+  
+  /* stop button clicked */
+  public stopIterationsHandler() {
+    this.system?.stopIterating()
+    this.runResumeButtonLabel = "Resume"
+  }
+
+  /** reset button clicked */
+  public resetSystemHandler() {
+    this.setupSystem()
+    this.runResumeButtonLabel = "Run"
+  }
 
 
-
-
-  public systemSetupHandler(): void {
+  public setupSystem(): void {
     console.log(`main-canvas.systemSetupHandler()`)
 
 /**/const numActGrps = 1
 /**/const numActors = 50
 
     this.system?.stopIterating()
-    this.system = new NervousNumbatSystem(cIntervalMillisecs)
+    this.system = new NervousNumbatSystem(cIntervalMillisecs, this.canvasRef.nativeElement, this.sysExecParms)
 
     const actGrps: ActorGroup[] = []
     for (let i = 0; i < numActGrps; i++) {
@@ -123,7 +176,7 @@ export class MainCanvas implements OnChanges {
 */    
 
 
-      this.system.addActGrps(actGrps).iterate()
+      this.system.addActGrps(actGrps).iterateOn()
     }
 }
 

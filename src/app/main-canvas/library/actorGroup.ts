@@ -31,7 +31,7 @@ export abstract class ActorGroup implements CanvasObject {
         this.actors.forEach(a => a.visualize(this.ctx))
         if (!cShowActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality()
-    }
+        }
     private visualizeIdAndQuality(remark: string = ""): void {
         const ctr = this.centerPoint()
         this.ctx.beginPath()
