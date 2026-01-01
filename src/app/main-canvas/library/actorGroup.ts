@@ -6,11 +6,15 @@ import { CanvasObject, Point, Box } from "./geometry"
 import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
 import { RgbColor, ColorScheme } from "./color"
 import { Actor } from "./actor"
-import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
+//import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas"
 
 export abstract class ActorGroup implements CanvasObject {
+    private showOneActorOnlyWithTheGivenAgIndex: number | undefined = undefined
+    private showActorGroupIdAndQuality: boolean = true
+    public  minTriangleQuality: number = 1
+
     constructor(public ctx: CanvasRenderingContext2D, 
                 public id: string, 
                 public actors: Actor[] = [], 
@@ -24,12 +28,12 @@ export abstract class ActorGroup implements CanvasObject {
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
     public visualize() {
-        if (cShowOneActorOnlyWithTheGivenAgIndex != undefined) {
-            this.actors[cShowOneActorOnlyWithTheGivenAgIndex].visualize(this.ctx)
+        if (this.showOneActorOnlyWithTheGivenAgIndex != undefined) {
+            this.actors[this.showOneActorOnlyWithTheGivenAgIndex].visualize(this.ctx)
             return
         }
         this.actors.forEach(a => a.visualize(this.ctx))
-        if (!cShowActorGroupIdAndQuality) return 
+        if (!this.showActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality()
         }
     private visualizeIdAndQuality(remark: string = ""): void {
@@ -62,6 +66,9 @@ export abstract class ActorGroup implements CanvasObject {
     }
     public updateParameters(sep: SystemExecParms) {
         console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
+        this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex
+        this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
+        this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))
     } 
     abstract calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void
@@ -99,7 +106,7 @@ export class ActorGroupDynamic extends ActorGroup {
     }
     public calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void {
         const qlty = this.avgTriangleQuality  
-        if (qlty > cMinTriangleQuality) {
+        if (qlty > this.minTriangleQuality) {
             console.log(`iterations stopped at avg. triangle quality= ${qlty}`)
             return
         }    

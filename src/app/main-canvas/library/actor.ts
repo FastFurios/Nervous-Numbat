@@ -6,7 +6,7 @@ import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection } fro
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
-import { cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
+//import { cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas"
 
@@ -76,7 +76,7 @@ export class Actor implements CanvasObject {
         return targetP
     }
     public newPosition(otherActGrps: ActorGroup[]): Point {
-        if (cAimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(cPoorTriangleQualityThreshold)) {
+        if (this.sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(this.sysExecParms.strategy.poorTriangleQualityThreshold)) {
             this.mode = Mode.aimForFartherVertex 
             this.triangleQualityLog = new Log()
          } 
@@ -125,11 +125,11 @@ export class Actor implements CanvasObject {
         ctx.closePath()
         ctx.font = "12px Arial"
 /**/
-        if (cShowActorId) {
+        if (this.sysExecParms.display.showActorId) {
             ctx.font = "12px Arial"
-            ctx.fillText(`${this.id}: ${cShowActorTriangleQuality ? (this.triangleQuality *100).toFixed(0) : ""}%, ${cShowActorMode ? this.mode : ""}`, this.p.x + cTextOffset, this.p.y)
+            ctx.fillText(`${this.id}: ${this.sysExecParms.display.showActorTriangleQuality ? (this.triangleQuality *100).toFixed(0) : ""}%, ${this.sysExecParms.display.showActorMode ? this.mode : ""}`, this.p.x + cTextOffset, this.p.y)
         }
-        if (cShowActorObservees) {
+        if (this.sysExecParms.display.showActorObservees) {
             ctx.font = "8px Arial"
             ctx.fillText(`=> ${this.observee1.id} and ${this.observee2.id}`, this.p.x, this.p.y + cTextOffset)
         }

@@ -28,6 +28,7 @@ export class NervousNumbatSystem {
     private actGrps: ActorGroup[] = []
     public  colorSchemes = new ColorSchemes(1)  // 1 as default
     public  maxIterations: number = cMaxIterations
+    private showActorJourney = false
     public  doneIterations = 0
     private iterationMode  = IterationMode.iterating
     public  pickedActor: Actor | null | undefined = undefined
@@ -56,7 +57,7 @@ export class NervousNumbatSystem {
         this.actGrps.forEach(ag => ag.updateParameters(sep))
     }
     public visualize(): void {
-        if (!cShowActorJourney) this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
+        if (!this.showActorJourney) this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
         this.actGrps.forEach(ag => ag.visualize())
     }
     public iterateOn(): void {
@@ -67,9 +68,10 @@ export class NervousNumbatSystem {
         this.actGrps.forEach(ag => ag.moveActors())
         this.visualize()
         this.doneIterations++
-//        if (this.iterationMode == IterationMode.iterating)
+        if (this.iterationMode == IterationMode.iterating)
             setTimeout(() => this.iterateOn(), this.interval)
     }
+/*
     public toggleIterationsMode(): void {
         if (this.iterationMode == IterationMode.dead) return
         if (this.iterationMode == IterationMode.iterating)
@@ -79,8 +81,14 @@ export class NervousNumbatSystem {
             setTimeout(() => this.iterateOn(), this.interval)
         }
     }
+ */
     public stopIterating(): void {
         this.iterationMode = IterationMode.paused
+    }
+    public runResumeIterating(): void {
+        if (this.iterationMode == IterationMode.iterating) return
+        this.iterationMode = IterationMode.iterating
+        this.iterateOn()
     }
     private nearbyActorsInRange(p: Point, margin: number): Actor[] {
         return this.actGrps.flatMap(ag => ag.nearbyActors(p, margin))
@@ -92,6 +100,7 @@ export class NervousNumbatSystem {
         const minDistance = actorsInRange.map(a => p.distanceTo(a.p)).reduce((e, f) => e < f ? e : f)
         return actorsInRange.find(a => p.distanceTo(a.p) == minDistance) || actorsInRange[0]
     }
+/*
     public handleKeyDown(event: KeyboardEvent): void {
         event.preventDefault()
         switch (event.code) {
@@ -99,6 +108,7 @@ export class NervousNumbatSystem {
             default:      { }
         }
     }
+*/
     public handleMouseDown(event: MouseEvent): void {
         event.preventDefault()
         this.pickedActor = this.closestActorInRange(new Point(this.ctx, event.offsetX, event.offsetY), cActorPickMargin)

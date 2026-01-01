@@ -123,7 +123,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
 
   /** run&resume button clicked */
   public runResumeIterationsHandler() {
-    this.system?.iterateOn()
+    this.system?.runResumeIterating()
   }
   
   /* stop button clicked */
@@ -143,7 +143,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
     console.log(`main-canvas.systemSetupHandler()`)
 
 /**/const numActGrps = 1
-/**/const numActors = 50
+/**/const numActors = 15
 
     this.system?.stopIterating()
     this.system = new NervousNumbatSystem(cIntervalMillisecs, this.canvasRef.nativeElement, this.sysExecParms)
@@ -177,6 +177,8 @@ export class MainCanvas implements AfterViewInit, OnChanges {
 
 
       this.system.addActGrps(actGrps).iterateOn()
+      this.system.stopIterating()
+
     }
 }
 
