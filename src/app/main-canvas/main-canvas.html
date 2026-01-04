@@ -106,17 +106,17 @@
             </label>
             show actors' journey 
         </div>
-        #actors in ActGrp[0]= {{numActorsOfActGrp(0)}}
+        #actors in ActGrp[0]= {{numActorsOfActGrp(0)! - 1 }}
         <div *ngIf="sysExecParms.display.showActorJourney" class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="0"
-                max="highestActorIndexInActorGroup_0"
+                min="-1"
+                [max]="numActorsOfActGrp(0)! - 1" 
                 id="maxMoveDistance" 
                 [(ngModel)]="sysExecParms.display.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="onUpdatedParameters($event)">
-            <label for="showOneActorOnlyWithTheGivenAgIndex">Selected actor#</label>
+            <label for="showOneActorOnlyWithTheGivenAgIndex">Selected actor# (-1=all)</label>
         </div>
 
     </div>
-</div>
+</div>s
   

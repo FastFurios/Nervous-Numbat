@@ -6,7 +6,6 @@ import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection } fro
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
-//import { cAimAtFartherVertexOnEnduredPoorQuality, cPoorTriangleQualityThreshold, cShowActorId, cShowActorTriangleQuality, cShowActorMode, cShowActorObservees } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas"
 

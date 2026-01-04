@@ -1,0 +1,31 @@
+{
+    "id": "EarlyBird",
+    "topology": {
+        "creation_mode" : "explicit",
+        "actor_groups": [
+            {
+                "id": "Group A",
+                "explicit_toplogy": [
+                    { "id" : "Bird-00", "observee1" : "Bird-05", "observee2" : "Bird-13"},
+                    { "id" : "Bird-01", "observee1" : "Bird-03", "observee2" : "Bird-02"},
+                    { "id" : "Bird-02", "observee1" : "Bird-07", "observee2" : "Bird-04"},
+                    { "id" : "Bird-03", "observee1" : "Bird-14", "observee2" : "Bird-01"},
+                    { "id" : "Bird-04", "observee1" : "Bird-00", "observee2" : "Bird-12"},
+                    { "id" : "Bird-05", "observee1" : "Bird-10", "observee2" : "Bird-09"},
+                    { "id" : "Bird-06", "observee1" : "Bird-09", "observee2" : "Bird-03"},
+                    { "id" : "Bird-07", "observee1" : "Bird-09", "observee2" : "Bird-04"},
+                    { "id" : "Bird-08", "observee1" : "Bird-05", "observee2" : "Bird-03"},
+                    { "id" : "Bird-09", "observee1" : "Bird-11", "observee2" : "Bird-07"},
+                    { "id" : "Bird-10", "observee1" : "Bird-02", "observee2" : "Bird-11"},
+                    { "id" : "Bird-11", "observee1" : "Bird-01", "observee2" : "Bird-09"},
+                    { "id" : "Bird-12", "observee1" : "Bird-06", "observee2" : "Bird-02"},
+                    { "id" : "Bird-13", "observee1" : "Bird-00", "observee2" : "Bird-12"},
+                    { "id" : "Bird-14", "observee1" : "Bird-07", "observee2" : "Bird-11"}
+                ],
+                "automatic_topology": {
+                    "number_actors": 15
+                }
+            }
+        ]
+    } 
+}

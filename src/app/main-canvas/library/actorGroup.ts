@@ -11,14 +11,18 @@ import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas"
 
 export abstract class ActorGroup implements CanvasObject {
-    private showOneActorOnlyWithTheGivenAgIndex: number | undefined = undefined
-    private showActorGroupIdAndQuality: boolean = true
+    private showActorJourney: boolean 
+    private showOneActorOnlyWithTheGivenAgIndex: number
+    private showActorGroupIdAndQuality: boolean
     public  minTriangleQuality: number = 1
 
     constructor(public ctx: CanvasRenderingContext2D, 
                 public id: string, 
                 public actors: Actor[] = [], 
                 public colorScheme?: ColorScheme) { 
+        this.showActorJourney = false
+        this.showOneActorOnlyWithTheGivenAgIndex = -1
+        this.showActorGroupIdAndQuality = false
     }
     public covers(p: Point): boolean {
         return this.actors.map(a => a.covers(p)).reduce((d, e) => d || e, false)
@@ -28,14 +32,14 @@ export abstract class ActorGroup implements CanvasObject {
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
     public visualize() {
-        if (this.showOneActorOnlyWithTheGivenAgIndex != undefined) {
-            this.actors[this.showOneActorOnlyWithTheGivenAgIndex].visualize(this.ctx)
+        if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
+            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(this.ctx)
             return
         }
         this.actors.forEach(a => a.visualize(this.ctx))
         if (!this.showActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality()
-        }
+    }
     private visualizeIdAndQuality(remark: string = ""): void {
         const ctr = this.centerPoint()
         this.ctx.beginPath()
@@ -66,7 +70,8 @@ export abstract class ActorGroup implements CanvasObject {
     }
     public updateParameters(sep: SystemExecParms) {
         console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
-        this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex
+        this.showActorJourney = sep.display.showActorJourney
+        this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
         this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))

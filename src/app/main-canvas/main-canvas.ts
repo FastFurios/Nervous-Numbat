@@ -22,8 +22,7 @@ export type SystemExecParmsDisplay = {
   showActorObservees: boolean
   showActorGroupIdAndQuality: boolean
   showActorJourney: boolean
-  showOneActorOnlyWithTheGivenAgIndex: number | undefined
-}
+  showOneActorOnlyWithTheGivenAgIndex: number}
 export type SystemExecParmsStrategy = {
   poorTriangleQualityThreshold: number
   aimAtFartherVertexOnEnduredPoorQuality: boolean
@@ -70,7 +69,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
         showActorObservees: false,
         showActorGroupIdAndQuality: false,
         showActorJourney: false,
-        showOneActorOnlyWithTheGivenAgIndex: undefined
+        showOneActorOnlyWithTheGivenAgIndex: -1
       },
       strategy: {
         poorTriangleQualityThreshold: 0.5,
@@ -105,6 +104,8 @@ export class MainCanvas implements AfterViewInit, OnChanges {
   public onUpdatedParameters(value: unknown): void {
     console.log(`main-canvas.onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
     console.log(this.sysExecParms)
+    this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
+
     this.system?.updateParameters(this.sysExecParms)
     this.system?.visualize() 
   }
@@ -129,28 +130,24 @@ export class MainCanvas implements AfterViewInit, OnChanges {
   public runResumeIterationsHandler() {
     this.system?.runResumeIterating()
   }
-  
-  /* stop button clicked */
+    /* stop button clicked */
   public stopIterationsHandler() {
     this.system?.stopIterating()
     this.runResumeButtonLabel = "Resume"
   }
-
   /** reset button clicked */
   public resetSystemHandler() {
     this.setupSystem()
     this.runResumeButtonLabel = "Run"
   }
-
   public numActorsOfActGrp(agIdx: number): number | undefined {
     return this.system?.actGrps[agIdx].actors.length
   }
 
   public setupSystem(): void {
     console.log(`main-canvas.systemSetupHandler()`)
-
 /**/const numActGrps = 1
-/**/const numActors = 25
+/**/const numActors = 50
 
     this.system?.stopIterating()
     this.system = new NervousNumbatSystem(this.canvasRef.nativeElement, this.sysExecParms)
