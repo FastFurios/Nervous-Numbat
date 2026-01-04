@@ -16,14 +16,15 @@ export const cIntervalMillisecs = 30
 const cNumberActorsInActGrp = 20
 export const cShowActorId = false
 export const cShowActorTriangleQuality = false
-export const cShowActorMode = false
+//export const cShowActorMode = false
 export const cShowActorObservees = false
 //export const cShowTriangle = false
 export const cShowActorGroupIdAndQuality = true
-export const cAimAtFartherVertexOnEnduredPoorQuality = false
+export const cAimAtFartherVertexOnEnduredPoorQuality = true
 export const cPowerCurveFactor = -0.8; if (cPowerCurveFactor > 0) throw Error("cPowerCurveFactor needs to be smaller than 0 !")
 export const cShowActorJourney = true
 export const cShowOneActorOnlyWithTheGivenAgIndex: number | undefined = 0
+export const cTextOffset = 10
 
     
     

@@ -7,7 +7,7 @@ import { ColorSchemes, RgbColor } from "./color"
 import { SystemExecParms } from "../main-canvas"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupStaticBox } from "./actorGroup"
-import { cMaxIterations, cActorPickMargin, cLeftMargin, cRightMargin, cUpperMargin, cLowerMargin, cShowActorJourney } from "./parameters"
+import { cActorPickMargin, cLeftMargin, cRightMargin, cUpperMargin, cLowerMargin, cShowActorJourney } from "./parameters"
 
 
 enum IterationMode {
@@ -17,25 +17,25 @@ enum IterationMode {
 }
 
 export class NervousNumbatSystem {
-    static  newWithActGrps(interval: number, actGrps: ActorGroup[], canvas: HTMLCanvasElement, sysExecParms: SystemExecParms): NervousNumbatSystem {
-        const sys = new NervousNumbatSystem(interval, canvas, sysExecParms)
+    static  newWithActGrps(canvas: HTMLCanvasElement, actGrps: ActorGroup[], sysExecParms: SystemExecParms): NervousNumbatSystem {
+        const sys = new NervousNumbatSystem(canvas, sysExecParms)
         sys.colorSchemes = new ColorSchemes(actGrps.length)
         actGrps.forEach(ag => sys.addActGrps([ag]))
         return sys
     }
 
     public  ctx: CanvasRenderingContext2D
-    private actGrps: ActorGroup[] = []
+    public  actGrps: ActorGroup[] = []
     public  colorSchemes = new ColorSchemes(1)  // 1 as default
-    public  maxIterations: number = cMaxIterations
-    private showActorJourney = false
+    public  maxIterations!: number
+    public  intervalMillisecs!: number
+    private showActorJourney!: boolean
     public  doneIterations = 0
     private iterationMode  = IterationMode.iterating
     public  pickedActor: Actor | null | undefined = undefined
 //    private htmlElementNumIterations: HTMLParagraphElement
 
-    constructor(private interval: number,
-                private canvas:  HTMLCanvasElement,
+    constructor(private canvas:  HTMLCanvasElement,
                         sysExecParms: SystemExecParms) {
 
         this.ctx = canvas.getContext('2d')!
@@ -43,6 +43,7 @@ export class NervousNumbatSystem {
         //document.addEventListener("keydown", (event: KeyboardEvent): void => this.handleKeyDown(event))
         window.addEventListener("resize", this.resizeCanvas.bind(this))
         this.resizeCanvas()
+        this.showActorJourney = sysExecParms.display.showActorJourney
         this.updateParameters(sysExecParms)
     }
     public addActGrps(actGrps: ActorGroup[]): NervousNumbatSystem {
@@ -54,10 +55,13 @@ export class NervousNumbatSystem {
     public updateParameters(sep: SystemExecParms): void {
         console.log(`system.updateParameter(): propagating update...`)
         this.maxIterations = sep.run.maxIterations
+        this.intervalMillisecs = sep.run.intervalMillisecs
+        this.showActorJourney = sep.display.showActorJourney
         this.actGrps.forEach(ag => ag.updateParameters(sep))
     }
     public visualize(): void {
         if (!this.showActorJourney) this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
+        console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}`)
         this.actGrps.forEach(ag => ag.visualize())
     }
     public iterateOn(): void {
@@ -69,7 +73,7 @@ export class NervousNumbatSystem {
         this.visualize()
         this.doneIterations++
         if (this.iterationMode == IterationMode.iterating)
-            setTimeout(() => this.iterateOn(), this.interval)
+            setTimeout(() => this.iterateOn(), this.intervalMillisecs)
     }
 /*
     public toggleIterationsMode(): void {

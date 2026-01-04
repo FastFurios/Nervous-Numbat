@@ -7,11 +7,11 @@
 // Exakte Flächenberechnung der Dreiecksgruppe: 
 // $ npm install martinez-polygon-clipping (siehe ChatGPT für "Polygon Union")
 
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { MainCanvas } from "./main-canvas/main-canvas";
-import { CommonModule } from '@angular/common';
+import { MainCanvas } from "./main-canvas/main-canvas"
+import { CommonModule } from '@angular/common'
 
 /** list of possible user actions */
 type ActionsPossible = {

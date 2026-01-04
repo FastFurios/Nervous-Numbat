@@ -13,7 +13,6 @@ import { SystemExecParms } from "../main-canvas"
 
 export const cOpacity = 0.1
 export const cActorDotRadius = 1
-const cTextOffset = 10
 //const cContextMargin = 0.4
 
 export enum Halo {
@@ -115,7 +114,7 @@ export class Actor implements CanvasObject {
         ctx.beginPath()
         ctx.moveTo(this.observee1.p.x, this.observee1.p.y)
         ctx.lineTo(this.p.x, this.p.y)
-            ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
+        ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
 
         if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
 
@@ -123,17 +122,6 @@ export class Actor implements CanvasObject {
         ctx.stroke();
         ctx.setLineDash([])
         ctx.closePath()
-        ctx.font = "12px Arial"
-/**/
-        if (this.sysExecParms.display.showActorId) {
-            ctx.font = "12px Arial"
-            ctx.fillText(`${this.id}: ${this.sysExecParms.display.showActorTriangleQuality ? (this.triangleQuality *100).toFixed(0) : ""}%, ${this.sysExecParms.display.showActorMode ? this.mode : ""}`, this.p.x + cTextOffset, this.p.y)
-        }
-        if (this.sysExecParms.display.showActorObservees) {
-            ctx.font = "8px Arial"
-            ctx.fillText(`=> ${this.observee1.id} and ${this.observee2.id}`, this.p.x, this.p.y + cTextOffset)
-        }
-/**/
         ctx.fillStyle = this.color.rgbWithOpacityString
         ctx.fill()
     }
@@ -176,7 +164,12 @@ export class Actor implements CanvasObject {
     }
 
     public visualize(ctx: CanvasRenderingContext2D): void {
-        this.p.visualize(ctx, this.color, this.halo)
+        let actorLabel: string = ""
+        if (this.sysExecParms.display.showActorId)              actorLabel  = `${this.id}`
+        if (this.sysExecParms.display.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
+        if (this.sysExecParms.display.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
+
+        this.p.visualize(ctx, this.color, this.halo, actorLabel)
         if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(ctx)
     }
     public toString(): string {

@@ -1,14 +1,15 @@
-import { Component, Input, OnChanges, SimpleChanges, HostListener, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { CommonModule } from '@angular/common'
 
 import { Point, Box} from "./library/geometry"
-import { ColorSchemes, RgbColor } from "./library/color"
+import { RgbColor } from "./library/color"
 import { NervousNumbatSystem } from "./library/system"
 import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./library/actorGroup"
 import { cIntervalMillisecs, cPowerCurveFactor } from "./library/parameters"
 
 export type SystemExecParmsRun = {
-  intervalMillisecs: Number
+  intervalMillisecs: number
   maxIterations: number
   maxMoveDistance: number
   minTriangleQuality: number
@@ -17,7 +18,7 @@ export type SystemExecParmsDisplay = {
   showActorId: boolean
   showTriangle: boolean
   showActorTriangleQuality: boolean
-  showActorMode: boolean
+//showActorMode: boolean
   showActorObservees: boolean
   showActorGroupIdAndQuality: boolean
   showActorJourney: boolean
@@ -37,7 +38,7 @@ type RunResumeButtonLabel = "Run" | "Resume"
 
 @Component({
   selector: 'main-canvas',
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './main-canvas.html',
   styleUrl: './main-canvas.css',
 })
@@ -46,9 +47,10 @@ export class MainCanvas implements AfterViewInit, OnChanges {
   public system: NervousNumbatSystem | undefined = undefined
 //  public pIntervalMillisecs: number 
   public runResumeButtonLabel: RunResumeButtonLabel = "Run"
-  @ViewChild('myCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  public highestActorIndexInActorGroup_0: number
+  @ViewChild('myCanvas') canvasRef!: ElementRef<HTMLCanvasElement>
   private canvas!: HTMLCanvasElement
-  private ctx!: CanvasRenderingContext2D;
+  private ctx!: CanvasRenderingContext2D
 
   constructor() {
 //  console.log("Welcome from the MainCanvas component.")
@@ -64,7 +66,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
         showActorId: false,
         showTriangle: true,
         showActorTriangleQuality: false,
-        showActorMode: false,
+//      showActorMode: false,
         showActorObservees: false,
         showActorGroupIdAndQuality: false,
         showActorJourney: false,
@@ -72,10 +74,11 @@ export class MainCanvas implements AfterViewInit, OnChanges {
       },
       strategy: {
         poorTriangleQualityThreshold: 0.5,
-        aimAtFartherVertexOnEnduredPoorQuality: false
+        aimAtFartherVertexOnEnduredPoorQuality: true
       }
     }
     //this.pIntervalMillisecs = 0.4
+    this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
   }
 
   ngAfterViewInit() {
@@ -103,6 +106,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
     console.log(`main-canvas.onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
     console.log(this.sysExecParms)
     this.system?.updateParameters(this.sysExecParms)
+    this.system?.visualize() 
   }
 /*
   public onTest(value: unknown): void {
@@ -138,15 +142,18 @@ export class MainCanvas implements AfterViewInit, OnChanges {
     this.runResumeButtonLabel = "Run"
   }
 
+  public numActorsOfActGrp(agIdx: number): number | undefined {
+    return this.system?.actGrps[agIdx].actors.length
+  }
 
   public setupSystem(): void {
     console.log(`main-canvas.systemSetupHandler()`)
 
 /**/const numActGrps = 1
-/**/const numActors = 15
+/**/const numActors = 25
 
     this.system?.stopIterating()
-    this.system = new NervousNumbatSystem(cIntervalMillisecs, this.canvasRef.nativeElement, this.sysExecParms)
+    this.system = new NervousNumbatSystem(this.canvasRef.nativeElement, this.sysExecParms)
 
     const actGrps: ActorGroup[] = []
     for (let i = 0; i < numActGrps; i++) {
@@ -174,7 +181,6 @@ export class MainCanvas implements AfterViewInit, OnChanges {
                                                  new Point(this.system.ctx,  this.system.ctx.canvas.width / 2 + 10, this.system.ctx.canvas.height / 2 - 100), 
                                                  new RgbColor(128, 128, 128))))
 */    
-
 
       this.system.addActGrps(actGrps).iterateOn()
       this.system.stopIterating()

@@ -5,6 +5,7 @@
 import { RgbColor } from "./color"
 import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
+import { cTextOffset } from "./parameters"
 
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
@@ -75,7 +76,7 @@ export class Point implements CanvasObject {
     public equalsTo(p: Point): boolean {
         return Math.abs(p.x - this.x) < cTolerance && Math.abs(p.y - this.y) < cTolerance
     }
-    public visualize(ctx: CanvasRenderingContext2D, color: RgbColor, halo: Halo = Halo.off): void {
+    public visualize(ctx: CanvasRenderingContext2D, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
         ctx.beginPath()
         ctx.arc(this.x, this.y, cActorDotRadius, 0, 2 * Math.PI)
         if (halo == Halo.off) {
@@ -93,6 +94,10 @@ export class Point implements CanvasObject {
         ctx.fillStyle = color.rgbString
         ctx.fill()
         ctx.closePath
+        if (label != "") {
+            ctx.font = "12px Arial"
+            ctx.fillText(`${label}`, this.x, this.y + cTextOffset)
+        }
     }
     public toString(): string {
         return `Point ${this.id}: (${this.x.toFixed(0)}, ${this.y.toFixed(0)})`
