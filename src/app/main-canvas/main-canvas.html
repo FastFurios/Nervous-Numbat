@@ -21,7 +21,7 @@
         <div class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="1"
+                min=1
                 id="intervalMillisecs" 
                 [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="onUpdatedParameters($event)">
             <label for="intervalMillisecs">Iteration intervals [ms]</label>
@@ -29,7 +29,7 @@
         <div class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="1"
+                min=1
                 id="maxIterations" 
                 [(ngModel)]="sysExecParms.run.maxIterations" (ngModelChange)="onUpdatedParameters($event)">
             <label for="intervalMillisecs">Stop after #iterations</label>
@@ -37,9 +37,9 @@
         <div class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="0"
-                max="1"
-                step="0.1"
+                min=0
+                max=1
+                step=0.1
                 id="minTriangleQuality" 
                 [(ngModel)]="sysExecParms.run.minTriangleQuality" (ngModelChange)="onUpdatedParameters($event)">
             <label for="intervalMillisecs">Freeze when quality is beyond</label>
@@ -47,7 +47,7 @@
         <div class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="1"
+                min=1
                 id="maxMoveDistance" 
                 [(ngModel)]="sysExecParms.run.maxMoveDistance" (ngModelChange)="onUpdatedParameters($event)">
             <label for="intervalMillisecs">Max move distance</label>
@@ -106,15 +106,33 @@
             </label>
             show actors' journey 
         </div>
-        #actors in ActGrp[0]= {{numActorsOfActGrp(0)! - 1 }}
         <div *ngIf="sysExecParms.display.showActorJourney" class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
-                min="-1"
+                min=-1
                 [max]="numActorsOfActGrp(0)! - 1" 
                 id="maxMoveDistance" 
                 [(ngModel)]="sysExecParms.display.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="onUpdatedParameters($event)">
             <label for="showOneActorOnlyWithTheGivenAgIndex">Selected actor# (-1=all)</label>
+        </div>
+        <div class="lineContainerFlexStart">
+            <label class="switch">
+                <input type="checkbox" 
+                id="aimAtFartherVertexOnEnduredPoorQuality"
+                [(ngModel)]="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" (ngModelChange)="onUpdatedParameters($event)">
+                <span class="slider round"></span>
+            </label>
+            Aim to alt. vertex on poor Q 
+        </div>
+        <div *ngIf="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" class="lineContainerFlexStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min=0
+                max=1
+                step="0.1" 
+                id="poorTriangleQualityThreshold" 
+                [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="onUpdatedParameters($event)">
+            <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
         </div>
 
     </div>
