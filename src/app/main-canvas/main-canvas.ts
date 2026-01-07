@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, Afte
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
+import { System } from "../services/system"
 import { Point, Box} from "./library/geometry"
 import { RgbColor } from "./library/color"
 import { NervousNumbatSystem } from "./library/system"
@@ -51,7 +52,7 @@ export class MainCanvas implements AfterViewInit, OnChanges {
   private canvas!: HTMLCanvasElement
   private ctx!: CanvasRenderingContext2D
 
-  constructor() {
+  constructor(private sys: System) {
 //  console.log("Welcome from the MainCanvas component.")
 
     this.sysExecParms = {
@@ -89,6 +90,11 @@ export class MainCanvas implements AfterViewInit, OnChanges {
     } else {
       throw Error('Could not get 2D context from canvas!');
     }
+
+    const r = this.sys.deliverSpotOnCanvas(this.ctx, 100, 100)
+    console.log(`main-canvas.ngAfterViewInit(): call to this.sys.deliverSpotOnCanvas(100, 100) returns ${r}`)
+    throw Error("aborted")
+
 
     this.setupSystem()
 
@@ -146,8 +152,8 @@ export class MainCanvas implements AfterViewInit, OnChanges {
 
   public setupSystem(): void {
     console.log(`main-canvas.systemSetupHandler()`)
-/**/const numActGrps = 1
-/**/const numActors = 50
+/**/const numActGrps = 2
+/**/const numActors = 25
 
     this.system?.stopIterating()
     this.system = new NervousNumbatSystem(this.canvasRef.nativeElement, this.sysExecParms)
