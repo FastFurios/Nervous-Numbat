@@ -16,14 +16,14 @@
             </button>
         </div> 
         <div>
-            #Iterations: {{ system?.doneIterations }}
+            #Iterations: {{ doneIterations }}
         </div>
         <div class="lineContainerFlexStart">
             <input type="number" 
                 class="inputFormNumber" 
                 min=1
                 id="intervalMillisecs" 
-                [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="updateExecParms()">
             <label for="intervalMillisecs">Iteration intervals [ms]</label>
         </div>
         <div class="lineContainerFlexStart">
@@ -31,7 +31,7 @@
                 class="inputFormNumber" 
                 min=1
                 id="maxIterations" 
-                [(ngModel)]="sysExecParms.run.maxIterations" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.run.maxIterations" (ngModelChange)="updateExecParms()">
             <label for="intervalMillisecs">Stop after #iterations</label>
         </div>
         <div class="lineContainerFlexStart">
@@ -41,7 +41,7 @@
                 max=1
                 step=0.1
                 id="minTriangleQuality" 
-                [(ngModel)]="sysExecParms.run.minTriangleQuality" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.run.minTriangleQuality" (ngModelChange)="updateExecParms()">
             <label for="intervalMillisecs">Freeze when quality is beyond</label>
         </div>
         <div class="lineContainerFlexStart">
@@ -49,14 +49,14 @@
                 class="inputFormNumber" 
                 min=1
                 id="maxMoveDistance" 
-                [(ngModel)]="sysExecParms.run.maxMoveDistance" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.run.maxMoveDistance" (ngModelChange)="updateExecParms()">
             <label for="intervalMillisecs">Max move distance</label>
         </div>
         <div class="lineContainerFlexStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorId"
-                [(ngModel)]="sysExecParms.display.showActorId" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showActorId" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show actor ids 
@@ -65,7 +65,7 @@
             <label class="switch">
                 <input type="checkbox" 
                 id="showTriangle"
-                [(ngModel)]="sysExecParms.display.showTriangle" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showTriangle" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show triangles 
@@ -74,7 +74,7 @@
             <label class="switch">
                 <input type="checkbox" 
                 id="showTriangle"
-                [(ngModel)]="sysExecParms.display.showActorTriangleQuality" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showActorTriangleQuality" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show triangle quality 
@@ -83,7 +83,7 @@
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorObservees" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showActorObservees" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show observees 
@@ -92,7 +92,7 @@
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorGroupIdAndQuality" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showActorGroupIdAndQuality" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show group id & avg. quality 
@@ -101,7 +101,7 @@
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorJourney" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showActorJourney" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             show actors' journey 
@@ -112,14 +112,14 @@
                 min=-1
                 [max]="numActorsOfActGrp(0)! - 1" 
                 id="maxMoveDistance" 
-                [(ngModel)]="sysExecParms.display.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.display.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="updateExecParms()">
             <label for="showOneActorOnlyWithTheGivenAgIndex">Selected actor# (-1=all)</label>
         </div>
         <div class="lineContainerFlexStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="aimAtFartherVertexOnEnduredPoorQuality"
-                [(ngModel)]="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" (ngModelChange)="updateExecParms()">
                 <span class="slider round"></span>
             </label>
             Aim to alt. vertex on poor Q 
@@ -131,7 +131,7 @@
                 max=1
                 step="0.1" 
                 id="poorTriangleQualityThreshold" 
-                [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="onUpdatedParameters($event)">
+                [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="updateExecParms()">
             <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
         </div>
 

@@ -1,31 +1,27 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { System } from "../services/system"
-import { Point, Box} from "./library/geometry"
-import { RgbColor } from "./library/color"
-import { NervousNumbatSystem } from "./library/system"
-import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./library/actorGroup"
-import { cIntervalMillisecs, cPowerCurveFactor } from "./library/parameters"
+import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
 
 export type SystemExecParmsRun = {
-  intervalMillisecs: number
-  maxIterations: number
-  maxMoveDistance: number
+  intervalMillisecs:  number
+  maxIterations:      number
+  maxMoveDistance:    number
   minTriangleQuality: number
 }
 export type SystemExecParmsDisplay = {
-  showActorId: boolean
-  showTriangle: boolean
-  showActorTriangleQuality: boolean
-//showActorMode: boolean
-  showActorObservees: boolean
-  showActorGroupIdAndQuality: boolean
-  showActorJourney: boolean
-  showOneActorOnlyWithTheGivenAgIndex: number}
+  showActorId:                          boolean
+  showTriangle:                         boolean
+  showActorTriangleQuality:             boolean
+  showActorObservees:                   boolean
+  showActorGroupIdAndQuality:           boolean
+  showActorJourney:                     boolean
+  showOneActorOnlyWithTheGivenAgIndex:  number
+}
 export type SystemExecParmsStrategy = {
-  poorTriangleQualityThreshold: number
+  poorTriangleQualityThreshold:           number
   aimAtFartherVertexOnEnduredPoorQuality: boolean
 }
 export interface SystemExecParms {
@@ -36,159 +32,128 @@ export interface SystemExecParms {
 
 type RunResumeButtonLabel = "Run" | "Resume"
 
+// ****************************************************************************************
+//      MAIN CANVAS COMPONENT
+// ****************************************************************************************
+
 @Component({
-  selector: 'main-canvas',
-  imports: [FormsModule, CommonModule],
-  templateUrl: './main-canvas.html',
-  styleUrl: './main-canvas.css',
+  selector:     'main-canvas',
+  imports:      [FormsModule, CommonModule],
+  templateUrl:  './main-canvas.html',
+  styleUrl:     './main-canvas.css',
 })
-export class MainCanvas implements AfterViewInit, OnChanges {
+export class MainCanvas implements AfterViewInit {
   sysExecParms!: SystemExecParms
-  public system: NervousNumbatSystem | undefined = undefined
-//  public pIntervalMillisecs: number 
-  public runResumeButtonLabel: RunResumeButtonLabel = "Run"
-  public highestActorIndexInActorGroup_0: number
-  @ViewChild('myCanvas') canvasRef!: ElementRef<HTMLCanvasElement>
-  private canvas!: HTMLCanvasElement
-  private ctx!: CanvasRenderingContext2D
+  public runResumeButtonLabel:            RunResumeButtonLabel  = "Run"
+  public highestActorIndexInActorGroup_0: number                = 0
+  @ViewChild('myCanvas') canvasRef!:      ElementRef<HTMLCanvasElement>
+  private canvas!:                        HTMLCanvasElement | null
+  private ctx!:                           CanvasRenderingContext2D | null
 
   constructor(private sys: System) {
 //  console.log("Welcome from the MainCanvas component.")
-
     this.sysExecParms = {
       run: {
-        intervalMillisecs: cIntervalMillisecs,
-        maxIterations: 1000000,
-        maxMoveDistance: 4,
-        minTriangleQuality: 1
+        intervalMillisecs:                      cIntervalMillisecs,
+        maxIterations:                          1000000,
+        maxMoveDistance:                        4,
+        minTriangleQuality:                     1
       },
       display: {
-        showActorId: false,
-        showTriangle: true,
-        showActorTriangleQuality: false,
-//      showActorMode: false,
-        showActorObservees: false,
-        showActorGroupIdAndQuality: false,
-        showActorJourney: false,
-        showOneActorOnlyWithTheGivenAgIndex: -1
+        showActorId:                            false,
+        showTriangle:                           true,
+        showActorTriangleQuality:               false,
+        showActorObservees:                     false,
+        showActorGroupIdAndQuality:             false,
+        showActorJourney:                       false,
+        showOneActorOnlyWithTheGivenAgIndex:    -1
       },
       strategy: {
-        poorTriangleQualityThreshold: 0.5,
+        poorTriangleQualityThreshold:           0.5,
         aimAtFartherVertexOnEnduredPoorQuality: true
       }
     }
-    //this.pIntervalMillisecs = 0.4
-    this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
+//  this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
   }
 
   ngAfterViewInit() {
-    const canvas = this.canvasRef.nativeElement
-    const context = canvas.getContext('2d')
+    if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
+    this.canvas  = this.canvasRef.nativeElement
+    if (!this.canvas) throw Error("main-canvas.ngAfterViewInit(): canvas is undefined.")
+    this.ctx = this.canvas.getContext('2d')
+    if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
+    console.log(`main-canvas.constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 
-    if (context) {
-      this.ctx = context;
-    } else {
-      throw Error('Could not get 2D context from canvas!');
-    }
+    window.addEventListener("resize", this.handleCanvasResized.bind(this))
+    this.handleCanvasResized()
 
-    const r = this.sys.deliverSpotOnCanvas(this.ctx, 100, 100)
-    console.log(`main-canvas.ngAfterViewInit(): call to this.sys.deliverSpotOnCanvas(100, 100) returns ${r}`)
-    throw Error("aborted")
+    this.canvas.onmousedown = this.handleMouseDown.bind(this)
+    window.addEventListener("resize", this.handleCanvasResized.bind(this))
 
-
-    this.setupSystem()
-
+    this.sys.initialize(this.ctx, this.sysExecParms)
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-/*
-      console.log(`main-vanvas.ngOnChanges(): updating system...`)
-//    this.system?.updateParameters(changes["pShowTriangles"].currentValue)
-      this.system?.updateParameters(this.sysExecParms)
-*/
+  public get doneIterations(): number {
+    return this.sys.doneIterations
   }
-  public onUpdatedParameters(value: unknown): void {
-    console.log(`main-canvas.onUpdatedParameters(): ${this.sysExecParms.run.intervalMillisecs}`)
-    console.log(this.sysExecParms)
-    this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
+  
 
-    this.system?.updateParameters(this.sysExecParms)
-    this.system?.visualize() 
-  }
-/*
-  public onTest(value: unknown): void {
-    console.log(`main-canvas.onTest()`)
+  // ??
+  public numActorsOfActGrp(agIdx: number): number | undefined {
+    return this.sys.actGrps[agIdx].actors.length
   }
 
-  @HostListener("document:keydown", ["$event"])
-  onKeyDown(event: KeyboardEvent) {
-    if (event.code === 'Space') {
-      event.preventDefault();
-      console.log('main-canvas.onKeyDown(): Space pressed!');
-    }
-  }
-*/
   // ---------------------------------------------------------------------------------------
-  // <button> and other handlers
+  // button handlers
   // ---------------------------------------------------------------------------------------
 
+  /** update the system with the current execution parameters */
+  public updateExecParms(): void {
+    this.sys.updateExecParms(this.sysExecParms)
+  }
   /** run&resume button clicked */
   public runResumeIterationsHandler() {
-    this.system?.runResumeIterating()
+    this.sys.runResumeIterating()
   }
     /* stop button clicked */
   public stopIterationsHandler() {
-    this.system?.stopIterating()
+    this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
   }
   /** reset button clicked */
   public resetSystemHandler() {
-    this.setupSystem()
+    this.sys.reset()
     this.runResumeButtonLabel = "Run"
   }
-  public numActorsOfActGrp(agIdx: number): number | undefined {
-    return this.system?.actGrps[agIdx].actors.length
+
+  // ---------------------------------------------------------------------------------------
+  // canvas mouse event handlers
+  // ---------------------------------------------------------------------------------------
+
+  public handleMouseDown(event: MouseEvent): void {
+      event.preventDefault()
+      this.sys.handleActorSelect(event.offsetX, event.offsetY)
+      this.canvas!.onmousemove = this.handleMouseMove.bind(this)
+      this.canvas!.onmouseup   = this.handleMouseUp.bind(this)
+  }
+  public handleMouseMove(event: MouseEvent): void {
+      event.preventDefault()
+      this.sys.handleActorMove(event.offsetX, event.offsetY)
+  }
+  public handleMouseUp(): void {
+      this.sys.handleActorDrop()
+      this.canvas!.onmousemove = null
+      this.canvas!.onmouseup   = null
   }
 
-  public setupSystem(): void {
-    console.log(`main-canvas.systemSetupHandler()`)
-/**/const numActGrps = 2
-/**/const numActors = 25
+  // ---------------------------------------------------------------------------------------
+  // window event handlers
+  // ---------------------------------------------------------------------------------------
 
-    this.system?.stopIterating()
-    this.system = new NervousNumbatSystem(this.canvasRef.nativeElement, this.sysExecParms)
-
-    const actGrps: ActorGroup[] = []
-    for (let i = 0; i < numActGrps; i++) {
-      const startBox = new Box(this.system.ctx, "startBox", 
-//                              new Point(this.system.ctx,  (i + 1) * 300,  (i + 1) * 100), 
-                                i % 2 == 0 ? new Point(this.system.ctx, 1300, 400) : new Point(this.system.ctx,  this.system.ctx.canvas.width - 100,  100), 
-//                              new Point(this.system.ctx,  (i + 2) * 300,  (i + 2) * 100), 
-                                i % 2 == 0 ? new Point(this.system.ctx, 1500, 600) : new Point(this.system.ctx,  this.system.ctx.canvas.width - 500,  500), 
-                                new RgbColor(0, 0, 0))
-      actGrps.push(ActorGroupDynamic.newRandomizedActGrp(
-                        this.system.ctx, 
-                        `Explorers-${i}`, 
-                        numActors, 
-                        startBox,
-                        this.sysExecParms, 
-                        i % 2 == 0 ? cPowerCurveFactor : 0)  // apply the cPowerCurveFactor to every actor group with even id
-                    )
-    }            
-/*    
-    actGrps.push(new ActorGroupStaticBox(this.system.ctx, 
-                                         "Obstacle", 
-                                         new Box(this.system.ctx, 
-                                                 "", 
-                                                 new Point(this.system.ctx,  this.system.ctx.canvas.width / 2 - 10, this.system.ctx.canvas.height / 2 - 300), 
-                                                 new Point(this.system.ctx,  this.system.ctx.canvas.width / 2 + 10, this.system.ctx.canvas.height / 2 - 100), 
-                                                 new RgbColor(128, 128, 128))))
-*/    
-
-      this.system.addActGrps(actGrps).iterateOn()
-      this.system.stopIterating()
-
-    }
+  public handleCanvasResized(): void {
+      this.ctx!.canvas.width  = window.innerWidth  - cLeftMargin  - cRightMargin
+      this.ctx!.canvas.height = window.innerHeight - cUpperMargin - cLowerMargin
+  }
 }
 
 

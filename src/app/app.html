@@ -34,8 +34,8 @@
 </div>
 -->
 <div>
-    <button type="button" class="submitButton" (click)="systemSetupHandler()" (keyup.enter)="systemSetupHandler()">
-        Setup system
+    <button type="button" class="submitButton" (click)="onSystemSetup()" (keyup.enter)="onSystemSetup()">
+        Setup randomized system
     </button>
 </div> 
 <main-canvas *ngIf="showCanvas"></main-canvas>

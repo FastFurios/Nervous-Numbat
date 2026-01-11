@@ -4,14 +4,18 @@
 // G.Lindorfer, from 2025-10 to ...
 // #########################################################################################
 
-// Exakte Flächenberechnung der Dreiecksgruppe: 
-// $ npm install martinez-polygon-clipping (siehe ChatGPT für "Polygon Union")
-
 import { Component, signal } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { MainCanvas } from "./main-canvas/main-canvas"
 import { CommonModule } from '@angular/common'
+
+import { MainCanvas } from './main-canvas/main-canvas'
+import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration } from "./services/system"
+import { cPowerCurveFactor } from "./main-canvas/library/parameters"
+
+// --------------------------------------------------------------------------------------
+//     Configuration Geometry  
+// --------------------------------------------------------------------------------------
 
 /** list of possible user actions */
 type ActionsPossible = {
@@ -28,6 +32,10 @@ export interface SystemStructParms {
   powerCurveFactor: number
 }
 
+// ****************************************************************************************
+//      APP COMPONENT
+// ****************************************************************************************
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule],
@@ -36,14 +44,20 @@ export interface SystemStructParms {
 })
 export class App {
   protected readonly title = signal('Nervous-Numbat');
+  public showCanvas : boolean             = false
+  public actorGroups: ConfigActorGroup[]  = []
+  public configuration: Configuration | undefined
+
+
   public configFilename: string | undefined
+/*
   public actionsPossible: ActionsPossible
   public greyOut = "color: lightgrey;"
   public pShowTriangles: boolean = true
-  public showCanvas : boolean = false
 //  public version                = environment.version
-
-  constructor() {
+*/
+  constructor(private sys: System) {
+/*
     this.actionsPossible = {
           login:              true,
           run:                false,
@@ -51,20 +65,23 @@ export class App {
           downloadEvents:     false,
           discard:            false
       }
-
+*/
   } 
 
-
-  public systemSetupHandler(): void {
-    console.log(`app.systemSetupHandler()`)
+  public onSystemSetup(): void {
+    this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp("Explorers",   10, cPowerCurveFactor, new ConfigBox(new ConfigPoint(2000, 4000), new ConfigPoint(4000, 6000))))
+    this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp("Challengers", 10, cPowerCurveFactor, new ConfigBox(new ConfigPoint(6000, 4000), new ConfigPoint(8000, 6000))))
+//  console.log("app.onSystemSetip(): this.actorGroups=")
+//  console.log(this.actorGroups)
+    this.sys.configuration = new Configuration("Explorer", this.actorGroups)
     this.showCanvas = !this.showCanvas
   }
 
-
+/*?*/
   public onUpdateParameters(value: boolean): void {
     console.log(`app.onUpdateParameters(${value})`)
-    this.pShowTriangles = value
   }
+
 
   //  public onShowTriangleChange(): void {
 //  }
