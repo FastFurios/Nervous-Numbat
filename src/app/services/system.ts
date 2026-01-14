@@ -7,7 +7,6 @@ import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./actorGroup"
 import { cActorPickMargin, cPoorTriangleQualityThreshold } from "./parameters"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf } from "../main-canvas/library/helpers"
-import { captureError } from 'rxjs/internal/util/errorContext';
 
 // ---------------------------------------------------------------------------------------
 //      SYSTEM SETUP API
@@ -110,7 +109,7 @@ export class System {
     public  intervalMillisecs!: number
     private showActorJourney!:  boolean
     public  doneIterations:     number                                  = 0
-    private iterationMode:      IterationMode                           = IterationMode.iterating
+    private iterationMode:      IterationMode                           = IterationMode.paused
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
     
@@ -138,6 +137,7 @@ export class System {
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
         this.ctx = ctx
 
+        this.actGrps = []
         for (let cag of this.configActGrps) {
 //          console.log(`system.initialize(): Config Act Grp= ${cag.id}`)
             const actors: Actor[] = cag.actors.map(ca => new Actor(this.ctx!, ca.id, this.mappedConfigPointOntoCanvas(ca.p!), systemExecParms!))
@@ -152,6 +152,9 @@ export class System {
 //          console.log(actors.map(a => `${a.p}`))
             const ag = new ActorGroupDynamic(this.ctx, cag.id, actors, systemExecParms)
             this.actGrps.push(ag)
+            this.colorSchemes = new ColorSchemes(this.actGrps.length)
+            this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
+            
         }
         this.visualize()
     }
@@ -221,11 +224,14 @@ export class System {
     }
 
     public visualize(): void {
-        if (!this.showActorJourney) this.ctx!.clearRect(0, 0, this.ctx!.canvas.width, this.ctx!.canvas.height)
+        if (!this.showActorJourney) this.clearCanvas()
         console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
         this.actGrps.forEach(ag => ag.visualize())
     }
     
+    public clearCanvas(): void {
+        this.ctx!.clearRect(0, 0, this.ctx!.canvas.width, this.ctx!.canvas.height)
+    }
 // ---------------------------------------------------------------------------------------
 //      handle UI events
 // ---------------------------------------------------------------------------------------
@@ -249,7 +255,9 @@ export class System {
         this.visualize()
     }
 
-    public reset(): void {
+    public reset(systemExecParms: SystemExecParms): void {
         // rebuild system from latest system setup data, may it be a JSON pojo or setup parameters
+        this.clearCanvas()
+        this.initialize(this.ctx!,  systemExecParms)
     }
 }
