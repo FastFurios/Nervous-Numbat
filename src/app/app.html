@@ -33,10 +33,45 @@
     <main-canvas [pShowTriangles]="pShowTriangles"></main-canvas>
 </div>
 -->
-<div>
-    <button type="button" class="submitButton" (click)="onSystemSetup()" (keyup.enter)="onSystemSetup()">
-        Setup randomized system
-    </button>
-</div> 
+<div class="lineContainerFlexStart">
+    <div class="lineContainerFlexStart">
+        <label for="numActGrps">#Actor Groups: </label>
+        <input type="number" 
+            class="inputFormNumber" 
+            min=1 max=8 
+            id="numActGrps" 
+            [(ngModel)]="systemStructParms.numActGrps">
+    </div>
+    <div class="lineContainerFlexStart">
+        <label for="numActorsPerActGrp">#Actors per Group: </label>
+        <input type="number" 
+            class="inputFormNumber" 
+            min=4  
+            id="numActorsPerActGrp" 
+            [(ngModel)]="systemStructParms.numActorsPerActGrp">
+    </div>
+    <div class="lineContainerFlexStart">
+        <label for="startBoxMarginPct">Start box margin %: </label>
+        <input type="number" 
+            class="inputFormNumber" 
+            min=0 max=40 step=5
+            id="startBoxMarginPct" 
+            [(ngModel)]="systemStructParms.startBoxMarginPct">
+    </div>
+    <div class="lineContainerFlexStart">
+        <label for="powerCurveFactor">Power curve factor: </label>
+        <input type="number" 
+            class="inputFormNumber" 
+            min=0 max=1 step="0.05"
+            id="powerCurveFactor" 
+            [(ngModel)]="systemStructParms.powerCurveFactor">
+    </div>
+    <div>
+        <button type="button" class="submitButton" (click)="onSystemSetup()" (keyup.enter)="onSystemSetup()">
+            Setup randomized system
+        </button>
+    </div> 
+</div>
+
 <main-canvas *ngIf="showCanvas"></main-canvas>
 <router-outlet></router-outlet>

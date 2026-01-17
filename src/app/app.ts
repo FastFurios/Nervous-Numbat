@@ -27,9 +27,10 @@ type ActionsPossible = {
 }
 
 export interface SystemStructParms {
-  numActGrps: number
+  numActGrps:         number
   numActorsPerActGrp: number
-  powerCurveFactor: number
+  powerCurveFactor:   number
+  startBoxMarginPct:  number  // 0..100 in %
 }
 
 // ****************************************************************************************
@@ -47,6 +48,12 @@ export class App {
   public showCanvas : boolean             = false
   public actorGroups: ConfigActorGroup[]  = []
   public configuration: Configuration | undefined
+  public systemStructParms: SystemStructParms = {
+                                                  numActGrps: 1,
+                                                  numActorsPerActGrp: 15,
+                                                  powerCurveFactor: 1,
+                                                  startBoxMarginPct: 10
+                                                }
 
 
   public configFilename: string | undefined
@@ -69,22 +76,56 @@ export class App {
   } 
 
   public onSystemSetup(): void {
-    this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp("Explorers",   10, cPowerCurveFactor, new ConfigBox(new ConfigPoint(2000, 4000), new ConfigPoint(4000, 6000))))
-    this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp("Challengers", 10, cPowerCurveFactor, new ConfigBox(new ConfigPoint(6000, 4000), new ConfigPoint(8000, 6000))))
-//  console.log("app.onSystemSetip(): this.actorGroups=")
-//  console.log(this.actorGroups)
-    this.sys.configuration = new Configuration("Explorer", this.actorGroups)
+    this.actorGroups = []
+    for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
+      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Explorers${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, sbs[i]))
+    }
+    this.sys.configuration = new Configuration("Explorers", this.actorGroups)
     this.showCanvas = !this.showCanvas
   }
 
-/*?*/
-  public onUpdateParameters(value: boolean): void {
-    console.log(`app.onUpdateParameters(${value})`)
+  private startBoxesForNumGrps(n: number): ConfigBox[] {
+    if (n  < 1) return []  // error
+
+    if (n == 1) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint(10000,  10000)))]
+
+    if (n == 2) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 5000,  10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint(10000,  10000)))]
+      
+    if (n <= 4) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 5000,   5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint(10000,   5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 5000,  10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,  5000), new ConfigPoint(10000,  10000)))]
+
+    if (n <= 6) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 3333,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(3334,     0), new ConfigPoint( 6666,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(6667,     0), new ConfigPoint(10000,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 3333, 10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(3334,  5000), new ConfigPoint( 6666, 10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(6667,  5000), new ConfigPoint(10000, 10000)))]
+
+    if (n <= 8) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 2500,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(2500,     0), new ConfigPoint( 5000,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint( 7500,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(7500,     0), new ConfigPoint(10000,  5000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 2500, 10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(2500,  5000), new ConfigPoint( 5000, 10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,  5000), new ConfigPoint( 7500, 10000))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(7500,  5000), new ConfigPoint(10000, 10000)))]
+    return []  // error
   }
 
+  private configBoxWithin(area: ConfigBox): ConfigBox {
+    console.log(`app.configBoxWithin(): area= [(${area.lowerLeft.x}, ${area.lowerLeft.y}) / (${area.upperRight.x}, ${area.upperRight.y})]`)
+    const boxWidth    = area.upperRight.x - area.lowerLeft.x
+    const boxHeight   = area.upperRight.y - area.lowerLeft.y
+    const xMargin     = boxWidth  * this.systemStructParms.startBoxMarginPct / 100
+    const yMargin     = boxHeight * this.systemStructParms.startBoxMarginPct / 100
+    const lowerLeft   = new ConfigPoint(area.lowerLeft.x  + xMargin, area.lowerLeft.y  + yMargin)
+    const upperRight  = new ConfigPoint(area.upperRight.x - xMargin, area.upperRight.y - yMargin)
+    return new ConfigBox(lowerLeft, upperRight)
+  }
 
-  //  public onShowTriangleChange(): void {
-//  }
 /*
   // --------------------------------------------------------------------------------------
   //     Discarding Configuration and also the Backend system instance  

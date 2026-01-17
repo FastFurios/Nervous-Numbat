@@ -109,20 +109,24 @@ export class MainCanvas implements AfterViewInit {
 
   /** update the system with the current execution parameters */
   public updateExecParms(): void {
+    console.log(`main-canvas.updateExecParms()`)
     this.sys.updateExecParms(this.sysExecParms)
   }
   /** run&resume button clicked */
   public runResumeIterationsHandler() {
+    console.log(`main-canvas.runResumeIterationsHandler()`)
     this.sys.runResumeIterating()
   }
     /* stop button clicked */
   public stopIterationsHandler() {
+    console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
   }
   /** reset button clicked */
   public resetSystemHandler() {
-    this.sys.reset()
+    console.log(`main-canvas.resetSystemHandler()`)
+    this.sys.reset(this.sysExecParms)
     this.runResumeButtonLabel = "Run"
   }
 

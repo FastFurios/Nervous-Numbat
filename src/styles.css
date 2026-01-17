@@ -12,7 +12,12 @@
     align-items: center;       /* Optional: vertically centers content */
 }  
 
-
+.lineContainerFlexStart {
+    display: flex;            
+    flex-direction: row;       /* arrange children horizontally */
+    justify-content: flex-start;   /* centers them horizontally */
+    align-items: center;       /* vertically centers content */
+}  
 
 
 .inputFormNumber {
