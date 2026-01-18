@@ -33,7 +33,7 @@ export abstract class ActorGroup implements CanvasObject {
     } 
     public visualize() {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
-        console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
+//      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
         if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
             this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(this.ctx)
             return

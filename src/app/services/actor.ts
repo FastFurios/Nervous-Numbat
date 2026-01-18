@@ -109,7 +109,7 @@ export class Actor implements CanvasObject {
         return this.halo
     }
     private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D): void {
-        console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
+        //console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
 
         if (!this.observee1 || !this.observee2) return
         ctx.beginPath()

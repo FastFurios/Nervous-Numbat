@@ -4,7 +4,7 @@
         {
             "id": "Group A",
             "creation_mode" : "explicit",
-            "explicit_toplogy": [
+            "topology": [
                 { "id" : "Bird-00", "x": 30, "y":  50, "observee1" : "Bird-05", "observee2" : "Bird-13"},
                 { "id" : "Bird-01", "x": 70, "y":  40, "observee1" : "Bird-03", "observee2" : "Bird-02"},
                 { "id" : "Bird-02", "x": 20, "y": 100, "observee1" : "Bird-07", "observee2" : "Bird-04"},
@@ -25,12 +25,12 @@
         {
             "id": "Group B",
             "creation_mode" : "automatic",
-            "automatic_topology": {
+            "topology": {
                 "number_actors": 15, 
                 "power_curve_factor": -0.8,
                 "start_box": {
-                    "upper_left%":  { "x": 20, "y": 10},
-                    "lower_right%": { "x": 80, "y": 90}
+                    "lower_left_pct":  { "x": 20, "y": 10},
+                    "upper_right_pct": { "x": 80, "y": 90}
                 }
             }
         }

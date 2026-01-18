@@ -82,7 +82,7 @@ export class MainCanvas implements AfterViewInit {
     if (!this.canvas) throw Error("main-canvas.ngAfterViewInit(): canvas is undefined.")
     this.ctx = this.canvas.getContext('2d')
     if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
-    console.log(`main-canvas.constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
+//  console.log(`main-canvas.ngAfterViewInit(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 
     window.addEventListener("resize", this.handleCanvasResized.bind(this))
     this.handleCanvasResized()
@@ -109,23 +109,23 @@ export class MainCanvas implements AfterViewInit {
 
   /** update the system with the current execution parameters */
   public updateExecParms(): void {
-    console.log(`main-canvas.updateExecParms()`)
+//  console.log(`main-canvas.updateExecParms()`)
     this.sys.updateExecParms(this.sysExecParms)
   }
   /** run&resume button clicked */
   public runResumeIterationsHandler() {
-    console.log(`main-canvas.runResumeIterationsHandler()`)
+//  console.log(`main-canvas.runResumeIterationsHandler()`)
     this.sys.runResumeIterating()
   }
     /* stop button clicked */
   public stopIterationsHandler() {
-    console.log(`main-canvas.stopIterationsHandler()`)
+//  console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
   }
   /** reset button clicked */
   public resetSystemHandler() {
-    console.log(`main-canvas.resetSystemHandler()`)
+//  console.log(`main-canvas.resetSystemHandler()`)
     this.sys.reset(this.sysExecParms)
     this.runResumeButtonLabel = "Run"
   }

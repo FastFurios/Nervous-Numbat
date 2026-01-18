@@ -67,7 +67,15 @@
             [(ngModel)]="systemStructParms.powerCurveFactor">
     </div>
     <div>
-        <button type="button" class="submitButton" (click)="onSystemSetup()" (keyup.enter)="onSystemSetup()">
+        <button type="button" class="submitButton" (click)="onRandomSystemSetup()" (keyup.enter)="onRandomSystemSetup()">
+            Setup randomized system
+        </button>
+    </div> 
+    <div>
+        <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
+    </div> 
+    <div>
+        <button type="button" class="submitButton" (click)="onSystemSetupFromJsonFile()">
             Setup randomized system
         </button>
     </div> 

@@ -6,7 +6,7 @@ import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./actorGroup"
 import { cActorPickMargin, cPoorTriangleQualityThreshold } from "./parameters"
-import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf } from "../main-canvas/library/helpers"
+import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf as powerCurveBloatedList } from "../main-canvas/library/helpers"
 
 // ---------------------------------------------------------------------------------------
 //      SYSTEM SETUP API
@@ -39,15 +39,10 @@ export class ConfigActor {
   public observee1id:  string | undefined
   public observee2id:  string | undefined
 
-  constructor(public id: string, x: number, y: number) {
+  constructor(public id: string, x: number, y: number, observee1id?: string, observee2id?: string) {
     this.p = new ConfigPoint(x, y)
-  }
-//public set position(p: ConfigPoint) {
-//  this.p = p
-//}
-  public assign2Observees(obs1: ConfigActor, obs2: ConfigActor): void {
-    this.observee1id = obs1.id 
-    this.observee2id = obs2.id 
+    this.observee1id = observee1id 
+    this.observee2id = observee2id
   }
   public assign2RandomObservees(actors: ConfigActor[]): void {
       const restOfActors1 = actors.filter(a => a !== this)
@@ -61,14 +56,14 @@ export class ConfigActor {
 
 export class ConfigActorGroup {
   static newRandomizedActGrp(id: string, numActors: number, powerCurveFactor: number = 0, startBox?: ConfigBox): ConfigActorGroup {
-      const ag = new ConfigActorGroup(id, powerCurveFactor, startBox)
-      ag.randomizeActors(numActors, startBox)
-      ag.assign2RandomObservees(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(powerCurveFactor, ag.actors.length)))
-      return ag
+    const cag = new ConfigActorGroup(id, [], startBox)
+    cag.randomizeActors(numActors, startBox)
+    cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(powerCurveFactor, cag.actors.length)))
+    return cag
   }
-  public actors: ConfigActor[] = []
+//public actors: ConfigActor[] = []
  
-  constructor(public id: string, public powerCurveFactor: number, public startBox?: ConfigBox) {}
+  constructor(public id: string, public actors: ConfigActor[], public startBox?: ConfigBox) {}
  
   public addActor(actor: ConfigActor): void {
     this.actors.push(actor)
@@ -83,7 +78,7 @@ export class ConfigActorGroup {
 }
 
 export class Configuration {
-    constructor(public id: string, public cags: ConfigActorGroup[]) { }
+    constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
 }
 
 enum IterationMode {
@@ -126,9 +121,11 @@ export class System {
     }
 
 
-    public set configuration(config: Configuration) {
-        this.id = config.id
-        this.configActGrps = config.cags
+    public set configuration(configuration: Configuration) {
+        this.id = configuration.id
+        this.configActGrps = configuration.actorGroups
+        console.log(`system: setter configuration(): this.id= ${this.id}, this.configActGrps=`)
+        console.log(this.configActGrps)
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -225,7 +222,7 @@ export class System {
 
     public visualize(): void {
         if (!this.showActorJourney) this.clearCanvas()
-        console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
+//      console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
         this.actGrps.forEach(ag => ag.visualize())
     }
     

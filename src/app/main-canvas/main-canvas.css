@@ -1,10 +1,4 @@
-    canvas {
+canvas {
       border: 1px solid #000;
     }
     
-.lineContainerFlexStart {
-    display: flex;            
-    flex-direction: row;       /* arrange children horizontally */
-    justify-content: flex-start;   /* centers them horizontally */
-    align-items: center;       /* vertically centers content */
-}  
