@@ -60,8 +60,8 @@ interface JsonPoint {
 }
 
 interface JsonBox {
-  lower_left_pct:  JsonPoint
-  upper_right_pct: JsonPoint
+  lower_left:  JsonPoint
+  upper_right: JsonPoint
 }
 
 interface JsonAutomaticTopology {
@@ -148,31 +148,31 @@ export class App {
   private startBoxesForNumGrps(n: number): ConfigBox[] {
     if (n  < 1) return []  // error
 
-    if (n == 1) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint(10000,  10000)))]
+    if (n == 1) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint(100,  100)))]
 
-    if (n == 2) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 5000,  10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint(10000,  10000)))]
+    if (n == 2) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 50,  100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint(100,  100)))]
       
-    if (n <= 4) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 5000,   5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint(10000,   5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 5000,  10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,  5000), new ConfigPoint(10000,  10000)))]
+    if (n <= 4) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 50,   50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint(100,   50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 50,  100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50), new ConfigPoint(100,  100)))]
 
-    if (n <= 6) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 3333,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(3334,     0), new ConfigPoint( 6666,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(6667,     0), new ConfigPoint(10000,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 3333, 10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(3334,  5000), new ConfigPoint( 6666, 10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(6667,  5000), new ConfigPoint(10000, 10000)))]
+    if (n <= 6) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 33,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33,  0), new ConfigPoint( 67,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67,  0), new ConfigPoint(100,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 33, 100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33, 50), new ConfigPoint( 67, 100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67, 50), new ConfigPoint(100, 100)))]
 
-    if (n <= 8) return [this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,     0), new ConfigPoint( 2500,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(2500,     0), new ConfigPoint( 5000,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,     0), new ConfigPoint( 7500,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(7500,     0), new ConfigPoint(10000,  5000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(   0,  5000), new ConfigPoint( 2500, 10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(2500,  5000), new ConfigPoint( 5000, 10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(5000,  5000), new ConfigPoint( 7500, 10000))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(7500,  5000), new ConfigPoint(10000, 10000)))]
+    if (n <= 8) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 25,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25,  0), new ConfigPoint( 50,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint( 75,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75,  0), new ConfigPoint(100,  50))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 25, 100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25, 50), new ConfigPoint( 50, 100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50), new ConfigPoint( 75, 100))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75, 50), new ConfigPoint(100, 100)))]
     return []  // error
   }
 
@@ -232,15 +232,15 @@ export class App {
 private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
   console.log(`app.configurationFrom(): jsonConfig=`)
   console.log(jsonConfig)
-  const sbs: ConfigBox[] = this.startBoxesForNumGrps(jsonConfig.actor_groups.length)
-  const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, sbs, i))
+//const sbs: ConfigBox[] = this.startBoxesForNumGrps(jsonConfig.actor_groups.length)
+  const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
   if (configActGrps.find(cag => cag == undefined)) {
     alert("A JSON file actor_group is invalid.")
   }  
   return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
 }
 
-private configActorGroupFrom(jag: JsonActorGroup, startBoxes: ConfigBox[], idx: number): ConfigActorGroup | undefined {
+private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroup | undefined {
   console.log(`app.configActorGroupFrom(): jag=`)
   console.log(jag)
 
@@ -248,12 +248,13 @@ private configActorGroupFrom(jag: JsonActorGroup, startBoxes: ConfigBox[], idx: 
     case "automatic" : { 
       this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
       this.systemStructParms.powerCurveFactor   = (<JsonAutomaticTopology>jag.topology).power_curve_factor
-      const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left_pct, (<JsonAutomaticTopology>jag.topology).start_box.upper_right_pct)  
+      const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
       return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, startBox); 
     }
     case "explicit" : {
       console.log(`app.configActorGroupFrom(): case explicit: jag is defined: ${jag != undefined}, #actors= ${(<JsonExplicitTopology>jag.topology).length}`)
-      const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2))
+      console.log((<JsonExplicitTopology>jag.topology).map(ja =>`\t${ja.id}: (${ja.x}, ${ja.y}`))
+      const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
       return new ConfigActorGroup(jag.id, cas)
     } 
     default: alert("JSON file invalid creation_mode.")

@@ -12,8 +12,8 @@ import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf
 //      SYSTEM SETUP API
 // ---------------------------------------------------------------------------------------
 
-const cVirtalGridWidth  = 10000
-const cVirtalGridHeight = 10000
+const cVirtalGridWidth  = 100
+const cVirtalGridHeight = 100
 
 export class ConfigPoint { // virtual grid 
   constructor (public x: number, public y: number) {
