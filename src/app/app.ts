@@ -5,7 +5,7 @@
 // #########################################################################################
 
 import { Component, signal } from '@angular/core'
-import { RouterOutlet } from '@angular/router'
+import { RouterOutlet, TitleStrategy } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
@@ -75,6 +75,35 @@ interface JsonConfiguration {
   id: string
   actor_groups: JsonActorGroup[]
 }
+
+function configActorAsJson(ca: ConfigActor): JsonActor {
+    return {
+      id: ca.id,
+      x:  ca.p!.x,
+      y:  ca.p!.y,
+      observee1: ca.observee1id!,
+      observee2: ca.observee2id!
+    }
+}
+
+function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
+    return {
+      id: cag.id,
+      creation_mode: "explicit",
+      topology: cag.actors.map(ca => configActorAsJson(ca))
+    }
+}
+
+function configAsJson(c: Configuration): JsonConfiguration {
+  return {
+    id: c.id,
+    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
+  }
+}
+
+
+
+
 
 // ****************************************************************************************
 //      APP COMPONENT
@@ -267,28 +296,31 @@ private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroup
   //     Downloading a Configuration  
   // --------------------------------------------------------------------------------------
 
+
   /** write system configuration to json file in the download folder */
   private downloadToFile(blob: Blob, fileExtension: string): void {
-    console.log(`app.downloadToFile()`)
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
-//  if (!this.configAsJson) return
     const now = new Date()
-//  link.download = `${this.configAsJson()?.system_id}_${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}_${now.getHours().toString().padStart(2, "0")}-${now.getMinutes().toString().padStart(2, "0")}.${fileExtension}`
+    link.download = `${this.configuration?.id}_${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}_${now.getHours().toString().padStart(2, "0")}-${now.getMinutes().toString().padStart(2, "0")}.${fileExtension}`
     link.click()
     link.remove()
-//  this.ess.add(EventsService.applicationEventFrom("Downloaded config", "/download", EventTypeId.configDownloaded, EventSeverity.info))
   }
 
   /** download system configuration to json file */
   public onSaveFile(): void {
-    console.log(`app.onSaveFile()`)
-/*
-    const fileContent = this.cfs.configAsJson()
+    this.configuration = this.sys.exportedAsConfiguration()
+    if (!this.configuration) {
+      alert("app.onSaveFile(): no configuration.")
+      return
+    }
+    const fileContent = configAsJson(this.configuration!)
     const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
     this.downloadToFile(blob, "json")
-*/
   }
+
+
+
 
 
 }

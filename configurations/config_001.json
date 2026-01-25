@@ -29,8 +29,8 @@
                 "number_actors": 15, 
                 "power_curve_factor": -0.8,
                 "start_box": {
-                    "lower_left":  { "x": 20, "y": 10},
-                    "upper_right": { "x": 80, "y": 90}
+                    "lower_left":  { "x": 60, "y": 60},
+                    "upper_right": { "x": 90, "y": 90}
                 }
             }
         }

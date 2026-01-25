@@ -5,7 +5,7 @@ import { Point, Box } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./actorGroup"
-import { cActorPickMargin, cPoorTriangleQualityThreshold } from "./parameters"
+import { cActorPickMargin, cPoorTriangleQualityThreshold, cTextOffset } from "./parameters"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf as powerCurveBloatedList } from "../main-canvas/library/helpers"
 
 // ---------------------------------------------------------------------------------------
@@ -16,18 +16,27 @@ const cVirtalGridWidth  = 100
 const cVirtalGridHeight = 100
 
 export class ConfigPoint { // virtual grid 
-  constructor (public x: number, public y: number) {
+    static new(pUpperRight: Point, p: Point): ConfigPoint {
+        return new ConfigPoint(p.x / pUpperRight.x * cVirtalGridWidth, p.y / pUpperRight.y * cVirtalGridHeight)
+    } 
+    constructor (public x: number, public y: number) {
     if (!isBetween(x, 0, cVirtalGridWidth))  throw Error(`ConfigPoint.constructor(): x= ${x} out of range of virtual grid.`) 
     if (!isBetween(y, 0, cVirtalGridHeight)) throw Error(`ConfigPoint.constructor(): y= ${y} out of range of virtual grid.`) 
   }
 }
 
 export class ConfigBox {
+  static new(pUpperRight: Point, b: Box): ConfigBox {
+      return new ConfigBox(ConfigPoint.new(pUpperRight, b.lowerLeft), ConfigPoint.new(pUpperRight, b.upperRight))
+  } 
   constructor(public lowerLeft: ConfigPoint, public upperRight: ConfigPoint) {
   }
 }
 
 export class ConfigActor {
+  static new(pUpperRight: Point, a: Actor): ConfigActor {
+    return new ConfigActor(a.id, ConfigPoint.new(pUpperRight, a.p).x, ConfigPoint.new(pUpperRight, a.p).y, a.observee1?.id, a.observee2?.id)
+  }
   static newRandomizedActor(id: string, startBox?: ConfigBox): ConfigActor {
     if (!startBox) 
       startBox = new ConfigBox(new ConfigPoint(0, 0), new ConfigPoint(cVirtalGridWidth, cVirtalGridHeight))
@@ -55,6 +64,9 @@ export class ConfigActor {
 } 
 
 export class ConfigActorGroup {
+  static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroup {
+    return new ConfigActorGroup(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
+  }  
   static newRandomizedActGrp(id: string, numActors: number, powerCurveFactor: number = 0, startBox?: ConfigBox): ConfigActorGroup {
     const cag = new ConfigActorGroup(id, [], startBox)
     cag.randomizeActors(numActors, startBox)
@@ -229,6 +241,16 @@ export class System {
     public clearCanvas(): void {
         this.ctx!.clearRect(0, 0, this.ctx!.canvas.width, this.ctx!.canvas.height)
     }
+
+// ---------------------------------------------------------------------------------------
+//      export the system and it's state
+// ---------------------------------------------------------------------------------------
+
+    public exportedAsConfiguration(): Configuration {
+        if (!this.ctx) alert("system.exportedAsConfiguration(): canvas context ctx is undefined.")
+        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroup.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
+    }
+
 // ---------------------------------------------------------------------------------------
 //      handle UI events
 // ---------------------------------------------------------------------------------------

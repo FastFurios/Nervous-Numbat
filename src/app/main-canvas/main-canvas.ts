@@ -2,7 +2,7 @@ import { Component, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
-import { System } from "../services/system"
+import { System, Configuration } from "../services/system"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
 
 export type SystemExecParmsRun = {

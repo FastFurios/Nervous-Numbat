@@ -34,6 +34,22 @@
 </div>
 -->
 <div class="lineContainerFlexStart">
+    <div>
+        <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
+    </div> 
+    <div>
+        <button type="button" class="submitButton" (click)="onSystemSetupFromJsonFile()">
+            Setup uploaded system
+        </button>
+    </div> 
+    <div>
+        <button type="button" class="submitButton" (click)="onSaveFile()">
+            Download system
+        </button>
+    </div> 
+</div> 
+
+<div class="lineContainerFlexStart">
     <div class="lineContainerFlexStart">
         <label for="numActGrps">#Actor Groups: </label>
         <input type="number" 
@@ -69,14 +85,6 @@
     <div>
         <button type="button" class="submitButton" (click)="onRandomSystemSetup()" (keyup.enter)="onRandomSystemSetup()">
             Setup randomized system
-        </button>
-    </div> 
-    <div>
-        <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
-    </div> 
-    <div>
-        <button type="button" class="submitButton" (click)="onSystemSetupFromJsonFile()">
-            Setup uploaded system
         </button>
     </div> 
 </div>
