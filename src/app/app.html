@@ -35,6 +35,9 @@
 -->
 <div class="lineContainerFlexStart">
     <div>
+        <input type="text" [(ngModel)]="configurationId" #configId>
+    </div> 
+    <div>
         <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
     </div> 
     <div>
@@ -45,6 +48,11 @@
     <div>
         <button type="button" class="submitButton" (click)="onSaveFile()">
             Download system
+        </button>
+    </div> 
+    <div>
+        <button type="button" class="submitButton" (click)="onDiscard()">
+            Discard system
         </button>
     </div> 
 </div> 

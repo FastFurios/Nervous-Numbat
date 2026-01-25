@@ -73,7 +73,6 @@ export class ConfigActorGroup {
     cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(powerCurveFactor, cag.actors.length)))
     return cag
   }
-//public actors: ConfigActor[] = []
  
   constructor(public id: string, public actors: ConfigActor[], public startBox?: ConfigBox) {}
  
@@ -111,7 +110,6 @@ export class System {
     public  configActGrps:      ConfigActorGroup[]                      = []
     public  actGrps:            ActorGroup[]                            = []
     private ctx:                CanvasRenderingContext2D | undefined    = undefined
-//  public  systemExecParms:    SystemExecParms | undefined             = undefined
     public  maxIterations!:     number
     public  intervalMillisecs!: number
     private showActorJourney!:  boolean
@@ -132,12 +130,11 @@ export class System {
         return new Point(this.ctx, this.ctx.canvas.width * cp.x / cVirtalGridWidth, this.ctx.canvas.height * cp.y / cVirtalGridHeight) 
     }
 
-
     public set configuration(configuration: Configuration) {
         this.id = configuration.id
         this.configActGrps = configuration.actorGroups
-        console.log(`system: setter configuration(): this.id= ${this.id}, this.configActGrps=`)
-        console.log(this.configActGrps)
+//      console.log(`system: setter configuration(): this.id= ${this.id}, this.configActGrps=`)
+//      console.log(this.configActGrps)
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -167,24 +164,7 @@ export class System {
         }
         this.visualize()
     }
-/*
-    public addActGrps(actGrps: ActorGroup[]): System {
-        actGrps.forEach(ag => this.actGrps.push(ag))
-        this.colorSchemes = new ColorSchemes(this.actGrps.length)
-        actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-        return this
-    }
-    public setCanvasContext(ctx: CanvasRenderingContext2D): System {
-        if (ctx == undefined) throw Error("system.setCanvasContext(): ctx is undefined.")
-        this.ctx = ctx
-        return this
-    }
 
-    
-    public set sysExecParms(sep: SystemExecParms) {
-        this.systemExecParms = sep
-    }
-*/
     public updateExecParms(sep: SystemExecParms): void {
 //      console.log(`system.updateParameter(): propagating update...`)
         this.maxIterations      = sep.run.maxIterations
@@ -199,7 +179,7 @@ export class System {
 
     public iterateOn(): void {
         if (this.doneIterations > this.maxIterations) throw("Iterations limit reached: stopped it!")
-/*?*/   if (this.actGrps[0].isFrozen())           throw(`${this.actGrps[0].id} is frozen.`)
+/*?*/   if (this.actGrps[0].isFrozen())               throw(`${this.actGrps[0].id} is frozen.`)
 //      this.htmlElementNumIterations.textContent = `${this.doneIterations}`    
         this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
         this.actGrps.forEach(ag => ag.moveActors())

@@ -160,7 +160,7 @@ export class Actor implements CanvasObject {
         return ((sumLen - sumDelta) / sumLen)**4
     }
     public updateParameters(sep: SystemExecParms): void {
-        console.log(`actor.updateParameter(): intervall= ${this.sysExecParms.run.intervalMillisecs} millisecs`)
+//      console.log(`actor.updateParameter(): intervall= ${this.sysExecParms.run.intervalMillisecs} millisecs`)
         this.sysExecParms = sep
     }
 
