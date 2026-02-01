@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core'
+import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
 import { Point, Box } from "./geometry"
@@ -92,7 +93,7 @@ export class Configuration {
     constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
 }
 
-enum IterationMode {
+/* no export */ export enum IterationMode {
     iterating = "iterating",
     paused    = "paused",
     dead      = "dead"
@@ -113,8 +114,10 @@ export class System {
     public  maxIterations!:     number
     public  intervalMillisecs!: number
     private showActorJourney!:  boolean
+    public  doneIteration$?:    Observable<number>
+    private doneIterationSub?:  Subscription 
     public  doneIterations:     number                                  = 0
-    private iterationMode:      IterationMode                           = IterationMode.paused
+    /* private */ public iterationMode:      IterationMode                           = IterationMode.paused
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
     
@@ -178,16 +181,22 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     public iterateOn(): void {
-        if (this.doneIterations > this.maxIterations) throw("Iterations limit reached: stopped it!")
+        if (this.doneIterationSub) return
 /*?*/   if (this.actGrps[0].isFrozen())               throw(`${this.actGrps[0].id} is frozen.`)
-//      this.htmlElementNumIterations.textContent = `${this.doneIterations}`    
-        this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
-        this.actGrps.forEach(ag => ag.moveActors())
-        this.visualize()
-        this.doneIterations++
+
 //      throw Error("system.iterateOn(): manually aborted.")
-        if (this.iterationMode == IterationMode.iterating)
-            setTimeout(() => this.iterateOn(), this.intervalMillisecs)
+        this.doneIteration$ = interval(100)    
+        this.doneIterationSub = this.doneIteration$.subscribe(() => {
+            if (this.iterationMode != IterationMode.iterating || this.doneIterations > this.maxIterations) { 
+                    this.doneIteration$ = undefined 
+                    this.doneIterationSub?.unsubscribe()
+                    console.log("Iterations limit reached: stopped it!") 
+            }
+            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
+            this.actGrps.forEach(ag => ag.moveActors())
+            this.visualize()
+            return this.doneIterations++
+        })
     }
 
     public stopIterating(): void {

@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common'
 
 import { MainCanvas } from './main-canvas/main-canvas'
 import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration } from "./services/system"
+import { Test } from "./test/test";
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -111,7 +112,7 @@ function configAsJson(c: Configuration): JsonConfiguration {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule],
+  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule, Test],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

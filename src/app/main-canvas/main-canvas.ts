@@ -1,9 +1,11 @@
-import { Component, ViewChild, ElementRef, AfterViewInit  } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { CommonModule } from '@angular/common'
+import { CommonModule, AsyncPipe } from '@angular/common'
+import { interval, Subscription } from 'rxjs'
 
-import { System, Configuration } from "../services/system"
+import { System, Configuration, IterationMode } from "../services/system"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
+import { consumerMarkDirty } from '@angular/core/primitives/signals'
 
 export type SystemExecParmsRun = {
   intervalMillisecs:  number
@@ -38,7 +40,7 @@ type RunResumeButtonLabel = "Run" | "Resume"
 
 @Component({
   selector:     'main-canvas',
-  imports:      [FormsModule, CommonModule],
+  imports:      [FormsModule, AsyncPipe, CommonModule],
   templateUrl:  './main-canvas.html',
   styleUrl:     './main-canvas.css',
 })
@@ -50,7 +52,7 @@ export class MainCanvas implements AfterViewInit {
   private canvas!:                        HTMLCanvasElement | null
   private ctx!:                           CanvasRenderingContext2D | null
 
-  constructor(private sys: System) {
+  constructor(public sys: System, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
 //  console.log("Welcome from the MainCanvas component.")
     this.sysExecParms = {
       run: {
@@ -93,11 +95,6 @@ export class MainCanvas implements AfterViewInit {
     this.sys.initialize(this.ctx, this.sysExecParms)
   }
 
-  public get doneIterations(): number {
-    return this.sys.doneIterations
-  }
-  
-
   // ??
   public numActorsOfActGrp(agIdx: number): number | undefined {
     return this.sys.actGrps[agIdx].actors.length
@@ -122,6 +119,10 @@ export class MainCanvas implements AfterViewInit {
 //  console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
+/* X */ this.sys.iterationMode = IterationMode.paused
+/* X */ this.sub?.unsubscribe()
+/* X */ this.sub = undefined
+
   }
   /** reset button clicked */
   public resetSystemHandler() {
@@ -130,6 +131,77 @@ export class MainCanvas implements AfterViewInit {
     this.runResumeButtonLabel = "Run"
   }
 
+  public timerId = 0 
+  public iCounter = 0
+
+  /*
+  public runTestCounter2(): void {
+            this.iCounter++
+            setTimeout(() => this.runTestCounter(), 100)
+  }
+  public runTestCounter3(): void {
+            this.timerId = setInterval(() => { this.iCounter++ }, 100)
+            console.log("main-canvas.runTestCounter(): done")
+  }
+
+  private pCounter: Promise<number> = this.counterPromise()
+
+  private counterPromise(): Promise<number> {
+      return new Promise((resolve, reject) => {
+          this.iCounter++
+          resolve(this.iCounter)
+      })
+  }
+  public runTestCounter4(): void {
+    this.pCounter.then((ctr) => {
+        console.log(ctr)
+        this.pCounter = this.counterPromise()
+        setTimeout(() => this.runTestCounter(), 100)
+    })
+    console.log("main-canvas.runTestCounter(): done")
+  }
+  private obsCounter?: Subscription
+  public runTestCounter5(): void {
+    this.sys.iterationMode = IterationMode.iterating
+    this.obsCounter = interval(100).subscribe(() => this.iCounter++)
+    console.log("main-canvas.runTestCounter(): done")
+  }
+
+
+  public sub?: Subscription
+
+  public runTestCounter6(): void {
+    if (this.sub) return
+    this.sys.iterationMode = IterationMode.iterating
+    this.ngZone.run(() => { this.sub = interval(100).subscribe(() => this.iCounter++) })
+    console.log("main-canvas.runTestCounter(): done")
+  }
+  public runTestCounter7(): void {
+    if (this.sub) return; // already running
+    this.sub = interval(100).subscribe(() => this.iCounter++);
+  }
+
+  public runTestCounter8(): void {
+    if (this.sub) return; // already running
+    this.sub = interval(100).subscribe(() => {
+      this.ngZone.run(() => this.iCounter++) })
+  
+  }
+
+  */
+  public runTestCounter(): void {
+    if (this.sub) return; // already running
+    this.sub = interval(100).subscribe(() => {
+      this.iCounter++ 
+      this.cdr.detectChanges})
+    }
+
+
+
+  private sub?: Subscription;
+
+
+  
   // ---------------------------------------------------------------------------------------
   // canvas mouse event handlers
   // ---------------------------------------------------------------------------------------

@@ -16,7 +16,7 @@
             </button>
         </div> 
         <div>
-            #Iterations: {{ doneIterations }}
+            #Iterations: {{ sys.doneIteration$ | async }}
         </div>
         <div class="lineContainerFlexStart">
             <input type="number" 

@@ -1,6 +1,10 @@
 
 <h1>Welcome to Nervous Numbat!</h1>
 <p>"Living" complex systems built by magic triangles.</p>
+
+
+<test></test>
+
 <!--
 
 <input type="file" class="file-input" (change)="onConfigFileSelected($event)"     accept=".json" #configFileUpload>
@@ -35,6 +39,7 @@
 -->
 <div class="lineContainerFlexStart">
     <div>
+        <label for="configId">Configuration id:</label>
         <input type="text" [(ngModel)]="configurationId" #configId>
     </div> 
     <div>
