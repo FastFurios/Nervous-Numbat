@@ -28,7 +28,7 @@ export function powerFunctionFactory(power: number, maxX: number): PowerFunction
   return powerOf.bind(null, 1 / lastValue, power);
 }
 
-export function powerCurveBloatedListOf<T>(list: T[], powFct: PowerFunction): T[] {
+export function powerCurveBloatedList<T>(list: T[], powFct: PowerFunction): T[] {
   let bloatedList: T[] = [];
   for (let i = 0; i < list.length; i++) {
     const numOfElements = Math.max(1, Math.round(powFct(i)))

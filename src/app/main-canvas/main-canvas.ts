@@ -38,20 +38,18 @@ type RunResumeButtonLabel = "Run" | "Resume"
 
 @Component({
   selector:     'main-canvas',
-  imports:      [FormsModule, AsyncPipe, CommonModule],
+  imports:      [FormsModule, CommonModule, AsyncPipe],
   templateUrl:  './main-canvas.html',
   styleUrl:     './main-canvas.css',
 })
 export class MainCanvas implements AfterViewInit {
-  sysExecParms!: SystemExecParms
-  public runResumeButtonLabel:            RunResumeButtonLabel  = "Run"
-  public highestActorIndexInActorGroup_0: number                = 0
-  @ViewChild('myCanvas') canvasRef!:      ElementRef<HTMLCanvasElement>
-  private canvas!:                        HTMLCanvasElement | null
-  private ctx!:                           CanvasRenderingContext2D | null
+  public  sysExecParms!:                SystemExecParms
+  public  runResumeButtonLabel:         RunResumeButtonLabel  = "Run"
+  private canvas!:                      HTMLCanvasElement | null
+  private ctx!:                         CanvasRenderingContext2D | null
+  @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
 
   constructor(public sys: System) {
-//  console.log("Welcome from the MainCanvas component.")
     this.sysExecParms = {
       run: {
         intervalMillisecs:                      cIntervalMillisecs,
@@ -73,29 +71,26 @@ export class MainCanvas implements AfterViewInit {
         aimAtFartherVertexOnEnduredPoorQuality: true
       }
     }
-//  this.highestActorIndexInActorGroup_0 = this.numActorsOfActGrp(0) || 0
   }
 
   ngAfterViewInit() {
-    if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
-    this.canvas  = this.canvasRef.nativeElement
-    if (!this.canvas) throw Error("main-canvas.ngAfterViewInit(): canvas is undefined.")
-    this.ctx = this.canvas.getContext('2d')
-    if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
-//  console.log(`main-canvas.ngAfterViewInit(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
+      if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
+      this.canvas  = this.canvasRef.nativeElement
+      if (!this.canvas) throw Error("main-canvas.ngAfterViewInit(): canvas is undefined.")
+      this.ctx = this.canvas.getContext('2d')
+      if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
 
-    window.addEventListener("resize", this.handleCanvasResized.bind(this))
-    this.handleCanvasResized()
+      window.addEventListener("resize", this.handleCanvasResized.bind(this))
+      this.handleCanvasResized()
 
-    this.canvas.onmousedown = this.handleMouseDown.bind(this)
-    window.addEventListener("resize", this.handleCanvasResized.bind(this))
+      this.canvas.onmousedown = this.handleMouseDown.bind(this)
+      window.addEventListener("resize", this.handleCanvasResized.bind(this))
 
-    this.sys.initialize(this.ctx, this.sysExecParms)
+      this.sys.initialize(this.ctx, this.sysExecParms)
   }
 
-  // ??
   public numActorsOfActGrp(agIdx: number): number | undefined {
-    return this.sys.actGrps[agIdx].actors.length
+      return this.sys.actGrps[agIdx].actors.length
   }
 
   // ---------------------------------------------------------------------------------------
@@ -125,77 +120,6 @@ export class MainCanvas implements AfterViewInit {
     this.runResumeButtonLabel = "Run"
   }
 
-  /*
-  public timerId = 0 
-  public iCounter = 0
-
-  public runTestCounter2(): void {
-            this.iCounter++
-            setTimeout(() => this.runTestCounter(), 100)
-  }
-  public runTestCounter3(): void {
-            this.timerId = setInterval(() => { this.iCounter++ }, 100)
-            console.log("main-canvas.runTestCounter(): done")
-  }
-
-  private pCounter: Promise<number> = this.counterPromise()
-
-  private counterPromise(): Promise<number> {
-      return new Promise((resolve, reject) => {
-          this.iCounter++
-          resolve(this.iCounter)
-      })
-  }
-  public runTestCounter4(): void {
-    this.pCounter.then((ctr) => {
-        console.log(ctr)
-        this.pCounter = this.counterPromise()
-        setTimeout(() => this.runTestCounter(), 100)
-    })
-    console.log("main-canvas.runTestCounter(): done")
-  }
-  private obsCounter?: Subscription
-  public runTestCounter5(): void {
-    this.sys.iterationMode = IterationMode.iterating
-    this.obsCounter = interval(100).subscribe(() => this.iCounter++)
-    console.log("main-canvas.runTestCounter(): done")
-  }
-
-
-  public sub?: Subscription
-
-  public runTestCounter6(): void {
-    if (this.sub) return
-    this.sys.iterationMode = IterationMode.iterating
-    this.ngZone.run(() => { this.sub = interval(100).subscribe(() => this.iCounter++) })
-    console.log("main-canvas.runTestCounter(): done")
-  }
-  public runTestCounter7(): void {
-    if (this.sub) return; // already running
-    this.sub = interval(100).subscribe(() => this.iCounter++);
-  }
-
-  public runTestCounter8(): void {
-    if (this.sub) return; // already running
-    this.sub = interval(100).subscribe(() => {
-      this.ngZone.run(() => this.iCounter++) })
-  
-  }
-
-  public runTestCounter(): void {
-    if (this.sub) return; // already running
-    this.sub = interval(100).subscribe(() => {
-      this.iCounter++ 
-      this.cdr.detectChanges})
-    }
-
-
-
-  private sub?: Subscription;
-*/
-  
-
-  
   // ---------------------------------------------------------------------------------------
   // canvas mouse event handlers
   // ---------------------------------------------------------------------------------------

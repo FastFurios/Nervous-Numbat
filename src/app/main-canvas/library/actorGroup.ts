@@ -3,7 +3,7 @@
 // ****************************************************************************************
 
 import { CanvasObject, Point, Box } from "./geometry"
-import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
+import { powerFunctionFactory, powerCurveBloatedList } from "./helpers"
 import { RgbColor, ColorScheme } from "./color"
 import { Actor } from "./actor"
 //import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
@@ -85,7 +85,7 @@ export class ActorGroupDynamic extends ActorGroup {
         const ag = new ActorGroupDynamic(ctx, id, [], sep, powerCurveFactor)
         ag.randomizeActors(startBox, numActors, sep)
 //      console.log(`${ag.id}: bloated list: ${powerCurveBloatedListOf(ag.actors, powerFunctionFactory(cPowerCurveFactor, ag.actors.length)).map(a => a.id)}`)
-        ag.assign2RandomObservees(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(powerCurveFactor, ag.actors.length)))
+        ag.assign2RandomObservees(powerCurveBloatedList(ag.actors, powerFunctionFactory(powerCurveFactor, ag.actors.length)))
 //      console.log(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(-cPowerCurveFactor, ag.actors.length)).map(e => e.id))
 //      console.log(ag.actors.map(e => `${e.id}=>[${e.observee1?.id}, ${e.observee2?.id}]\n`))
         return ag

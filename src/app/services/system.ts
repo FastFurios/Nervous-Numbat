@@ -3,11 +3,11 @@ import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
 import { Point, Box } from "./geometry"
-import { ColorSchemes, RgbColor } from "./color"
+import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
-import { ActorGroup, ActorGroupDynamic, ActorGroupStaticBox } from "./actorGroup"
-import { cActorPickMargin, cPoorTriangleQualityThreshold, cTextOffset } from "./parameters"
-import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedListOf as powerCurveBloatedList } from "../main-canvas/library/helpers"
+import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
+import { cActorPickMargin  } from "./parameters"
+import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 
 // ---------------------------------------------------------------------------------------
 //      SYSTEM SETUP API
@@ -111,13 +111,13 @@ export class System {
     public  configActGrps:      ConfigActorGroup[]                      = []
     public  actGrps:            ActorGroup[]                            = []
     private ctx:                CanvasRenderingContext2D | undefined    = undefined
-    public  maxIterations!:     number
-    public  intervalMillisecs!: number
-    private showActorJourney!:  boolean
-    public  doneIteration$?:    Observable<number>
-    private doneIterationSub?:  Subscription 
+    public  maxIterations?:     number
+    public  intervalMillisecs?: number
+    private showActorJourney?:  boolean
+    public  iteration$?:        Observable<number>
+    private iterationSubscription?:  Subscription 
     public  doneIterations:     number                                  = 0
-    /* private */ public iterationMode:      IterationMode                           = IterationMode.paused
+    private iterationMode:      IterationMode                           = IterationMode.paused
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
     
@@ -136,8 +136,6 @@ export class System {
     public set configuration(configuration: Configuration) {
         this.id = configuration.id
         this.configActGrps = configuration.actorGroups
-//      console.log(`system: setter configuration(): this.id= ${this.id}, this.configActGrps=`)
-//      console.log(this.configActGrps)
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -148,7 +146,6 @@ export class System {
 
         this.actGrps = []
         for (let cag of this.configActGrps) {
-//          console.log(`system.initialize(): Config Act Grp= ${cag.id}`)
             const actors: Actor[] = cag.actors.map(ca => new Actor(this.ctx!, ca.id, this.mappedConfigPointOntoCanvas(ca.p!), systemExecParms!))
             for (let ca of cag.actors) {
                 const actor: Actor | undefined = actors.find(a => a.id == ca.id)
@@ -158,7 +155,6 @@ export class System {
                 if (!obs1 || !obs2) throw Error(`system.initialize(): missing observee(s) for actor ${ca.id}`)
                 actor.assign2SpecificObservees(obs1, obs2)
             }
-//          console.log(actors.map(a => `${a.p}`))
             const ag = new ActorGroupDynamic(this.ctx, cag.id, actors, systemExecParms)
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
@@ -169,7 +165,6 @@ export class System {
     }
 
     public updateExecParms(sep: SystemExecParms): void {
-//      console.log(`system.updateParameter(): propagating update...`)
         this.maxIterations      = sep.run.maxIterations
         this.intervalMillisecs  = sep.run.intervalMillisecs
         this.showActorJourney   = sep.display.showActorJourney
@@ -180,29 +175,21 @@ export class System {
 //      run the system
 // ---------------------------------------------------------------------------------------
 
-    public iterateOn(): void {
-        if (this.doneIteration$) return
+    public startIterating(): void {
+        if (this.iteration$) return // is already iterating
 /*?*/   if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
-//      throw Error("system.iterateOn(): manually aborted.")
-//      console.log(`system.iterateOn(): iterationMode= ${this.iterationMode}; doneIterations= ${this.doneIterations}`)
-        this.doneIteration$ = interval(100)    
-        this.doneIterationSub = this.doneIteration$.subscribe(() => {
-            if (this.iterationMode != IterationMode.iterating || this.doneIterations > this.maxIterations) { 
-                    this.doneIterationSub?.unsubscribe()
-                    this.doneIteration$ = undefined 
-                    console.log("Iterations limit reached: stopped it!") 
-                    return
+        this.iteration$ = interval(100)    
+        this.iterationSubscription = this.iteration$.subscribe(() => {
+            if (this.iterationMode != IterationMode.iterating || this.doneIterations > this.maxIterations!) { 
+                this.iterationSubscription?.unsubscribe()
+                this.iteration$ = undefined 
+                return
             }
-//          console.log(`>>> system.iterateOn():  next iteration...: doneIterations= ${this.doneIterations} `)
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
             this.actGrps.forEach(ag => ag.moveActors())
-//          console.log(`>>> system.iterateOn(): visualize()...: doneIterations= ${this.doneIterations} `)
             this.visualize()
-//          this.doneIterations++
-//          console.log(`>>> system.iterateOn(): next iteration done: doneIterations= ${this.doneIterations} `)
             return ++this.doneIterations
         })
-        console.log(`system.iterateOn(): iterationMode= ${this.iterationMode}; doneIterations= ${this.doneIterations}:`)
     }
 
     public stopIterating(): void {
@@ -212,7 +199,7 @@ export class System {
     public runResumeIterating(): void {
         if (this.iterationMode == IterationMode.iterating) return
         this.iterationMode = IterationMode.iterating
-        this.iterateOn()
+        this.startIterating()
     }
 
     private nearbyActorsInRange(p: Point, margin: number): Actor[] {
