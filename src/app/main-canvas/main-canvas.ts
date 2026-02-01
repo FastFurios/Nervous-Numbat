@@ -1,11 +1,9 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule, AsyncPipe } from '@angular/common'
-import { interval, Subscription } from 'rxjs'
 
-import { System, Configuration, IterationMode } from "../services/system"
+import { System } from "../services/system"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
-import { consumerMarkDirty } from '@angular/core/primitives/signals'
 
 export type SystemExecParmsRun = {
   intervalMillisecs:  number
@@ -52,7 +50,7 @@ export class MainCanvas implements AfterViewInit {
   private canvas!:                        HTMLCanvasElement | null
   private ctx!:                           CanvasRenderingContext2D | null
 
-  constructor(public sys: System, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
+  constructor(public sys: System) {
 //  console.log("Welcome from the MainCanvas component.")
     this.sysExecParms = {
       run: {
@@ -119,10 +117,6 @@ export class MainCanvas implements AfterViewInit {
 //  console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
-/* X */ this.sys.iterationMode = IterationMode.paused
-/* X */ this.sub?.unsubscribe()
-/* X */ this.sub = undefined
-
   }
   /** reset button clicked */
   public resetSystemHandler() {
@@ -131,10 +125,10 @@ export class MainCanvas implements AfterViewInit {
     this.runResumeButtonLabel = "Run"
   }
 
+  /*
   public timerId = 0 
   public iCounter = 0
 
-  /*
   public runTestCounter2(): void {
             this.iCounter++
             setTimeout(() => this.runTestCounter(), 100)
@@ -188,7 +182,6 @@ export class MainCanvas implements AfterViewInit {
   
   }
 
-  */
   public runTestCounter(): void {
     if (this.sub) return; // already running
     this.sub = interval(100).subscribe(() => {
@@ -199,7 +192,8 @@ export class MainCanvas implements AfterViewInit {
 
 
   private sub?: Subscription;
-
+*/
+  
 
   
   // ---------------------------------------------------------------------------------------

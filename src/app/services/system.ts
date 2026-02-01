@@ -181,22 +181,28 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     public iterateOn(): void {
-        if (this.doneIterationSub) return
-/*?*/   if (this.actGrps[0].isFrozen())               throw(`${this.actGrps[0].id} is frozen.`)
-
+        if (this.doneIteration$) return
+/*?*/   if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
 //      throw Error("system.iterateOn(): manually aborted.")
+//      console.log(`system.iterateOn(): iterationMode= ${this.iterationMode}; doneIterations= ${this.doneIterations}`)
         this.doneIteration$ = interval(100)    
         this.doneIterationSub = this.doneIteration$.subscribe(() => {
             if (this.iterationMode != IterationMode.iterating || this.doneIterations > this.maxIterations) { 
-                    this.doneIteration$ = undefined 
                     this.doneIterationSub?.unsubscribe()
+                    this.doneIteration$ = undefined 
                     console.log("Iterations limit reached: stopped it!") 
+                    return
             }
+//          console.log(`>>> system.iterateOn():  next iteration...: doneIterations= ${this.doneIterations} `)
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
             this.actGrps.forEach(ag => ag.moveActors())
+//          console.log(`>>> system.iterateOn(): visualize()...: doneIterations= ${this.doneIterations} `)
             this.visualize()
-            return this.doneIterations++
+//          this.doneIterations++
+//          console.log(`>>> system.iterateOn(): next iteration done: doneIterations= ${this.doneIterations} `)
+            return ++this.doneIterations
         })
+        console.log(`system.iterateOn(): iterationMode= ${this.iterationMode}; doneIterations= ${this.doneIterations}:`)
     }
 
     public stopIterating(): void {
