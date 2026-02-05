@@ -1,9 +1,10 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule, AsyncPipe } from '@angular/common'
 
 import { System } from "../services/system"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
+import { Subscription } from 'rxjs'
 
 export type SystemExecParmsRun = {
   intervalMillisecs:  number
@@ -30,6 +31,11 @@ export interface SystemExecParms {
   strategy: SystemExecParmsStrategy
  }
 
+export interface SystemUiReferences {
+    time: number,
+    ctx:  CanvasRenderingContext2D | null
+}
+
 type RunResumeButtonLabel = "Run" | "Resume"
 
 // ****************************************************************************************
@@ -46,10 +52,12 @@ export class MainCanvas implements AfterViewInit {
   public  sysExecParms!:                SystemExecParms
   public  runResumeButtonLabel:         RunResumeButtonLabel  = "Run"
   private canvas!:                      HTMLCanvasElement | null
-  private ctx!:                         CanvasRenderingContext2D | null
+  private ctx?:                         CanvasRenderingContext2D | null
+  public  time                                                = signal(0)
+  public  timeSubscription?:            Subscription              
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
 
-  constructor(public sys: System) {
+  constructor(private sys: System) {
     this.sysExecParms = {
       run: {
         intervalMillisecs:                      cIntervalMillisecs,
@@ -105,18 +113,24 @@ export class MainCanvas implements AfterViewInit {
   /** run&resume button clicked */
   public runResumeIterationsHandler() {
 //  console.log(`main-canvas.runResumeIterationsHandler()`)
-    this.sys.runResumeIterating()
+    this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
+      this.time.update(t => t + 1)
+      console.log(`main-canvas: subscriber triggered; new time is ${this.time}`)
+    } )
   }
     /* stop button clicked */
   public stopIterationsHandler() {
 //  console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
+    this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Resume"
   }
   /** reset button clicked */
   public resetSystemHandler() {
 //  console.log(`main-canvas.resetSystemHandler()`)
     this.sys.reset(this.sysExecParms)
+    this.time.set(0)
+    this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Run"
   }
 

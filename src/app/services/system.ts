@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core'
-import { Observable, Subscription, interval } from 'rxjs'
+import { Injectable, NgZone } from '@angular/core'
+import { BehaviorSubject, Observable, Subscription, interval } from 'rxjs'
 
-import { SystemExecParms } from "../main-canvas/main-canvas"
+import { SystemExecParms, SystemUiReferences } from "../main-canvas/main-canvas"
 import { Point, Box } from "./geometry"
 import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
@@ -114,8 +114,8 @@ export class System {
     public  maxIterations?:     number
     public  intervalMillisecs?: number
     private showActorJourney?:  boolean
-    public  iteration$?:        Observable<number>
-    private iterationSubscription?:  Subscription 
+    public  time$?:             Observable<void>
+    private timeSubscription?:  Subscription 
     public  doneIterations:     number                                  = 0
     private iterationMode:      IterationMode                           = IterationMode.paused
     public  pickedActor:        Actor | null | undefined                = undefined
@@ -175,31 +175,25 @@ export class System {
 //      run the system
 // ---------------------------------------------------------------------------------------
 
-    public startIterating(): void {
-        if (this.iteration$) return // is already iterating
-/*?*/   if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
-        this.iteration$ = interval(100)    
-        this.iterationSubscription = this.iteration$.subscribe(() => {
-            if (this.iterationMode != IterationMode.iterating || this.doneIterations > this.maxIterations!) { 
-                this.iterationSubscription?.unsubscribe()
-                this.iteration$ = undefined 
-                return
-            }
-            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.doneIterations))
-            this.actGrps.forEach(ag => ag.moveActors())
-            this.visualize()
-            return ++this.doneIterations
-        })
-    }
-
     public stopIterating(): void {
         this.iterationMode = IterationMode.paused
     }
 
-    public runResumeIterating(): void {
-        if (this.iterationMode == IterationMode.iterating) return
+    public runResumeIterating(): Observable<number> | undefined {
+        if (this.iterationMode == IterationMode.iterating) return undefined
         this.iterationMode = IterationMode.iterating
-        this.startIterating()
+        if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
+        const time$ = interval(this.intervalMillisecs)
+        this.timeSubscription = time$.subscribe((now) => {
+            if (this.iterationMode != IterationMode.iterating || now > this.maxIterations!) { 
+                this.timeSubscription?.unsubscribe()
+                this.time$ = undefined
+            }
+            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
+            this.actGrps.forEach(ag => ag.moveActors())
+            this.visualize()
+        })
+        return time$
     }
 
     private nearbyActorsInRange(p: Point, margin: number): Actor[] {
