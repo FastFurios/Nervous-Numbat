@@ -115,7 +115,7 @@ export class MainCanvas implements AfterViewInit {
 //  console.log(`main-canvas.runResumeIterationsHandler()`)
     this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
       this.time.update(t => t + 1)
-      console.log(`main-canvas: subscriber triggered; new time is ${this.time}`)
+//    console.log(`main-canvas: subscriber triggered; new time is ${this.time}`)
     } )
   }
     /* stop button clicked */

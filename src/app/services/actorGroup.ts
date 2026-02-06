@@ -50,7 +50,10 @@ export abstract class ActorGroup implements CanvasObject {
         this.ctx.fillStyle = new RgbColor(100, 100, 100).rgbString
         this.ctx.textAlign = "center"
         this.ctx.font = "12px Arial"
-        this.ctx.fillText(`${this.id} ${(this.avgTriangleQuality * 100).toFixed(0)}% ${remark}`, ctr.x, ctr.y)
+        const expanse = this.expanse(this.centerPoint())
+        const avgTriangleQuality = this.avgTriangleQuality
+        const performance = expanse * avgTriangleQuality 
+        this.ctx.fillText(`${this.id} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
     } 
     public nearbyActors(p: Point, margin: number): Actor[] {
         return this.actors.filter(a => p.nearby(a.p, margin))
@@ -60,6 +63,9 @@ export abstract class ActorGroup implements CanvasObject {
                          this.actors.map(a => a.p.x).reduce((acc, curr) => acc + curr, 0) / this.actors.length,
                          this.actors.map(a => a.p.y).reduce((acc, curr) => acc + curr, 0) / this.actors.length)
     }
+    public expanse(p: Point): number {
+        return this.actors.map(a => a.p.distanceTo(p)).reduce((acc, curr) => acc + curr, 0) / this.actors.length
+    } 
     public get avgTriangleQuality(): number {
         return this.actors.map(a => a.triangleQuality).reduce((q1, q2) => q1 + q2) / this.actors.length
     }
