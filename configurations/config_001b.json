@@ -1,0 +1,38 @@
+{
+    "id": "EarlyBird-b",
+    "actor_groups": [
+        {
+            "id": "Group A",
+            "creation_mode" : "explicit",
+            "topology": [
+                { "id" : "Bird-00", "x": 30, "y":  50, "observee1" : "Bird-05", "observee2" : "Bird-13"},
+                { "id" : "Bird-01", "x": 70, "y":  40, "observee1" : "Bird-00", "observee2" : "Bird-02"},
+                { "id" : "Bird-02", "x": 20, "y": 100, "observee1" : "Bird-05", "observee2" : "Bird-07"},
+                { "id" : "Bird-03", "x": 75, "y":  55, "observee1" : "Bird-14", "observee2" : "Bird-14"},
+                { "id" : "Bird-04", "x": 15, "y":  30, "observee1" : "Bird-00", "observee2" : "Bird-12"},
+                { "id" : "Bird-05", "x": 55, "y":  35, "observee1" : "Bird-05", "observee2" : "Bird-09"},
+                { "id" : "Bird-06", "x": 20, "y":  35, "observee1" : "Bird-00", "observee2" : "Bird-03"},
+                { "id" : "Bird-07", "x": 85, "y":  50, "observee1" : "Bird-00", "observee2" : "Bird-04"},
+                { "id" : "Bird-08", "x": 75, "y":  45, "observee1" : "Bird-05", "observee2" : "Bird-03"},
+                { "id" : "Bird-09", "x": 30, "y":  40, "observee1" : "Bird-10", "observee2" : "Bird-07"},
+                { "id" : "Bird-10", "x": 20, "y":  25, "observee1" : "Bird-00", "observee2" : "Bird-11"},
+                { "id" : "Bird-11", "x":  5, "y":  30, "observee1" : "Bird-00", "observee2" : "Bird-09"},
+                { "id" : "Bird-12", "x": 15, "y":  15, "observee1" : "Bird-00", "observee2" : "Bird-02"},
+                { "id" : "Bird-13", "x": 90, "y":  55, "observee1" : "Bird-00", "observee2" : "Bird-12"},
+                { "id" : "Bird-14", "x": 65, "y":  35, "observee1" : "Bird-05", "observee2" : "Bird-11"}
+            ]
+        },
+        {
+            "id": "Group B",
+            "creation_mode" : "automatic",
+            "topology": {
+                "number_actors": 15, 
+                "power_curve_factor": -0.8,
+                "start_box": {
+                    "lower_left":  { "x": 60, "y": 60},
+                    "upper_right": { "x": 90, "y": 90}
+                }
+            }
+        }
+    ]
+}

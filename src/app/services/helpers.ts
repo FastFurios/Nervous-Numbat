@@ -37,3 +37,10 @@ export function powerCurveBloatedListOf<T>(list: T[], powFct: PowerFunction): T[
   //console.log(`powerCurveBloatedListOf(${(<Actor[]>list).map(a => a.id)}) => ${(<Actor[]>bloatedList).map(a => a.id)}`)
   return bloatedList
 }
+
+  export function now(): string {
+    const now = new Date()
+    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}_${now.getHours().toString().padStart(2, "0")}-${now.getMinutes().toString().padStart(2, "0")}`
+  }
+
+

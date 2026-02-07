@@ -10,17 +10,17 @@
         <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
     </div> 
     <div>
-        <button type="button" class="submitButton" (click)="onSystemSetupFromJsonFile()">
+        <button type="button" class="submitButton" [style]="actionsPossible.setupSystem() ? undefined : greyOut" (click)="onSystemSetupFromJsonFile()">
             Setup uploaded system
         </button>
     </div> 
     <div>
-        <button type="button" class="submitButton" (click)="onSaveFile()">
+        <button type="button" class="submitButton" [style]="actionsPossible.downloadConfig() ? undefined : greyOut" (click)="onSaveFile()">
             Download system
         </button>
     </div> 
     <div>
-        <button type="button" class="submitButton" (click)="onDiscard()">
+        <button type="button" class="submitButton" [style]="actionsPossible.discard() ? undefined : greyOut" (click)="onDiscard()">
             Discard system
         </button>
     </div> 

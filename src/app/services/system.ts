@@ -7,6 +7,7 @@ import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
 import { cActorPickMargin  } from "./parameters"
+import { now  } from "./helpers"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 
 // ---------------------------------------------------------------------------------------
@@ -93,6 +94,56 @@ export class Configuration {
     constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
 }
 
+
+type HistSegment = {
+    from:   number
+    to:     number
+    count:  number
+}
+
+type NumObserversOfActor = {
+    actor:          Actor,
+    numObservers:   number
+}
+
+class ActGrpObserversHistogram {
+    public segments: HistSegment[] = []
+    constructor(public actGrp: ActorGroup, numSegments: number) { 
+        console.log(`ActGrpObserverHIstogram: actGrp.actors.length= ${actGrp.actors.length}`)
+        for (let i = 0, from = 0, span = Math.ceil((actGrp.actors.length) / numSegments), to = span; 
+                 i < actGrp.actors.length / span; 
+                 i++, from += span, to = from + span) {
+            this.segments[i] = {
+                from:   from,
+                to:     to,
+                count:  0
+            } 
+        }
+        let numObserversOfActors: NumObserversOfActor[] = [] 
+        for (let a of actGrp.actors) {
+            let numObservers = 0
+            for (let obs of actGrp.actors) if (obs.observee1 == a || obs.observee2 == a) numObservers++ 
+            numObserversOfActors.push({actor: a, numObservers: numObservers})
+        }
+        for (let noa of numObserversOfActors)
+            for (let seg of this.segments)
+                if (noa.numObservers >= seg.from && noa.numObservers < seg.to) { 
+                    seg.count++
+                    break
+                }
+    }
+    public toCsvHeader(): string {
+        return `time; actor group; ${this.segments.map(seg => `count; to`).join("; ")}`
+    }
+    public toCsv(): string {
+        return `${now()}; ${this.actGrp.id}; ${this.segments.map(seg => `${seg.count}; ${seg.to}`).join("; ")}`                 //seg => `${seg.count}; ${seg.to}; `)}` 
+    }
+    public toString(): string {
+        return `${this.actGrp.id}: ${this.segments.map(seg => `[${seg.from}-<${seg.to}]: ${seg.count}`)}` 
+    }
+}
+
+
 /* no export */ export enum IterationMode {
     iterating = "iterating",
     paused    = "paused",
@@ -159,7 +210,11 @@ export class System {
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-            
+
+            const hist = new ActGrpObserversHistogram(ag, 5)
+//          console.log(hist.toString())
+//          console.log(hist.toCsvHeader())
+//          console.log(hist.toCsv())
         }
         this.visualize()
     }
@@ -169,6 +224,8 @@ export class System {
         this.intervalMillisecs  = sep.run.intervalMillisecs
         this.showActorJourney   = sep.display.showActorJourney
         this.actGrps.forEach(ag => ag.updateParameters(sep))
+        this.clearCanvas()
+        this.visualize()
     }
 
 // ---------------------------------------------------------------------------------------
@@ -177,6 +234,7 @@ export class System {
 
     public stopIterating(): void {
         this.iterationMode = IterationMode.paused
+        console.log(`ActorGroup #0 Q-log= ${(<ActorGroupDynamic>this.actGrps[0]).log}`)
     }
 
     public runResumeIterating(): Observable<number> | undefined {

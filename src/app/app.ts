@@ -4,11 +4,12 @@
 // G.Lindorfer, from 2025-10 to ...
 // #########################################################################################
 
-import { Component, signal } from '@angular/core'
+import { Component, signal, WritableSignal } from '@angular/core'
 import { RouterOutlet, TitleStrategy } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
+import { now } from './services/helpers'
 import { MainCanvas } from './main-canvas/main-canvas'
 import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration } from "./services/system"
 import { Test } from "./test/test";
@@ -19,11 +20,9 @@ import { Test } from "./test/test";
 
 /** list of possible user actions */
 type ActionsPossible = {
-    login:              boolean,
-    run:                boolean,
-    downloadConfig:     boolean,
-    downloadEvents:     boolean,
-    discard:            boolean
+    setupSystem:        WritableSignal<boolean>,
+    downloadConfig:     WritableSignal<boolean>,
+    discard:            WritableSignal<boolean>
 }
 
 // --------------------------------------------------------------------------------------
@@ -112,7 +111,7 @@ function configAsJson(c: Configuration): JsonConfiguration {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule, Test],
+  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -130,23 +129,15 @@ export class App {
   //public configAsJson: 
   public configFilename:  string | undefined
   public configurationId: string | undefined
-/*
-  public actionsPossible: ActionsPossible
-  public greyOut = "color: lightgrey;"
-  public pShowTriangles: boolean = true
-//  public version                = environment.version
-*/
-  constructor(private sys: System) {
-/*
-    this.actionsPossible = {
-          login:              true,
-          run:                false,
-          downloadConfig:     false,
-          downloadEvents:     false,
-          discard:            false
-      }
-*/
-  } 
+  public actionsPossible = {
+          setupSystem:        signal(false),
+          downloadConfig:     signal(false),
+          discard:            signal(false)
+  }
+  public greyOut = "background-color: lightgrey; border-color: lightgrey;"
+///public version                = environment.version
+
+  constructor(private sys: System) { } 
 
 // --------------------------------------------------------------------------------------
 //     System Setup   
@@ -230,6 +221,10 @@ export class App {
     this.configuration   = undefined
     this.configurationId = ""
     this.showCanvas      = false
+    this.actionsPossible.setupSystem.set(false)
+    this.actionsPossible.downloadConfig.set(false)
+    this.actionsPossible.discard.set(false)
+
   }
 
   // --------------------------------------------------------------------------------------
@@ -257,7 +252,10 @@ export class App {
 //      console.log(`app.onConfigFileSelected(): this.configuration=`)
 //      console.log(this.configuration)
         console.log(`app.onConfigFileSelected(): this.configurationId=${this.configurationId}`)
-      } 
+        this.actionsPossible.setupSystem.set(true)
+        this.actionsPossible.downloadConfig.set(true)
+        this.actionsPossible.discard.set(true)
+      }
       catch (error) {
 //      console.log(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
         alert(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
@@ -302,13 +300,11 @@ export class App {
   //     Downloading a Configuration  
   // --------------------------------------------------------------------------------------
 
-
   /** write system configuration to json file in the download folder */
   private downloadToFile(blob: Blob, fileExtension: string): void {
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
-    const now = new Date()
-    link.download = `${this.configuration?.id}_${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}_${now.getHours().toString().padStart(2, "0")}-${now.getMinutes().toString().padStart(2, "0")}.${fileExtension}`
+    link.download = `${this.configuration?.id}_${now()}.${fileExtension}`
     link.click()
     link.remove()
   }

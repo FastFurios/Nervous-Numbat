@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { CommonModule, AsyncPipe } from '@angular/common'
+import { CommonModule } from '@angular/common'
 
 import { System } from "../services/system"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
@@ -44,7 +44,7 @@ type RunResumeButtonLabel = "Run" | "Resume"
 
 @Component({
   selector:     'main-canvas',
-  imports:      [FormsModule, CommonModule, AsyncPipe],
+  imports:      [FormsModule, CommonModule],
   templateUrl:  './main-canvas.html',
   styleUrl:     './main-canvas.css',
 })

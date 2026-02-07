@@ -83,6 +83,7 @@ export abstract class ActorGroup implements CanvasObject {
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
         this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))
+        this.visualize()
     } 
     abstract calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void
     abstract moveActors(): void
@@ -99,7 +100,7 @@ export class ActorGroupDynamic extends ActorGroup {
         return ag
     }
 
-    private log = new Log()
+    public log = new Log(1000)
     private calculatedNewPositions: Point[] = []
     
     constructor(ctx: CanvasRenderingContext2D, id: string, actors: Actor[] = [], sep: SystemExecParms, public powerCurveFactor: number = 0) { 
