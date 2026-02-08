@@ -5,14 +5,13 @@
 // #########################################################################################
 
 import { Component, signal, WritableSignal } from '@angular/core'
-import { RouterOutlet, TitleStrategy } from '@angular/router'
+import { RouterOutlet } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { now } from './services/helpers'
 import { MainCanvas } from './main-canvas/main-canvas'
 import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration } from "./services/system"
-import { Test } from "./test/test";
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -119,7 +118,7 @@ export class App {
   protected readonly title = signal('Nervous-Numbat');
   public showCanvas : boolean             = false
   public actorGroups: ConfigActorGroup[]  = []
-  public configuration: Configuration | undefined
+  public configuration: WritableSignal<Configuration | undefined> = signal(undefined)
   public systemStructParms: SystemStructParms = {
     numActGrps:         1,
     numActorsPerActGrp: 15,
@@ -129,11 +128,6 @@ export class App {
   //public configAsJson: 
   public configFilename:  string | undefined
   public configurationId: string | undefined
-  public actionsPossible = {
-          setupSystem:        signal(false),
-          downloadConfig:     signal(false),
-          discard:            signal(false)
-  }
   public greyOut = "background-color: lightgrey; border-color: lightgrey;"
 ///public version                = environment.version
 
@@ -143,31 +137,122 @@ export class App {
 //     System Setup   
 // --------------------------------------------------------------------------------------
 
-  public onSystemSetupFromJsonFile(): void {
-    if (!this.configuration) { 
-      console.log("app.onSystemSetupFromJsonFile(): no JSON configuration loaded.")
-      alert("app.onSystemSetupFromJsonFile(): no JSON configuration loaded.")
-      return
-    }
-    this.setupSystem(this.configuration)
-  }
-
-  public onRandomSystemSetup(): void {
-    this.actorGroups = []
-    for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
-      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Explorers${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, sbs[i]))
-    }
-    this.setupSystem(new Configuration("Explorers", this.actorGroups))
-  }
-
-  private setupSystem(config: Configuration): void {
-    console.log(`app.setupSystem(): config= `)
-    console.log(config)
-    this.sys.configActGrps = config.actorGroups
-    console.log(`app.setupSystem(): this.sys.configActGrps= `)
-    console.log(this.sys.configActGrps)
+  public onSetupSystem(): void {
+    this.sys.id = this.configurationId
+    this.sys.configActGrps = this.configuration()!.actorGroups
     this.showCanvas = !this.showCanvas
   }
+
+  // --------------------------------------------------------------------------------------
+  //     Discarding Configuration  
+  // --------------------------------------------------------------------------------------
+
+  /** discard system in the backend and delete the system configuration in the frontend i.e. in the configuration file service; log to the application event service; signal to the appliation state transition service  */
+  public onDiscard(): void {
+    this.configuration.set(undefined)
+    this.configurationId = ""
+    this.showCanvas      = false
+  }
+
+  // --------------------------------------------------------------------------------------
+  //     Uploading a Configuration  
+  // --------------------------------------------------------------------------------------
+
+  /** upload system configuration json file */
+  public onConfigFileSelected(e: Event): void { 
+    const input = e.target as HTMLInputElement;
+    if (!input.files || input.files.length == 0) { console.warn('No file selected.'); return }
+    const file = input.files[0]
+    this.configFilename = file.name
+    const reader = new FileReader()
+    reader.readAsText(file)
+
+    reader.onload = () => {
+      (<HTMLInputElement>e.target).value = "" // clear the event input to allow event detection of re-selection of same file
+      if (!reader.result) return
+      try {
+        const jsonConfig = JSON.parse(reader.result.toString())
+        this.configuration.set(this.configurationFrom(jsonConfig)) 
+        this.configurationId = this.configuration()!.id
+      }
+      catch (error) {
+        alert(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
+      }
+    }
+  }
+  
+  private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
+    const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
+    if (configActGrps.find(cag => cag == undefined)) {
+      alert("A JSON file actor_group is invalid.")
+    }  
+    return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
+  }
+
+  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroup | undefined {
+    switch (jag.creation_mode) {
+      case "automatic" : { 
+        this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
+        this.systemStructParms.powerCurveFactor   = (<JsonAutomaticTopology>jag.topology).power_curve_factor
+        const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
+        return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, startBox); 
+      }
+      case "explicit" : {
+        const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
+        return new ConfigActorGroup(jag.id, cas)
+      } 
+      default: alert("JSON file invalid creation_mode.")
+    }
+    return undefined
+  }
+
+  // --------------------------------------------------------------------------------------
+  //     Randomize a Configuration  
+  // --------------------------------------------------------------------------------------
+
+  public onConfigurationByRandom(): void {
+    this.actorGroups = []
+    for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
+      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, sbs[i]))
+    }
+    this.configuration.set(new Configuration("random", this.actorGroups))
+    this.configurationId = this.configuration()!.id
+  }
+
+  // --------------------------------------------------------------------------------------
+  //     Downloading a Configuration  
+  // --------------------------------------------------------------------------------------
+
+  /** write system configuration to json file in the download folder */
+  private downloadToFile(blob: Blob, fileExtension: string): void {
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(blob)
+    link.download = `${this.configuration()?.id}_${now()}.${fileExtension}`
+    link.click()
+    link.remove()
+  }
+
+  /** download system configuration to json file */
+  public onSaveFile(): void {
+    this.configuration.set(this.sys.exportedAsConfiguration())
+    if (!this.configuration()) {
+      alert("app.onSaveFile(): no configuration.")
+      return
+    }
+    if (!this.configurationId) { 
+      alert("app.onSaveFile(): enter a configuration id!")
+      return
+    }
+    this.configuration()!.id = this.configurationId 
+
+    const fileContent = configAsJson(this.configuration()!)
+    const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
+    this.downloadToFile(blob, "json")
+  }
+
+  // --------------------------------------------------------------------------------------
+  //     Start boxes  
+  // --------------------------------------------------------------------------------------
 
   private startBoxesForNumGrps(n: number): ConfigBox[] {
     if (n  < 1) return []  // error
@@ -211,120 +296,6 @@ export class App {
     return new ConfigBox(lowerLeft, upperRight)
   }
 
-  // --------------------------------------------------------------------------------------
-  //     Discarding Configuration  
-  // --------------------------------------------------------------------------------------
-
-  /** discard system in the backend and delete the system configuration in the frontend i.e. in the configuration file service; log to the application event service; signal to the appliation state transition service  */
-  public onDiscard(): void {
-    console.log(`app.onDiscard()`)
-    this.configuration   = undefined
-    this.configurationId = ""
-    this.showCanvas      = false
-    this.actionsPossible.setupSystem.set(false)
-    this.actionsPossible.downloadConfig.set(false)
-    this.actionsPossible.discard.set(false)
-
-  }
-
-  // --------------------------------------------------------------------------------------
-  //     Uploading a Configuration  
-  // --------------------------------------------------------------------------------------
-
-  /** upload system configuration json file */
-  public onConfigFileSelected(e: Event): void { 
-    const input = e.target as HTMLInputElement;
-    if (!input.files || input.files.length == 0) { console.warn('No file selected.'); return }
-    const file = input.files[0]
-    this.configFilename = file.name
-    const reader = new FileReader()
-    reader.readAsText(file)
-
-    reader.onload = () => {
-      (<HTMLInputElement>e.target).value = "" // clear the event input to allow event detection of re-selection of same file
-      if (!reader.result) return
-      try {
-        const jsonConfig = JSON.parse(reader.result.toString())
-//      console.log(`app.onConfigFileSelected(): jsonParsed=`)
-//      console.log(jsonConfig)
-        this.configuration = this.configurationFrom(jsonConfig) 
-        this.configurationId = this.configuration.id
-//      console.log(`app.onConfigFileSelected(): this.configuration=`)
-//      console.log(this.configuration)
-        console.log(`app.onConfigFileSelected(): this.configurationId=${this.configurationId}`)
-        this.actionsPossible.setupSystem.set(true)
-        this.actionsPossible.downloadConfig.set(true)
-        this.actionsPossible.discard.set(true)
-      }
-      catch (error) {
-//      console.log(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
-        alert(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
-      }
-    }
 }
-  
-  private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
-//  console.log(`app.configurationFrom(): jsonConfig=`)
-//  console.log(jsonConfig)
-  //const sbs: ConfigBox[] = this.startBoxesForNumGrps(jsonConfig.actor_groups.length)
-    const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
-    if (configActGrps.find(cag => cag == undefined)) {
-      alert("A JSON file actor_group is invalid.")
-    }  
-    return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
-  }
 
-  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroup | undefined {
-  //console.log(`app.configActorGroupFrom(): jag=`)
-  //console.log(jag)
 
-    switch (jag.creation_mode) {
-      case "automatic" : { 
-        this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
-        this.systemStructParms.powerCurveFactor   = (<JsonAutomaticTopology>jag.topology).power_curve_factor
-        const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
-        return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, startBox); 
-      }
-      case "explicit" : {
-        console.log(`app.configActorGroupFrom(): case explicit: jag is defined: ${jag != undefined}, #actors= ${(<JsonExplicitTopology>jag.topology).length}`)
-        console.log((<JsonExplicitTopology>jag.topology).map(ja =>`\t${ja.id}: (${ja.x}, ${ja.y}`))
-        const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
-        return new ConfigActorGroup(jag.id, cas)
-      } 
-      default: alert("JSON file invalid creation_mode.")
-    }
-    return undefined
-  }
-
-  // --------------------------------------------------------------------------------------
-  //     Downloading a Configuration  
-  // --------------------------------------------------------------------------------------
-
-  /** write system configuration to json file in the download folder */
-  private downloadToFile(blob: Blob, fileExtension: string): void {
-    const link = document.createElement("a")
-    link.href = URL.createObjectURL(blob)
-    link.download = `${this.configuration?.id}_${now()}.${fileExtension}`
-    link.click()
-    link.remove()
-  }
-
-  /** download system configuration to json file */
-  public onSaveFile(): void {
-    this.configuration = this.sys.exportedAsConfiguration()
-    if (!this.configuration) {
-      alert("app.onSaveFile(): no configuration.")
-      return
-    }
-    if (!this.configurationId) { 
-      alert("app.onSaveFile(): enter a configuration id!")
-      return
-    }
-    this.configuration.id = this.configurationId 
-
-    const fileContent = configAsJson(this.configuration!)
-    const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
-    this.downloadToFile(blob, "json")
-  }
-
-}

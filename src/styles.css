@@ -21,7 +21,7 @@
 
 
 .inputFormNumber {
-    width: 100px;
+    width: 50px;
     margin: 3px;
     text-align: right;
     border-radius: 5px;
@@ -38,6 +38,11 @@
     border-style: outset;
     border-color: red
 }
+
+.file-input {
+    display: none;
+}
+
 
 /* The switch - the box around the slider ---------------------------- */
 .switch {

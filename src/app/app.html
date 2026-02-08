@@ -2,68 +2,75 @@
 <h1>Welcome to Nervous Numbat!</h1>
 <p>"Living" complex systems built by magic triangles.</p>
 <div class="lineContainerFlexStart">
-    <div>
-        <label for="configId">Configuration id:</label>
-        <input type="text" [(ngModel)]="configurationId" #configId>
+    <div class="lineContainerFlexStart">
+        <div>
+            <label for="configId">Configuration id:</label>
+            <input type="text" [(ngModel)]="configurationId" #configId>
+        </div> 
+        <div>
+            <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
+        </div> 
+        <div>
+            <button type="button" class="submitButton" (click)="configFileUpload.click()">
+                Upload
+            </button>
+        </div> 
     </div> 
-    <div>
-        <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
+    <div class="lineContainerFlexStart">
+        <div class="lineContainerFlexStart">
+            <label for="numActGrps">#Actor Groups: </label>
+            <input type="number" 
+                class="inputFormNumber" 
+                min=1 max=8 
+                id="numActGrps" 
+                [(ngModel)]="systemStructParms.numActGrps">
+        </div>
+        <div class="lineContainerFlexStart">
+            <label for="numActorsPerActGrp">#Actors per Group: </label>
+            <input type="number" 
+                class="inputFormNumber" 
+                min=4  
+                id="numActorsPerActGrp" 
+                [(ngModel)]="systemStructParms.numActorsPerActGrp">
+        </div>
+        <div class="lineContainerFlexStart">
+            <label for="startBoxMarginPct">Start box margin %: </label>
+            <input type="number" 
+                class="inputFormNumber" 
+                min=0 max=40 step=5
+                id="startBoxMarginPct" 
+                [(ngModel)]="systemStructParms.startBoxMarginPct">
+        </div>
+        <div class="lineContainerFlexStart">
+            <label for="powerCurveFactor">Power curve factor: </label>
+            <input type="number" 
+                class="inputFormNumber" 
+                min=0 max=1 step="0.05"
+                id="powerCurveFactor" 
+                [(ngModel)]="systemStructParms.powerCurveFactor">
+        </div>
+        <div>
+            <button type="button" class="submitButton" (click)="onConfigurationByRandom()" (keyup.enter)="onConfigurationByRandom()">
+                Randomize
+            </button>
+        </div> 
     </div> 
-    <div>
-        <button type="button" class="submitButton" [style]="actionsPossible.setupSystem() ? undefined : greyOut" (click)="onSystemSetupFromJsonFile()">
-            Setup uploaded system
-        </button>
-    </div> 
-    <div>
-        <button type="button" class="submitButton" [style]="actionsPossible.downloadConfig() ? undefined : greyOut" (click)="onSaveFile()">
-            Download system
-        </button>
-    </div> 
-    <div>
-        <button type="button" class="submitButton" [style]="actionsPossible.discard() ? undefined : greyOut" (click)="onDiscard()">
-            Discard system
-        </button>
-    </div> 
-</div> 
+        <div>
+            <button type="button" class="submitButton" [style]="!configuration() ? greyOut : undefined" (click)="onSetupSystem()">
+                Setup system
+            </button>
+        </div> 
+        <div>
+            <button type="button" class="submitButton" [style]="!configuration() ? greyOut : undefined" (click)="onSaveFile()">
+                Download
+            </button>
+        </div> 
+        <div>
+            <button type="button" class="submitButton" [style]="!configuration() ? greyOut : undefined" (click)="onDiscard()">
+                Discard
+            </button>
+        </div> 
 
-<div class="lineContainerFlexStart">
-    <div class="lineContainerFlexStart">
-        <label for="numActGrps">#Actor Groups: </label>
-        <input type="number" 
-            class="inputFormNumber" 
-            min=1 max=8 
-            id="numActGrps" 
-            [(ngModel)]="systemStructParms.numActGrps">
-    </div>
-    <div class="lineContainerFlexStart">
-        <label for="numActorsPerActGrp">#Actors per Group: </label>
-        <input type="number" 
-            class="inputFormNumber" 
-            min=4  
-            id="numActorsPerActGrp" 
-            [(ngModel)]="systemStructParms.numActorsPerActGrp">
-    </div>
-    <div class="lineContainerFlexStart">
-        <label for="startBoxMarginPct">Start box margin %: </label>
-        <input type="number" 
-            class="inputFormNumber" 
-            min=0 max=40 step=5
-            id="startBoxMarginPct" 
-            [(ngModel)]="systemStructParms.startBoxMarginPct">
-    </div>
-    <div class="lineContainerFlexStart">
-        <label for="powerCurveFactor">Power curve factor: </label>
-        <input type="number" 
-            class="inputFormNumber" 
-            min=0 max=1 step="0.05"
-            id="powerCurveFactor" 
-            [(ngModel)]="systemStructParms.powerCurveFactor">
-    </div>
-    <div>
-        <button type="button" class="submitButton" (click)="onRandomSystemSetup()" (keyup.enter)="onRandomSystemSetup()">
-            Setup randomized system
-        </button>
-    </div> 
 </div>
 
 <main-canvas *ngIf="showCanvas"></main-canvas>

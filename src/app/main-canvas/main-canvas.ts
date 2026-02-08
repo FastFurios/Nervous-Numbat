@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, signal } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
@@ -54,7 +54,8 @@ export class MainCanvas implements AfterViewInit {
   private canvas!:                      HTMLCanvasElement | null
   private ctx?:                         CanvasRenderingContext2D | null
   public  time                                                = signal(0)
-  public  timeSubscription?:            Subscription              
+  public  timeSubscription?:            Subscription
+  public  systemId:                     WritableSignal<string | undefined> = signal(undefined)              
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
 
   constructor(private sys: System) {
@@ -95,6 +96,7 @@ export class MainCanvas implements AfterViewInit {
       window.addEventListener("resize", this.handleCanvasResized.bind(this))
 
       this.sys.initialize(this.ctx, this.sysExecParms)
+      this.systemId.set(this.sys.id)
   }
 
   public numActorsOfActGrp(agIdx: number): number | undefined {

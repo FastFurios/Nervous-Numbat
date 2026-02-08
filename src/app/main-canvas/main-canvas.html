@@ -4,6 +4,7 @@
         <canvas #myCanvas ></canvas>
     </div>
     <div>
+        <p>System: {{ systemId() }}</p>
         <div>
             <button type="button" class="submitButton" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
                 {{ runResumeButtonLabel }}

@@ -210,12 +210,13 @@ export class System {
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-
             const hist = new ActGrpObserversHistogram(ag, 5)
 //          console.log(hist.toString())
 //          console.log(hist.toCsvHeader())
 //          console.log(hist.toCsv())
         }
+        console.log(`system.initialize(): this.id= ${this.id}`)  
+
         this.visualize()
     }
 
