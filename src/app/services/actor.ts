@@ -2,7 +2,7 @@
 //      ACTOR
 // ****************************************************************************************
 
-import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection } from "./geometry"
+import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection, MapperToCanvas } from "./geometry"
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
@@ -108,23 +108,26 @@ export class Actor implements CanvasObject {
     public haloStatus(): Halo {
         return this.halo
     }
-    private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D): void {
+    private visualizeEdgesAndFillTriangle(m2c: MapperToCanvas): void {
         //console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
 
         if (!this.observee1 || !this.observee2) return
-        ctx.beginPath()
-        ctx.moveTo(this.observee1.p.x, this.observee1.p.y)
-        ctx.lineTo(this.p.x, this.p.y)
-        ctx.lineTo(this.observee2.p.x, this.observee2.p.y)
+        const cp  = m2c(this.p)
+        const co1 = m2c(this.observee1.p)
+        const co2 = m2c(this.observee2.p)
+        this.ctx.beginPath()
+        this.ctx.moveTo(co1.x, co1.y)
+        this.ctx.lineTo(cp.x, cp.y)
+        this.ctx.lineTo(co2.x, co2.y)
 
-        if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
+        if (this.mode == Mode.aimForFartherVertex) this.ctx.setLineDash([10, 5]) // [line length, space length]
 
-        ctx.strokeStyle = this.color.rgbString
-        ctx.stroke();
-        ctx.setLineDash([])
-        ctx.closePath()
-        ctx.fillStyle = this.color.rgbWithOpacityString
-        ctx.fill()
+        this.ctx.strokeStyle = this.color.rgbString
+        this.ctx.stroke();
+        this.ctx.setLineDash([])
+        this.ctx.closePath()
+        this.ctx.fillStyle = this.color.rgbWithOpacityString
+        this.ctx.fill()
     }
     get triangleEdges(): [LineSegment, LineSegment, LineSegment]{
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
@@ -134,7 +137,7 @@ export class Actor implements CanvasObject {
     }
     public covers(p: Point): boolean {
         if (!this.observee1 || !this.observee2) return false
-        const verticalThruP = Line.newLineFromPointAndVector(this.ctx, new Point(this.ctx, p.x, 0), new Vector(0, 1))
+        const verticalThruP = Line.fromPointAndVector(this.ctx, new Point(this.ctx, p.x, 0), new Vector(0, 1))
         const edgeIntersecs: Intersection[] = []
         for (let e of this.triangleEdges) {
             const is: Intersection = e.intersects(verticalThruP)
@@ -164,16 +167,16 @@ export class Actor implements CanvasObject {
         this.sysExecParms = sep
     }
 
-    public visualize(ctx: CanvasRenderingContext2D): void {
+    public visualize(m2c: MapperToCanvas): void {
 //      console.log(`Actor${this.id}.visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         let actorLabel: string = ""
         if (this.sysExecParms.display.showActorId)              actorLabel  = `${this.id}`
         if (this.sysExecParms.display.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
         if (this.sysExecParms.display.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
 
-        this.p.visualize(ctx, this.color, this.halo, actorLabel)
+        this.p.visualize(m2c, this.color, this.halo, actorLabel)
 //      console.log(`Actor${this.id}.visualize(): this.sysExecParms.display.showTriangle= ${this.sysExecParms.display.showTriangle}`)
-        if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(ctx)
+        if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(m2c)
     }
     public toString(): string {
         return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x.toFixed(0)}, ${this.observee1?.p.y.toFixed(0)}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 

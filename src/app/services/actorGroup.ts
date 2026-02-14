@@ -2,14 +2,13 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
-import { CanvasObject, Point, Box, Vector } from "./geometry"
+import { CanvasObject, Point, Box, Vector, MapperToCanvas, m2cStraight } from "./geometry"
 import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
-import { Actor } from "./actor"
+import { Actor, Halo } from "./actor"
 //import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
-import { MapperToCanvas } from "./system"
 
 export abstract class ActorGroup implements CanvasObject {
     private showActorJourney: boolean 
@@ -32,19 +31,40 @@ export abstract class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
+    private mapperToCanvas(): MapperToCanvas {
+        const canvasBox: Box      = Box.fromCanvas(this.ctx)
+//        canvasBox.color = new RgbColor(255, 0, 0)
+//        canvasBox.visualize(m2cStraight)
+        const boxAroundThis: Box  = this.boxAround()
+//        boxAroundThis.color = new RgbColor(0, 0, 255)
+//      boxAroundThis.visualize(m2cStraight)
+
+        const scaleFactorGross = boxAroundThis.scaleToFitInto(canvasBox)
+        const scaleFactor: number = scaleFactorGross > 1 ? 1 : scaleFactorGross  
+        const shiftVector: Vector = boxAroundThis.scaledBy(scaleFactor).center().vectorTo(canvasBox.center())
+
+//      canvasBox.center().visualize(m2cStraight, new RgbColor(255, 0, 0), Halo.off, "canvas center")
+//      boxAroundThis.center().visualize(m2cStraight, new RgbColor(0, 0, 255), Halo.off, "AG.boxAround center")
+        console.log(`ActorGroup.mapperToCanvas(): canvasBox= ${canvasBox}; this.boxAround= ${this.boxAround()}; scaleFactor= ${scaleFactor.toFixed(2)}; shift vector= ${shiftVector}`)
+
+      return (p: Point) => new Point(this.ctx, (p.x * scaleFactor) + shiftVector.dx, (p.y * scaleFactor) + shiftVector.dy)
+//    return (p: Point) => p
+    }
+
     public visualize() {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
+        const m2c = this.mapperToCanvas()
         if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
-            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(this.ctx)
+            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(m2c)
             return
         }
-        this.actors.forEach(a => a.visualize(this.ctx))
+        this.actors.forEach(a => a.visualize(m2c))
         if (!this.showActorGroupIdAndQuality) return 
-        this.visualizeIdAndQuality()
+        this.visualizeIdAndQuality(m2c)
     }
-    private visualizeIdAndQuality(remark: string = ""): void {
-        const ctr = this.centerPoint()
+    private visualizeIdAndQuality(m2c: MapperToCanvas, remark: string = ""): void {
+        const ctr = m2c(this.centerPoint())
         this.ctx.beginPath()
         this.ctx.moveTo(ctr.x, ctr.y)
         this.ctx.closePath() 
@@ -64,13 +84,6 @@ export abstract class ActorGroup implements CanvasObject {
                          this.actors.map(a => a.p.x).reduce((acc, curr) => acc + curr, 0) / this.actors.length,
                          this.actors.map(a => a.p.y).reduce((acc, curr) => acc + curr, 0) / this.actors.length)
     }
-    public onCanvas(): MapperToCanvas {
-        const canvasBox: Box      = Box.fromCanvas(this.ctx)
-        const boxAroundThis: Box  = this.boxAround()
-        const scaleFactor: number = boxAroundThis.scaleToFitInto(canvasBox)
-        const shiftVector: Vector = boxAroundThis.center().vectorTo(canvasBox.center())
-        return (x: number, y: number) => [(x * scaleFactor) + shiftVector.dx, (y * scaleFactor) + shiftVector.dy]
-    }
     public expanse(p: Point): number {
         return this.actors.map(a => a.p.distanceTo(p)).reduce((acc, curr) => acc + curr, 0) / this.actors.length
     } 
@@ -79,7 +92,9 @@ export abstract class ActorGroup implements CanvasObject {
         const rightMost = this.actors.map(a => a.p.x).reduce((max, x) => x > max ? x : max)
         const bottom    = this.actors.map(a => a.p.y).reduce((min, y) => y < min ? y : min)
         const top       = this.actors.map(a => a.p.y).reduce((max, y) => y > max ? y : max)
-        return new Box(this.ctx, "", new Point(this.ctx, leftMost, bottom), new Point(this.ctx, rightMost, top), cDefaultColor) 
+        const boxAround = new Box(this.ctx, "", new Point(this.ctx, leftMost, bottom), new Point(this.ctx, rightMost, top), cDefaultColor) 
+//      boxAround.visualize(m2cStraight)
+        return boxAround
     }
     public get avgTriangleQuality(): number {
         return this.actors.map(a => a.triangleQuality).reduce((q1, q2) => q1 + q2) / this.actors.length

@@ -109,7 +109,7 @@ type NumObserversOfActor = {
 class ActGrpObserversHistogram {
     public segments: HistSegment[] = []
     constructor(public actGrp: ActorGroup, numSegments: number) { 
-        console.log(`ActGrpObserverHIstogram: actGrp.actors.length= ${actGrp.actors.length}`)
+        //console.log(`ActGrpObserverHIstogram: actGrp.actors.length= ${actGrp.actors.length}`)
         for (let i = 0, from = 0, span = Math.ceil((actGrp.actors.length) / numSegments), to = span; 
                  i < actGrp.actors.length / span; 
                  i++, from += span, to = from + span) {
@@ -150,7 +150,7 @@ class ActGrpObserversHistogram {
     dead      = "dead"
 }
 
-export type MapperToCanvas = (x: number, y: number) => [number, number]  // x and y are the caluclated coordinates in the iterations; the returned tuple is the coodinate mapped onto the canvas
+//export type MapperToCanvas = (x: number, y: number) => [number, number]  // x and y are the caluclated coordinates in the iterations; the returned tuple is the coodinate mapped onto the canvas
 
 // ****************************************************************************************
 //      SYSTEM SERVICE
@@ -237,7 +237,7 @@ export class System {
 
     public stopIterating(): void {
         this.iterationMode = IterationMode.paused
-        console.log(`ActorGroup #0 Q-log= ${(<ActorGroupDynamic>this.actGrps[0]).log}`)
+        //console.log(`ActorGroup #0 Q-log= ${(<ActorGroupDynamic>this.actGrps[0]).log}`)
     }
 
     public runResumeIterating(): Observable<number> | undefined {

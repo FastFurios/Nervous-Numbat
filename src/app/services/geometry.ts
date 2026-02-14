@@ -9,6 +9,7 @@ import { cDefaultColor, RgbColor } from "./color"
 import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
+import { LiteralMapExpr } from "@angular/compiler"
 
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
@@ -18,9 +19,12 @@ type  Infinite           = undefined
 const infinite: Infinite = undefined
 export interface CanvasObject {
     ctx: CanvasRenderingContext2D
-    visualize(ctx: CanvasRenderingContext2D, color: RgbColor): void
+    visualize(m2c: MapperToCanvas, color?: RgbColor): void
     toString(): string
 }
+
+export type MapperToCanvas = (p: Point) => Point  // maps a Point of the systen onto a Point on the canvas 
+export function m2cStraight(p: Point): Point { return p } 
 
 // --------------------------------------------------------------------------------------
 //     POINT  
@@ -84,28 +88,32 @@ export class Point implements CanvasObject {
     public equalsTo(p: Point): boolean {
         return Math.abs(p.x - this.x) < cTolerance && Math.abs(p.y - this.y) < cTolerance
     }
-    public visualize(ctx: CanvasRenderingContext2D, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
+    public scaledBy(factor: number): Point {
+        return new Point(this.ctx, this.x * factor, this.y * factor, this.id)
+    }
+    public visualize(m2c: MapperToCanvas, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
 //      console.log(`Point(${this.x.toFixed(0)} / ${this.y.toFixed(0)}).visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, cActorDotRadius, 0, 2 * Math.PI)
+        this.ctx.beginPath()
+        const cp = m2c(this)
+        this.ctx.arc(cp.x, cp.y, cActorDotRadius, 0, 2 * Math.PI)
         if (halo == Halo.off) {
-            ctx.strokeStyle = color.rgbString
-            ctx.stroke()
+            this.ctx.strokeStyle = color.rgbString
+            this.ctx.stroke()
         }
         else {
 //          if (halo == Halo.on) console.log(`visualizing point p= ${this}`)
-            ctx.strokeStyle = new RgbColor(255, 0, 0).rgbString
-            ctx.lineWidth = 10
-            ctx.stroke()
-            ctx.lineWidth = 1
-            ctx.strokeStyle = color.rgbString
+            this.ctx.strokeStyle = new RgbColor(255, 0, 0).rgbString
+            this.ctx.lineWidth = 10
+            this.ctx.stroke()
+            this.ctx.lineWidth = 1
+            this.ctx.strokeStyle = color.rgbString
         }
-        ctx.fillStyle = color.rgbString
-        ctx.fill()
-        ctx.closePath
+        this.ctx.fillStyle = color.rgbString
+        this.ctx.fill()
+        this.ctx.closePath
         if (label != "") {
-            ctx.font = "12px Arial"
-            ctx.fillText(`${label}`, this.x, this.y + cTextOffset)
+            this.ctx.font = "12px Arial"
+            this.ctx.fillText(`${label} (${this.x.toFixed(0)}/${this.y.toFixed(0)})`, this.x, this.y + cTextOffset)
         }
     }
     public toString(): string {
@@ -130,12 +138,15 @@ export class Box implements CanvasObject {
         return this.upperRight.y - this.lowerLeft.y
     }
     public center(): Point {
-        return new Point(this.ctx, this.width / 2, this.height / 2 )
+        return new Point(this.ctx, this.lowerLeft.x + (this.width / 2), this.upperRight.y - (this.height / 2) )
     }
     public scaleToFitInto(b: Box): number { // scaling factor to be applied to this box in order to fit into b
         const xScaling = b.width  / this.width
         const yScaling = b.height / this.height
         return xScaling < yScaling ? xScaling : yScaling
+    }
+    public scaledBy(factor: number): Box {
+        return new Box(this.ctx, this.id, this.lowerLeft.scaledBy(factor), this.upperRight.scaledBy(factor), this.color)
     }
 /*
     public scaleToFitIntoCanvas(): number { // scaling factor to be applied to this box in order to fit into the canvas
@@ -143,13 +154,15 @@ export class Box implements CanvasObject {
         return this.scaleToFitInto(canvas)
     }
 */
-    public visualize(): void {
+    public visualize(m2c: MapperToCanvas): void {
+        const lowerLeft  = m2c(this.lowerLeft)
+        const upperRight = m2c(this.upperRight)
         this.ctx.beginPath()
-        this.ctx.moveTo(this.lowerLeft.x,  this.lowerLeft.y)
-        this.ctx.lineTo(this.lowerLeft.x,  this.upperRight.y)
-        this.ctx.lineTo(this.upperRight.x, this.upperRight.y)
-        this.ctx.lineTo(this.upperRight.x, this.lowerLeft.y)
-        this.ctx.lineTo(this.lowerLeft.x,  this.lowerLeft.y)
+        this.ctx.moveTo(lowerLeft.x,  lowerLeft.y)
+        this.ctx.lineTo(lowerLeft.x,  upperRight.y)
+        this.ctx.lineTo(upperRight.x, upperRight.y)
+        this.ctx.lineTo(upperRight.x, lowerLeft.y)
+        this.ctx.lineTo(lowerLeft.x,  lowerLeft.y)
         this.ctx.strokeStyle = this.color.rgbString
         this.ctx.stroke();
         this.ctx.closePath()
@@ -231,7 +244,7 @@ export type Intersection     = { type:   IntersectionType,
                           p2?:    Point }
 
 export class Line implements CanvasObject {
-    static newLineFromPointAndVector(ctx: CanvasRenderingContext2D, p: Point, v: Vector, id: string = ""): Line {
+    static fromPointAndVector(ctx: CanvasRenderingContext2D, p: Point, v: Vector, id: string = ""): Line {
         return new Line(ctx, p, p.addFree(v), id)
     }
     public uv: UnitVector
@@ -243,7 +256,7 @@ export class Line implements CanvasObject {
         return this.uv.perpendicular
     }
     public parallel(p: Point, id: string = ""): Line {
-        return Line.newLineFromPointAndVector(this.ctx, p, this.uv, id)
+        return Line.fromPointAndVector(this.ctx, p, this.uv, id)
     }
     public isParallel(l: Line): boolean {
         return this.uv.isEqualInOneOfBothDirection(l.uv)
@@ -274,27 +287,28 @@ export class Line implements CanvasObject {
         const qy = l.uv.dy / this.uv.dy
         return { type: "point", p: l.base.addFree(l.uv.scale((ky - kx) / (qx - qy))) }
     }
-    public visualize(ctx: CanvasRenderingContext2D, color: RgbColor): void {
-        ctx.beginPath()
+    public visualize(m2c: MapperToCanvas, color: RgbColor): void {
+        const cbase = m2c(this.base)
+        this.ctx.beginPath()
         if (this.isVertical) {
-            ctx.moveTo(this.base.x, 0)
-            ctx.lineTo(this.base.x, ctx.canvas.height)
+            this.ctx.moveTo(cbase.x, 0)
+            this.ctx.lineTo(cbase.x, this.ctx.canvas.height)
         } else
         if (this.isHorizontal) {
-            ctx.moveTo(0, this.base.y)
-            ctx.lineTo(ctx.canvas.width, this.base.y)
+            this.ctx.moveTo(0, cbase.y)
+            this.ctx.lineTo(this.ctx.canvas.width, cbase.y)
         }
         else {
-            const lowerLine = new Line(this.ctx, new Point(this.ctx, 0, 0), new Point(this.ctx, ctx.canvas.width, 0), "lower")
-            const upperLine = new Line(this.ctx, new Point(this.ctx, 0, ctx.canvas.height), new Point(this.ctx, ctx.canvas.width, ctx.canvas.height), "upper")
-            const boundaryIntersectionLower  = this.intersects(lowerLine)                
-            const boundaryIntersectionUpper  = this.intersects(upperLine) 
-            ctx.moveTo(boundaryIntersectionLower.p!.x, boundaryIntersectionLower.p!.y)
-            ctx.lineTo(boundaryIntersectionUpper.p!.x, boundaryIntersectionUpper.p!.y)
+            const lowerLine = new Line(this.ctx, new Point(this.ctx, 0, 0), new Point(this.ctx, this.ctx.canvas.width, 0), "lower")
+            const upperLine = new Line(this.ctx, new Point(this.ctx, 0, this.ctx.canvas.height), new Point(this.ctx, this.ctx.canvas.width, this.ctx.canvas.height), "upper")
+            const boundaryIntersectionLower  = Line.fromPointAndVector(this.ctx, m2c(this.base), this.uv).intersects(lowerLine)                
+            const boundaryIntersectionUpper  = Line.fromPointAndVector(this.ctx, m2c(this.base), this.uv).intersects(upperLine) 
+            this.ctx.moveTo(boundaryIntersectionLower.p!.x, boundaryIntersectionLower.p!.y)
+            this.ctx.lineTo(boundaryIntersectionUpper.p!.x, boundaryIntersectionUpper.p!.y)
         }
-        ctx.strokeStyle = color.rgbString
-        ctx.stroke();
-        ctx.closePath()
+        this.ctx.strokeStyle = color.rgbString
+        this.ctx.stroke();
+        this.ctx.closePath()
     }
     public toString(): string {
         return `Line ${this.id}: Base ${this.base}, ${this.uv})`
@@ -340,13 +354,15 @@ export class LineSegment extends Line {
         return [v0, v1]
     }
 
-    public override visualize(ctx: CanvasRenderingContext2D, color: RgbColor): void {
-        ctx.beginPath()
-        ctx.moveTo(this.base.x, this.base.y)
-        ctx.lineTo(this.p2.x,   this.p2.y)
-        ctx.strokeStyle = color.rgbString
-        ctx.stroke();
-        ctx.closePath()
+    public override visualize(m2c: MapperToCanvas, color: RgbColor): void {
+        const cbase = m2c(this.base)
+        const cp2   = m2c(this.p2)
+        this.ctx.beginPath()
+        this.ctx.moveTo(cbase.x, cbase.y)
+        this.ctx.lineTo(cp2.x,   cp2.y)
+        this.ctx.strokeStyle = color.rgbString
+        this.ctx.stroke();
+        this.ctx.closePath()
     }
     public override toString(): string {
         return `Line segment ${this.id}: from ${this.base} to ${this.p2}, length= ${this.length.toFixed(1)}`
