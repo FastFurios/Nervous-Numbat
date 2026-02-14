@@ -2,13 +2,14 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
-import { CanvasObject, Point, Box } from "./geometry"
+import { CanvasObject, Point, Box, Vector } from "./geometry"
 import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
-import { RgbColor, ColorScheme } from "./color"
+import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor } from "./actor"
 //import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
+import { MapperToCanvas } from "./system"
 
 export abstract class ActorGroup implements CanvasObject {
     private showActorJourney: boolean 
@@ -63,9 +64,23 @@ export abstract class ActorGroup implements CanvasObject {
                          this.actors.map(a => a.p.x).reduce((acc, curr) => acc + curr, 0) / this.actors.length,
                          this.actors.map(a => a.p.y).reduce((acc, curr) => acc + curr, 0) / this.actors.length)
     }
+    public onCanvas(): MapperToCanvas {
+        const canvasBox: Box      = Box.fromCanvas(this.ctx)
+        const boxAroundThis: Box  = this.boxAround()
+        const scaleFactor: number = boxAroundThis.scaleToFitInto(canvasBox)
+        const shiftVector: Vector = boxAroundThis.center().vectorTo(canvasBox.center())
+        return (x: number, y: number) => [(x * scaleFactor) + shiftVector.dx, (y * scaleFactor) + shiftVector.dy]
+    }
     public expanse(p: Point): number {
         return this.actors.map(a => a.p.distanceTo(p)).reduce((acc, curr) => acc + curr, 0) / this.actors.length
     } 
+    public boxAround(): Box {
+        const leftMost  = this.actors.map(a => a.p.x).reduce((min, x) => x < min ? x : min)
+        const rightMost = this.actors.map(a => a.p.x).reduce((max, x) => x > max ? x : max)
+        const bottom    = this.actors.map(a => a.p.y).reduce((min, y) => y < min ? y : min)
+        const top       = this.actors.map(a => a.p.y).reduce((max, y) => y > max ? y : max)
+        return new Box(this.ctx, "", new Point(this.ctx, leftMost, bottom), new Point(this.ctx, rightMost, top), cDefaultColor) 
+    }
     public get avgTriangleQuality(): number {
         return this.actors.map(a => a.triangleQuality).reduce((q1, q2) => q1 + q2) / this.actors.length
     }

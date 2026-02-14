@@ -1,5 +1,5 @@
-import { Injectable, NgZone } from '@angular/core'
-import { BehaviorSubject, Observable, Subscription, interval } from 'rxjs'
+import { Injectable } from '@angular/core'
+import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms, SystemUiReferences } from "../main-canvas/main-canvas"
 import { Point, Box } from "./geometry"
@@ -150,6 +150,8 @@ class ActGrpObserversHistogram {
     dead      = "dead"
 }
 
+export type MapperToCanvas = (x: number, y: number) => [number, number]  // x and y are the caluclated coordinates in the iterations; the returned tuple is the coodinate mapped onto the canvas
+
 // ****************************************************************************************
 //      SYSTEM SERVICE
 // ****************************************************************************************
@@ -267,9 +269,11 @@ export class System {
         return actorsInRange.find(a => p.distanceTo(a.p) == minDistance) || actorsInRange[0]
     }
 
+
     public visualize(): void {
         if (!this.showActorJourney) this.clearCanvas()
 //      console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
+
         this.actGrps.forEach(ag => ag.visualize())
     }
     

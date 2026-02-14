@@ -5,7 +5,7 @@
 // Exakte Flächenberechnung der Dreiecksgruppe: 
 // $ npm install martinez-polygon-clipping (siehe ChatGPT für "Polygon Union")
 
-import { RgbColor } from "./color"
+import { cDefaultColor, RgbColor } from "./color"
 import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
@@ -57,7 +57,7 @@ export class Point implements CanvasObject {
     }
     public add(vec: Vector): Point {  // alias
 //      return this.addConfinedUnelastic(vec)
-        return this.addConfinedElastic(vec)
+        return this.addFree(vec)
     }
     public vectorTo(p: Point): Vector {
         return new Vector(p.x - this.x, p.y - this.y)
@@ -117,8 +117,32 @@ export class Point implements CanvasObject {
 //     BOX  
 // --------------------------------------------------------------------------------------
 export class Box implements CanvasObject {
+    static fromCanvas(ctx: CanvasRenderingContext2D): Box {
+        return new Box(ctx, "canvas", new Point(ctx, 0, 0), new Point(ctx, ctx.canvas.width, ctx.canvas.height), cDefaultColor)
+    }
+
     constructor(public ctx: CanvasRenderingContext2D, public id: string, public lowerLeft: Point, public upperRight: Point, public color: RgbColor) { }
 
+    private get width(): number {
+        return this.upperRight.x - this.lowerLeft.x
+    }
+    private get height(): number {
+        return this.upperRight.y - this.lowerLeft.y
+    }
+    public center(): Point {
+        return new Point(this.ctx, this.width / 2, this.height / 2 )
+    }
+    public scaleToFitInto(b: Box): number { // scaling factor to be applied to this box in order to fit into b
+        const xScaling = b.width  / this.width
+        const yScaling = b.height / this.height
+        return xScaling < yScaling ? xScaling : yScaling
+    }
+/*
+    public scaleToFitIntoCanvas(): number { // scaling factor to be applied to this box in order to fit into the canvas
+        const canvas = Box.fromCanvas(this.ctx)
+        return this.scaleToFitInto(canvas)
+    }
+*/
     public visualize(): void {
         this.ctx.beginPath()
         this.ctx.moveTo(this.lowerLeft.x,  this.lowerLeft.y)
