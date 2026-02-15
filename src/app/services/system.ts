@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
-import { SystemExecParms, SystemUiReferences } from "../main-canvas/main-canvas"
-import { Point, Box } from "./geometry"
-import { ColorSchemes } from "./color"
+import { SystemExecParms } from "../main-canvas/main-canvas"
+import { Point, Box, Line, UnitVector, m2cStraight, Vector } from "./geometry"
+import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
 import { cActorPickMargin  } from "./parameters"
@@ -270,10 +270,31 @@ export class System {
     }
 
 
+    private visualizeGrid(): void {
+        const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
+        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-lower-left")
+        const m2c = this.actGrps[0].mapperToCanvas()
+        const canvasLowerLeftScaled:  Point = m2c(canvasLowerLeft)
+        const canvasUpperRightScaled: Point = m2c(canvasUpperRight)
+        const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+        canvasBoxScaled.visualize(m2c)
+
+        for (let i=-10, offset = 0; i < 10; i++, offset += canvasBoxScaled.height) {
+            const horizontalLine: Line = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(0, offset)), new UnitVector(1, 0))
+            horizontalLine.visualize(m2c, new RgbColor(230, 230, 230))
+        }
+        for (let i=-10, offset = 0; i < 10; i++, offset += canvasBoxScaled.width) {
+            const verticalLine: Line   = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(offset, 0)), new UnitVector(0, 1))
+            verticalLine.visualize(m2c, new RgbColor(230, 230, 230))
+        }
+    }
+
+
+
     public visualize(): void {
         if (!this.showActorJourney) this.clearCanvas()
 //      console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
-
+        this.visualizeGrid()
         this.actGrps.forEach(ag => ag.visualize())
     }
     

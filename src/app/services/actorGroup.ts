@@ -31,7 +31,7 @@ export abstract class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    private mapperToCanvas(): MapperToCanvas {
+    public mapperToCanvas(): MapperToCanvas {
         const canvasBox: Box      = Box.fromCanvas(this.ctx)
 //        canvasBox.color = new RgbColor(255, 0, 0)
 //        canvasBox.visualize(m2cStraight)
@@ -45,10 +45,10 @@ export abstract class ActorGroup implements CanvasObject {
 
 //      canvasBox.center().visualize(m2cStraight, new RgbColor(255, 0, 0), Halo.off, "canvas center")
 //      boxAroundThis.center().visualize(m2cStraight, new RgbColor(0, 0, 255), Halo.off, "AG.boxAround center")
-        console.log(`ActorGroup.mapperToCanvas(): canvasBox= ${canvasBox}; this.boxAround= ${this.boxAround()}; scaleFactor= ${scaleFactor.toFixed(2)}; shift vector= ${shiftVector}`)
+//      console.log(`ActorGroup.mapperToCanvas(): canvasBox= ${canvasBox}; this.boxAround= ${this.boxAround()}; scaleFactor= ${scaleFactor.toFixed(2)}; shift vector= ${shiftVector}`)
 
-      return (p: Point) => new Point(this.ctx, (p.x * scaleFactor) + shiftVector.dx, (p.y * scaleFactor) + shiftVector.dy)
-//    return (p: Point) => p
+        return (p: Point) => new Point(this.ctx, (p.x * scaleFactor) + shiftVector.dx, (p.y * scaleFactor) + shiftVector.dy)
+//      return (p: Point) => p
     }
 
     public visualize() {
@@ -74,7 +74,7 @@ export abstract class ActorGroup implements CanvasObject {
         const expanse = this.expanse(this.centerPoint())
         const avgTriangleQuality = this.avgTriangleQuality
         const performance = expanse * avgTriangleQuality 
-        this.ctx.fillText(`${this.id} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
+        this.ctx.fillText(`${this.id} ${this.centerPoint()} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
     } 
     public nearbyActors(p: Point, margin: number): Actor[] {
         return this.actors.filter(a => p.nearby(a.p, margin))

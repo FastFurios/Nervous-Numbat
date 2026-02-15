@@ -131,10 +131,10 @@ export class Box implements CanvasObject {
 
     constructor(public ctx: CanvasRenderingContext2D, public id: string, public lowerLeft: Point, public upperRight: Point, public color: RgbColor) { }
 
-    private get width(): number {
+    public get width(): number {
         return this.upperRight.x - this.lowerLeft.x
     }
-    private get height(): number {
+    public get height(): number {
         return this.upperRight.y - this.lowerLeft.y
     }
     public center(): Point {
