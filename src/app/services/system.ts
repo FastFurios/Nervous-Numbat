@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
-import { Point, Box, Line, UnitVector, m2cStraight, Vector } from "./geometry"
+import { Point, Box, Line, UnitVector, Vector,  MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
@@ -17,6 +17,7 @@ import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList }
 const cVirtalGridWidth  = 100
 const cVirtalGridHeight = 100
 
+// --- CONFIG POINT ----------------------------------------------------------------------
 export class ConfigPoint { // virtual grid 
     static new(pUpperRight: Point, p: Point): ConfigPoint {
         return new ConfigPoint(p.x / pUpperRight.x * cVirtalGridWidth, p.y / pUpperRight.y * cVirtalGridHeight)
@@ -27,6 +28,7 @@ export class ConfigPoint { // virtual grid
   }
 }
 
+// --- CONFIG BOX ----------------------------------------------------------------------
 export class ConfigBox {
   static new(pUpperRight: Point, b: Box): ConfigBox {
       return new ConfigBox(ConfigPoint.new(pUpperRight, b.lowerLeft), ConfigPoint.new(pUpperRight, b.upperRight))
@@ -35,6 +37,7 @@ export class ConfigBox {
   }
 }
 
+// --- CONFIG ACTOR ----------------------------------------------------------------------
 export class ConfigActor {
   static new(pUpperRight: Point, a: Actor): ConfigActor {
     return new ConfigActor(a.id, ConfigPoint.new(pUpperRight, a.p).x, ConfigPoint.new(pUpperRight, a.p).y, a.observee1?.id, a.observee2?.id)
@@ -65,6 +68,7 @@ export class ConfigActor {
   }
 } 
 
+// --- CONFIG ACTOR GROUP ----------------------------------------------------------------------
 export class ConfigActorGroup {
   static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroup {
     return new ConfigActorGroup(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
@@ -90,11 +94,13 @@ export class ConfigActorGroup {
   }
 }
 
+// --- CONFIGURATION ----------------------------------------------------------------------
 export class Configuration {
     constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
 }
 
 
+// --- ACTOR GROUP OBSERVERS HISTOGRAMM ----------------------------------------------------------------------
 type HistSegment = {
     from:   number
     to:     number
@@ -143,15 +149,13 @@ class ActGrpObserversHistogram {
     }
 }
 
+// --- ITERATION CONTROL ----------------------------------------------------------------------
 
 /* no export */ export enum IterationMode {
     iterating = "iterating",
     paused    = "paused",
     dead      = "dead"
 }
-
-//export type MapperToCanvas = (x: number, y: number) => [number, number]  // x and y are the caluclated coordinates in the iterations; the returned tuple is the coodinate mapped onto the canvas
-
 // ****************************************************************************************
 //      SYSTEM SERVICE
 // ****************************************************************************************
@@ -173,8 +177,8 @@ export class System {
     private iterationMode:      IterationMode                           = IterationMode.paused
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
+    private mbrc:               MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
     
-
     constructor() { }
 
 // ---------------------------------------------------------------------------------------
@@ -212,21 +216,24 @@ export class System {
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-            const hist = new ActGrpObserversHistogram(ag, 5)
+//           const hist = new ActGrpObserversHistogram(ag, 5)
 //          console.log(hist.toString())
 //          console.log(hist.toCsvHeader())
 //          console.log(hist.toCsv())
         }
         console.log(`system.initialize(): this.id= ${this.id}`)  
 
+        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas()
         this.visualize()
+
+        console.log(`system.initialize(): Test mappers: ${this.mbrc.canvasToReal(this.mbrc.realToCanvas(new Point(this.ctx, 10, 10)))}`)
     }
 
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations      = sep.run.maxIterations
         this.intervalMillisecs  = sep.run.intervalMillisecs
         this.showActorJourney   = sep.display.showActorJourney
-        this.actGrps.forEach(ag => ag.updateParameters(sep))
+        this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc.realToCanvas))
         this.clearCanvas()
         this.visualize()
     }
@@ -251,7 +258,8 @@ export class System {
                 this.time$ = undefined
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
-            this.actGrps.forEach(ag => ag.moveActors())
+            this.actGrps.forEach(ag => ag.moveActors(this.mbrc.realToCanvas))
+            this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas()
             this.visualize()
         })
         return time$
@@ -273,19 +281,18 @@ export class System {
     private visualizeGrid(): void {
         const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
         const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-lower-left")
-        const m2c = this.actGrps[0].mapperToCanvas()
-        const canvasLowerLeftScaled:  Point = m2c(canvasLowerLeft)
-        const canvasUpperRightScaled: Point = m2c(canvasUpperRight)
+        const canvasLowerLeftScaled:  Point = this.mbrc.realToCanvas(canvasLowerLeft)
+        const canvasUpperRightScaled: Point = this.mbrc.realToCanvas(canvasUpperRight)
         const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
-        canvasBoxScaled.visualize(m2c)
+        canvasBoxScaled.visualize(this.mbrc.realToCanvas)
 
-        for (let i=-10, offset = 0; i < 10; i++, offset += canvasBoxScaled.height) {
+        for (let i=-10, offset = i * canvasBoxScaled.height; i <= 10; i++, offset += canvasBoxScaled.height) {
             const horizontalLine: Line = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(0, offset)), new UnitVector(1, 0))
-            horizontalLine.visualize(m2c, new RgbColor(230, 230, 230))
+            horizontalLine.visualize(this.mbrc.realToCanvas, new RgbColor(230, 230, 230))
         }
-        for (let i=-10, offset = 0; i < 10; i++, offset += canvasBoxScaled.width) {
+        for (let i=-10, offset = i * canvasBoxScaled.width;  i <= 10; i++, offset += canvasBoxScaled.width) {
             const verticalLine: Line   = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(offset, 0)), new UnitVector(0, 1))
-            verticalLine.visualize(m2c, new RgbColor(230, 230, 230))
+            verticalLine.visualize(this.mbrc.realToCanvas, new RgbColor(230, 230, 230))
         }
     }
 
@@ -295,7 +302,7 @@ export class System {
         if (!this.showActorJourney) this.clearCanvas()
 //      console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
         this.visualizeGrid()
-        this.actGrps.forEach(ag => ag.visualize())
+        this.actGrps.forEach(ag => ag.visualize(this.mbrc.realToCanvas))
     }
     
     public clearCanvas(): void {
@@ -315,8 +322,8 @@ export class System {
 //      handle UI events
 // ---------------------------------------------------------------------------------------
 
-    public handleActorSelect(x: number, y: number): void {
-        this.pickedActor = this.closestActorInRange(new Point(this.ctx!, x, y), cActorPickMargin)
+    public handleActorSelect(x: number, y: number): void {  // x, y are Points on the canvas
+        this.pickedActor = this.closestActorInRange(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)), cActorPickMargin)
         if (!this.pickedActor) return
         this.pickedActor.turnHaloOn()
         this.visualize()
@@ -324,7 +331,7 @@ export class System {
 
     public handleActorMove(x: number, y: number): void {
         if (!this.pickedActor) return
-        this.pickedActor.setPosition(new Point(this.ctx!, x, y))
+        this.pickedActor.setPosition(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)))
         this.visualize()
     }
 

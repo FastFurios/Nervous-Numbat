@@ -2,7 +2,7 @@
 //      ACTOR
 // ****************************************************************************************
 
-import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection, MapperToCanvas } from "./geometry"
+import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection, MapperRealToCanvas } from "./geometry"
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
@@ -108,7 +108,7 @@ export class Actor implements CanvasObject {
     public haloStatus(): Halo {
         return this.halo
     }
-    private visualizeEdgesAndFillTriangle(m2c: MapperToCanvas): void {
+    private visualizeEdgesAndFillTriangle(m2c: MapperRealToCanvas): void {
         //console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
 
         if (!this.observee1 || !this.observee2) return
@@ -167,7 +167,7 @@ export class Actor implements CanvasObject {
         this.sysExecParms = sep
     }
 
-    public visualize(m2c: MapperToCanvas): void {
+    public visualize(m2c: MapperRealToCanvas): void {
 //      console.log(`Actor${this.id}.visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         let actorLabel: string = ""
         if (this.sysExecParms.display.showActorId)              actorLabel  = `${this.id}`

@@ -9,7 +9,6 @@ import { cDefaultColor, RgbColor } from "./color"
 import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
-import { LiteralMapExpr } from "@angular/compiler"
 
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
@@ -19,12 +18,24 @@ type  Infinite           = undefined
 const infinite: Infinite = undefined
 export interface CanvasObject {
     ctx: CanvasRenderingContext2D
-    visualize(m2c: MapperToCanvas, color?: RgbColor): void
+    visualize(m2c: MapperRealToCanvas, color?: RgbColor): void
     toString(): string
 }
 
-export type MapperToCanvas = (p: Point) => Point  // maps a Point of the systen onto a Point on the canvas 
-export function m2cStraight(p: Point): Point { return p } 
+// "real": means a real coordinate as it lives in the geometry before being mapped onto the canvas for display 
+export type MapperRealToCanvas = (rp: Point) => Point
+export type MapperCanvasToReal = (cp: Point) => Point
+export type MapperBtwRealAndCanvas = { 
+    realToCanvas: MapperRealToCanvas,  // maps a real Point of the systen onto a Point on the canvas 
+    canvasToReal: MapperCanvasToReal   // maps a canvas Point onto a real Point in the system
+}
+export function mapperBtwRealAndCanvasStraight(): MapperBtwRealAndCanvas {
+    return {
+        realToCanvas: (rp: Point): Point => rp,
+        canvasToReal: (cp: Point): Point => cp
+    }
+}
+
 
 // --------------------------------------------------------------------------------------
 //     POINT  
@@ -91,7 +102,7 @@ export class Point implements CanvasObject {
     public scaledBy(factor: number): Point {
         return new Point(this.ctx, this.x * factor, this.y * factor, this.id)
     }
-    public visualize(m2c: MapperToCanvas, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
+    public visualize(m2c: MapperRealToCanvas, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
 //      console.log(`Point(${this.x.toFixed(0)} / ${this.y.toFixed(0)}).visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         this.ctx.beginPath()
         const cp = m2c(this)
@@ -154,7 +165,7 @@ export class Box implements CanvasObject {
         return this.scaleToFitInto(canvas)
     }
 */
-    public visualize(m2c: MapperToCanvas): void {
+    public visualize(m2c: MapperRealToCanvas): void {
         const lowerLeft  = m2c(this.lowerLeft)
         const upperRight = m2c(this.upperRight)
         this.ctx.beginPath()
@@ -287,7 +298,7 @@ export class Line implements CanvasObject {
         const qy = l.uv.dy / this.uv.dy
         return { type: "point", p: l.base.addFree(l.uv.scale((ky - kx) / (qx - qy))) }
     }
-    public visualize(m2c: MapperToCanvas, color: RgbColor): void {
+    public visualize(m2c: MapperRealToCanvas, color: RgbColor): void {
         const cbase = m2c(this.base)
         this.ctx.beginPath()
         if (this.isVertical) {
@@ -354,7 +365,7 @@ export class LineSegment extends Line {
         return [v0, v1]
     }
 
-    public override visualize(m2c: MapperToCanvas, color: RgbColor): void {
+    public override visualize(m2c: MapperRealToCanvas, color: RgbColor): void {
         const cbase = m2c(this.base)
         const cp2   = m2c(this.p2)
         this.ctx.beginPath()

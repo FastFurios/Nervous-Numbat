@@ -2,13 +2,17 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
-import { CanvasObject, Point, Box, Vector, MapperToCanvas, m2cStraight } from "./geometry"
+import { CanvasObject, Point, Box, Vector, MapperBtwRealAndCanvas, MapperRealToCanvas } from "./geometry"
 import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor, Halo } from "./actor"
-//import { cShowActorGroupIdAndQuality, cMinTriangleQuality, cShowOneActorOnlyWithTheGivenAgIndex } from "./parameters"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
+
+
+// ****************************************************************************************
+//      abstract ACTOR GROUP
+// ****************************************************************************************
 
 export abstract class ActorGroup implements CanvasObject {
     private showActorJourney: boolean 
@@ -31,30 +35,24 @@ export abstract class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    public mapperToCanvas(): MapperToCanvas {
+    public mapperBtwRealAndCanvas(): MapperBtwRealAndCanvas {
         const canvasBox: Box      = Box.fromCanvas(this.ctx)
-//        canvasBox.color = new RgbColor(255, 0, 0)
-//        canvasBox.visualize(m2cStraight)
         const boxAroundThis: Box  = this.boxAround()
-//        boxAroundThis.color = new RgbColor(0, 0, 255)
-//      boxAroundThis.visualize(m2cStraight)
-
-        const scaleFactorGross = boxAroundThis.scaleToFitInto(canvasBox)
+        const scaleFactorGross    = boxAroundThis.scaleToFitInto(canvasBox)
         const scaleFactor: number = scaleFactorGross > 1 ? 1 : scaleFactorGross  
         const shiftVector: Vector = boxAroundThis.scaledBy(scaleFactor).center().vectorTo(canvasBox.center())
-
-//      canvasBox.center().visualize(m2cStraight, new RgbColor(255, 0, 0), Halo.off, "canvas center")
-//      boxAroundThis.center().visualize(m2cStraight, new RgbColor(0, 0, 255), Halo.off, "AG.boxAround center")
-//      console.log(`ActorGroup.mapperToCanvas(): canvasBox= ${canvasBox}; this.boxAround= ${this.boxAround()}; scaleFactor= ${scaleFactor.toFixed(2)}; shift vector= ${shiftVector}`)
-
-        return (p: Point) => new Point(this.ctx, (p.x * scaleFactor) + shiftVector.dx, (p.y * scaleFactor) + shiftVector.dy)
-//      return (p: Point) => p
+        const mapperRealToCanvas  = (rp: Point) => new Point(this.ctx, (rp.x * scaleFactor) + shiftVector.dx, (rp.y * scaleFactor) + shiftVector.dy)
+        const mapperCanvasToReal  = (cp: Point) => new Point(this.ctx, ((cp.x - shiftVector.dx) / scaleFactor) , ((cp.y - shiftVector.dy) / scaleFactor) )
+        return {
+            realToCanvas: mapperRealToCanvas,
+            canvasToReal: mapperCanvasToReal
+        }
+//      return { realToCanvas: (p: Point) => p, canvasToReal: (p: Point) => p  }
     }
-
-    public visualize() {
+    public visualize(m2c: MapperRealToCanvas) {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
-        const m2c = this.mapperToCanvas()
+        
         if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
             this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(m2c)
             return
@@ -63,7 +61,7 @@ export abstract class ActorGroup implements CanvasObject {
         if (!this.showActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality(m2c)
     }
-    private visualizeIdAndQuality(m2c: MapperToCanvas, remark: string = ""): void {
+    private visualizeIdAndQuality(m2c: MapperRealToCanvas, remark: string = ""): void {
         const ctr = m2c(this.centerPoint())
         this.ctx.beginPath()
         this.ctx.moveTo(ctr.x, ctr.y)
@@ -93,40 +91,39 @@ export abstract class ActorGroup implements CanvasObject {
         const bottom    = this.actors.map(a => a.p.y).reduce((min, y) => y < min ? y : min)
         const top       = this.actors.map(a => a.p.y).reduce((max, y) => y > max ? y : max)
         const boxAround = new Box(this.ctx, "", new Point(this.ctx, leftMost, bottom), new Point(this.ctx, rightMost, top), cDefaultColor) 
-//      boxAround.visualize(m2cStraight)
         return boxAround
     }
     public get avgTriangleQuality(): number {
         return this.actors.map(a => a.triangleQuality).reduce((q1, q2) => q1 + q2) / this.actors.length
     }
     public isFrozen(): boolean {
-//      console.log(`${this.id} is frozen? ${this.actors.map(a => a.isFrozen()).reduce((a, b) => a && b, true)}`)
         return this.actors.map(a => a.isFrozen()).reduce((a, b) => a && b, true)
     }
     public toString(): string {
         return `Actor Group ${this.id}: #actors= ${this.actors.length}` 
     }
-    public updateParameters(sep: SystemExecParms) {
+    public updateParameters(sep: SystemExecParms, m2c: MapperRealToCanvas) {
         console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
         this.showActorJourney = sep.display.showActorJourney
         this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
         this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))
-        this.visualize()
+        this.visualize(m2c)
     } 
     abstract calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void
-    abstract moveActors(): void
+    abstract moveActors(m2c: MapperRealToCanvas): void
 }
+
+// ****************************************************************************************
+//      ACTOR GROUP DYNAMIC
+// ****************************************************************************************
 
 export class ActorGroupDynamic extends ActorGroup {
     static newRandomizedActGrp(ctx: CanvasRenderingContext2D, id: string, numActors: number, startBox: Box, sep: SystemExecParms, powerCurveFactor: number = 0) {
         const ag = new ActorGroupDynamic(ctx, id, [], sep, powerCurveFactor)
         ag.randomizeActors(startBox, numActors, sep)
-//      console.log(`${ag.id}: bloated list: ${powerCurveBloatedListOf(ag.actors, powerFunctionFactory(cPowerCurveFactor, ag.actors.length)).map(a => a.id)}`)
         ag.assign2RandomObservees(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(powerCurveFactor, ag.actors.length)))
-//      console.log(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(-cPowerCurveFactor, ag.actors.length)).map(e => e.id))
-//      console.log(ag.actors.map(e => `${e.id}=>[${e.observee1?.id}, ${e.observee2?.id}]\n`))
         return ag
     }
 
@@ -144,9 +141,7 @@ export class ActorGroupDynamic extends ActorGroup {
             this.addActor(Actor.newRandomizedActor(this.ctx, `${this.id[0]}${i}`, startBox, sep))
     }    
     public assign2RandomObservees(bloatedActorsList: Actor[]): void {
-//      console.log(bloatedActorsList.map(a => a.id))
         this.actors.forEach(a => a.assign2RandomObservees(bloatedActorsList))
-//      console.log(this.actors.map(e => `${e.id}=>[${e.observee1?.id}, ${e.observee2?.id}]\n`))
     }
     public calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void {
         const qlty = this.avgTriangleQuality  
@@ -163,13 +158,17 @@ export class ActorGroupDynamic extends ActorGroup {
         for (let a of this.actors)
             this.calculatedNewPositions.push(a.newPosition(otherActGrps))
     }
-    public moveActors(): void {
+    public moveActors(m2c: MapperRealToCanvas): void {
         for (let i = 0; i < this.actors.length; i++) {
             this.actors[i].setPosition(this.calculatedNewPositions[i])
         }
-        this.visualize()
+        this.visualize(m2c)
     }
 }
+
+// ****************************************************************************************
+//      ACTOR GROUP STATIC BOX
+// ****************************************************************************************
 
 export class ActorGroupStaticBox extends ActorGroup {
     constructor(ctx: CanvasRenderingContext2D, id: string, box: Box, sep: SystemExecParms, colRgbRanges?: ColorScheme) { 
