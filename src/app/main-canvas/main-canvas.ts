@@ -38,6 +38,11 @@ export interface SystemUiReferences {
 
 type RunResumeButtonLabel = "Run" | "Resume"
 
+export enum WheelMotion {
+  up,
+  down
+}
+
 // ****************************************************************************************
 //      MAIN CANVAS COMPONENT
 // ****************************************************************************************
@@ -93,6 +98,7 @@ export class MainCanvas implements AfterViewInit {
       this.handleCanvasResized()
 
       this.canvas.onmousedown = this.handleMouseDown.bind(this)
+      this.canvas.addEventListener("wheel", this.handleWheelScroll.bind(this))
       window.addEventListener("resize", this.handleCanvasResized.bind(this))
 
       this.sys.initialize(this.ctx, this.sysExecParms)
@@ -155,7 +161,9 @@ export class MainCanvas implements AfterViewInit {
       this.canvas!.onmousemove = null
       this.canvas!.onmouseup   = null
   }
-
+  public handleWheelScroll(event: WheelEvent): void {
+     this.sys.handleWheelMotion(event.deltaY < 0 ? WheelMotion.up : WheelMotion.down)
+  }
   // ---------------------------------------------------------------------------------------
   // window event handlers
   // ---------------------------------------------------------------------------------------

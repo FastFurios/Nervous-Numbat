@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
-import { SystemExecParms } from "../main-canvas/main-canvas"
+import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
 import { Point, Box, Line, UnitVector, Vector,  MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
@@ -178,6 +178,7 @@ export class System {
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
     private mbrc:               MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
+    private manualScaling:      number                                  = 1
     
     constructor() { }
 
@@ -216,14 +217,14 @@ export class System {
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-//           const hist = new ActGrpObserversHistogram(ag, 5)
+//          const hist = new ActGrpObserversHistogram(ag, 5)
 //          console.log(hist.toString())
 //          console.log(hist.toCsvHeader())
 //          console.log(hist.toCsv())
         }
         console.log(`system.initialize(): this.id= ${this.id}`)  
 
-        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas()
+        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
         this.visualize()
 
         console.log(`system.initialize(): Test mappers: ${this.mbrc.canvasToReal(this.mbrc.realToCanvas(new Point(this.ctx, 10, 10)))}`)
@@ -259,7 +260,7 @@ export class System {
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
             this.actGrps.forEach(ag => ag.moveActors(this.mbrc.realToCanvas))
-            this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas()
+            this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
             this.visualize()
         })
         return time$
@@ -295,8 +296,6 @@ export class System {
             verticalLine.visualize(this.mbrc.realToCanvas, new RgbColor(230, 230, 230))
         }
     }
-
-
 
     public visualize(): void {
         if (!this.showActorJourney) this.clearCanvas()
@@ -345,5 +344,12 @@ export class System {
         // rebuild system from latest system setup data, may it be a JSON pojo or setup parameters
         this.clearCanvas()
         this.initialize(this.ctx!,  systemExecParms)
+    }
+
+    public handleWheelMotion(motion: WheelMotion): void {
+        this.manualScaling *= motion == WheelMotion.up ? 2 : 0.5
+        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
+        console.log(`system.handleWheelMotion(): this.manualScaling= ${this.manualScaling}`)
+        this.visualize()
     }
 }
