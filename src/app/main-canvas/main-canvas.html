@@ -135,6 +135,23 @@
                 [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="updateExecParms()">
             <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
         </div>
+        <div>Boundary:</div>
+        <form>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.inelastic" (ngModelChange)="updateBoundaryMode($event)">
+                inelastic
+            </label><br>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.rebound" (ngModelChange)="updateBoundaryMode($event)">
+                rebound
+            </label><br>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.boundless" (ngModelChange)="updateBoundaryMode($event)">
+                unlimited
+            </label>
+        </form>
+
+        <p>Selected mode: {{ selectedBoundaryMode }}</p>
 
     </div>
 </div>

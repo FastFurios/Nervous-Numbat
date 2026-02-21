@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
-import { Point, Box, Line, UnitVector, Vector,  MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
+import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight, BoundaryMode } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
@@ -156,6 +156,7 @@ class ActGrpObserversHistogram {
     paused    = "paused",
     dead      = "dead"
 }
+
 // ****************************************************************************************
 //      SYSTEM SERVICE
 // ****************************************************************************************
@@ -175,15 +176,16 @@ export class System {
     private timeSubscription?:  Subscription 
     public  doneIterations:     number                                  = 0
     private iterationMode:      IterationMode                           = IterationMode.paused
+    private _boundaryMode:      BoundaryMode                            = BoundaryMode.rebound
     public  pickedActor:        Actor | null | undefined                = undefined
     public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
     private mbrc:               MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
-    private manualScaling:      number                                  = 1
+    private manualScaling:      number                                  = 1  // the bigger the wider the area displayed i.e. to more zoomed out
     
     constructor() { }
 
 // ---------------------------------------------------------------------------------------
-//      create the system
+//      create the system and setting parameters
 // ---------------------------------------------------------------------------------------
 
     private mappedConfigPointOntoCanvas(cp: ConfigPoint): Point {
@@ -237,6 +239,11 @@ export class System {
         this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc.realToCanvas))
         this.clearCanvas()
         this.visualize()
+    }
+
+    public set boundaryMode(boundaryMode: BoundaryMode) {
+        this._boundaryMode = boundaryMode
+        console.log(`System.updateExecParms(): boundaryMode= ${this._boundaryMode}`)
     }
 
 // ---------------------------------------------------------------------------------------
@@ -322,7 +329,7 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     public handleActorSelect(x: number, y: number): void {  // x, y are Points on the canvas
-        this.pickedActor = this.closestActorInRange(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)), cActorPickMargin)
+        this.pickedActor = this.closestActorInRange(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)), cActorPickMargin * this.manualScaling)
         if (!this.pickedActor) return
         this.pickedActor.turnHaloOn()
         this.visualize()

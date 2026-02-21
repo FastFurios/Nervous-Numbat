@@ -36,11 +36,18 @@ export function mapperBtwRealAndCanvasStraight(): MapperBtwRealAndCanvas {
     }
 }
 
+export enum BoundaryMode {
+  inelastic = "inelastic",
+  rebound   = "rebound",
+  boundless = "boundless"
+} 
 
 // --------------------------------------------------------------------------------------
 //     POINT  
 // --------------------------------------------------------------------------------------
 export class Point implements CanvasObject {
+    static boundaryMode: BoundaryMode = BoundaryMode.rebound
+
     constructor (public ctx: CanvasRenderingContext2D, public x: number, public y: number, public id: string = "") {
 //      console.log(`Point(${this.x.toFixed(0)} / ${this.y.toFixed(0)}).constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
     }
@@ -71,8 +78,11 @@ export class Point implements CanvasObject {
         return aux 
     }
     public add(vec: Vector): Point {  // alias
-//      return this.addConfinedUnelastic(vec)
-        return this.addFree(vec)
+        switch (Point.boundaryMode) {
+            case BoundaryMode.inelastic: return this.addConfinedUnelastic(vec)
+            case BoundaryMode.boundless: return this.addFree(vec)
+            default: return this.addConfinedElastic(vec)
+        }
     }
     public vectorTo(p: Point): Vector {
         return new Vector(p.x - this.x, p.y - this.y)

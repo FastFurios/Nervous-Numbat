@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { System } from "../services/system"
+import { BoundaryMode } from "../services/geometry"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
 import { Subscription } from 'rxjs'
 
@@ -11,6 +12,7 @@ export type SystemExecParmsRun = {
   maxIterations:      number
   maxMoveDistance:    number
   minTriangleQuality: number
+  boundaryMode:       BoundaryMode
 }
 export type SystemExecParmsDisplay = {
   showActorId:                          boolean
@@ -54,13 +56,16 @@ export enum WheelMotion {
   styleUrl:     './main-canvas.css',
 })
 export class MainCanvas implements AfterViewInit {
+  public  BoundaryMode                                        = BoundaryMode 
   public  sysExecParms!:                SystemExecParms
   public  runResumeButtonLabel:         RunResumeButtonLabel  = "Run"
   private canvas!:                      HTMLCanvasElement | null
   private ctx?:                         CanvasRenderingContext2D | null
   public  time                                                = signal(0)
   public  timeSubscription?:            Subscription
-  public  systemId:                     WritableSignal<string | undefined> = signal(undefined)              
+  public  systemId:                     WritableSignal<string | undefined>    = signal(undefined)
+//public  selectedBoundaryMode:         WritableSignal<BoundaryMode | undefined> = signal(BoundaryMode.inelastic)                   
+  public  selectedBoundaryMode:         BoundaryMode= BoundaryMode.inelastic                   
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
 
   constructor(private sys: System) {
@@ -69,7 +74,8 @@ export class MainCanvas implements AfterViewInit {
         intervalMillisecs:                      cIntervalMillisecs,
         maxIterations:                          1000000,
         maxMoveDistance:                        4,
-        minTriangleQuality:                     1
+        minTriangleQuality:                     1,
+        boundaryMode:                           BoundaryMode.rebound
       },
       display: {
         showActorId:                            false,
@@ -119,6 +125,10 @@ export class MainCanvas implements AfterViewInit {
     this.sys.updateExecParms(this.sysExecParms)
   }
   /** run&resume button clicked */
+  public updateBoundaryMode(newBoundaryMode: BoundaryMode): void {
+//  console.log(`main-canvas.updateExecParms()`)
+    this.sys.boundaryMode = newBoundaryMode
+  }
   public runResumeIterationsHandler() {
 //  console.log(`main-canvas.runResumeIterationsHandler()`)
     this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
