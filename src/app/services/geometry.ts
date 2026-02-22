@@ -29,10 +29,23 @@ export type MapperBtwRealAndCanvas = {
     realToCanvas: MapperRealToCanvas,  // maps a real Point of the systen onto a Point on the canvas 
     canvasToReal: MapperCanvasToReal   // maps a canvas Point onto a real Point in the system
 }
+export function mapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D, boxAround: Box, manualScaling: number): MapperBtwRealAndCanvas {  // for following actor group, put its center in the canvas' center and scale to fit the canvas 
+    const canvasBox: Box      = Box.fromCanvas(ctx)
+    const boxAroundThis: Box  = boxAround
+    const scaleFactorGross    = boxAroundThis.scaleToFitInto(canvasBox)
+    const scaleFactor: number = (scaleFactorGross > 1 ? 1 : scaleFactorGross) / manualScaling  
+    const shiftVector: Vector = boxAroundThis.scaledBy(scaleFactor).center().vectorTo(canvasBox.center())
+    const mapperRealToCanvas  = (rp: Point) => new Point(ctx, (rp.x * scaleFactor) + shiftVector.dx, (rp.y * scaleFactor) + shiftVector.dy)
+    const mapperCanvasToReal  = (cp: Point) => new Point(ctx, ((cp.x - shiftVector.dx) / scaleFactor) , ((cp.y - shiftVector.dy) / scaleFactor) )
+    return {
+        realToCanvas: mapperRealToCanvas,
+        canvasToReal: mapperCanvasToReal
+    }
+}
 export function mapperBtwRealAndCanvasStraight(manualScaling: number = 1): MapperBtwRealAndCanvas {
     return {
-        realToCanvas: (rp: Point): Point => rp.scaledBy(1 / manualScaling),
-        canvasToReal: (cp: Point): Point => cp.scaledBy(manualScaling)
+        realToCanvas: (rp: Point): Point => rp,//.scaledBy(1), // / manualScaling),
+        canvasToReal: (cp: Point): Point => cp//.scaledBy(1) //manualScaling)
     }
 }
 
@@ -79,9 +92,9 @@ export class Point implements CanvasObject {
     }
     public add(vec: Vector): Point {  // alias
         switch (Point.boundaryMode) {
-            case BoundaryMode.inelastic: return this.addConfinedUnelastic(vec)
+            case BoundaryMode.inelastic: return this.addFree(vec)// addConfinedUnelastic(vec)
             case BoundaryMode.boundless: return this.addFree(vec)
-            default: return this.addConfinedElastic(vec)
+            default: return this.addFree(vec)//addConfinedElastic(vec)
         }
     }
     public vectorTo(p: Point): Vector {

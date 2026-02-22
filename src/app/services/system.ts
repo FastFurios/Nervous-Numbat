@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
-import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
+import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
@@ -241,7 +241,7 @@ export class System {
     }
     private setMapperBtwRealAndCanvas(): void {
         this.mbrc = this.focusAndFollowActGrp0 
-                    ? this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling) 
+                    ? mapperBtwRealAndCanvas(this.ctx!, this.actGrps[0].boxAround(), this.manualScaling) 
                     : mapperBtwRealAndCanvasStraight(this.manualScaling) 
     }
 
@@ -287,7 +287,7 @@ export class System {
 
     private visualizeGrid(): void {
         const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
-        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-lower-left")
+        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")
         const canvasLowerLeftScaled:  Point = this.mbrc.realToCanvas(canvasLowerLeft)
         const canvasUpperRightScaled: Point = this.mbrc.realToCanvas(canvasUpperRight)
         const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
@@ -331,29 +331,29 @@ export class System {
         this.pickedActor = this.closestActorInRange(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)), cActorPickMargin * this.manualScaling)
         if (!this.pickedActor) return
         this.pickedActor.turnHaloOn()
-        this.visualize()
+        //this.visualize()
     }
 
     public handleActorMove(x: number, y: number): void {
         if (!this.pickedActor) return
         this.pickedActor.setPosition(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)))
-        this.visualize()
+        //this.visualize()
     }
 
     public handleActorDrop(): void {
         this.pickedActor?.turnHaloOff()
         this.pickedActor = undefined
-        this.visualize()
+        //this.visualize()
     }
 
     public reset(systemExecParms: SystemExecParms): void {
         // rebuild system from latest system setup data, may it be a JSON pojo or setup parameters
         this.clearCanvas()
-        this.initialize(this.ctx!,  systemExecParms)
+        //this.initialize(this.ctx!,  systemExecParms)
     }
 
     public handleWheelMotion(motion: WheelMotion): void {
-        this.manualScaling *= motion == WheelMotion.up ? 2 : 0.5
+        this.manualScaling *= motion == WheelMotion.up ? 0.5 : 2
         this.setMapperBtwRealAndCanvas()
         console.log(`system.handleWheelMotion(): this.manualScaling= ${this.manualScaling}`)
         this.visualize()

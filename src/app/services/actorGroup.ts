@@ -35,20 +35,6 @@ export abstract class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    public mapperBtwRealAndCanvas(manualScaling: number): MapperBtwRealAndCanvas {  // for following actor group, put its center in the canvas' center and scale to fit the canvas 
-        const canvasBox: Box      = Box.fromCanvas(this.ctx)
-        const boxAroundThis: Box  = this.boxAround()
-        const scaleFactorGross    = boxAroundThis.scaleToFitInto(canvasBox)
-        const scaleFactor: number = (scaleFactorGross > 1 ? 1 : scaleFactorGross) / manualScaling  
-        const shiftVector: Vector = boxAroundThis.scaledBy(scaleFactor).center().vectorTo(canvasBox.center())
-        const mapperRealToCanvas  = (rp: Point) => new Point(this.ctx, (rp.x * scaleFactor) + shiftVector.dx, (rp.y * scaleFactor) + shiftVector.dy)
-        const mapperCanvasToReal  = (cp: Point) => new Point(this.ctx, ((cp.x - shiftVector.dx) / scaleFactor) , ((cp.y - shiftVector.dy) / scaleFactor) )
-        return {
-            realToCanvas: mapperRealToCanvas,
-            canvasToReal: mapperCanvasToReal
-        }
-//      return { realToCanvas: (p: Point) => p, canvasToReal: (p: Point) => p  }
-    }
     public visualize(m2c: MapperRealToCanvas) {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
