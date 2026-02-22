@@ -135,23 +135,32 @@
                 [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="updateExecParms()">
             <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
         </div>
+        <div class="lineContainerFlexStart">
+            <label class="switch">
+                <input type="checkbox" 
+                id="focusAndFollowActGrp-0"
+                [(ngModel)]="sysExecParms.display.focusAndFollowActGrp0" (ngModelChange)="updateExecParms()">
+                <span class="slider round"></span>
+            </label>
+            Focus & follow actor group 0 
+        </div>
         <div>Boundary:</div>
         <form>
             <label>
-                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.inelastic" (ngModelChange)="updateBoundaryMode($event)">
+                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.inelastic" (ngModelChange)="updateBoundaryMode($event)">
                 inelastic
             </label><br>
             <label>
-                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.rebound" (ngModelChange)="updateBoundaryMode($event)">
+                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.rebound" (ngModelChange)="updateBoundaryMode($event)">
                 rebound
             </label><br>
             <label>
-                <input type="radio" name="mode" [(ngModel)]="selectedBoundaryMode" [value]="BoundaryMode.boundless" (ngModelChange)="updateBoundaryMode($event)">
+                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.boundless" (ngModelChange)="updateBoundaryMode($event)">
                 unlimited
             </label>
         </form>
 
-        <p>Selected mode: {{ selectedBoundaryMode }}</p>
+        <p>Selected mode: {{ sysExecParms.run.boundaryMode }}</p>
 
     </div>
 </div>

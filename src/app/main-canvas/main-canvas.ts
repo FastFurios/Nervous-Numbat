@@ -22,6 +22,7 @@ export type SystemExecParmsDisplay = {
   showActorGroupIdAndQuality:           boolean
   showActorJourney:                     boolean
   showOneActorOnlyWithTheGivenAgIndex:  number
+  focusAndFollowActGrp0:                boolean
 }
 export type SystemExecParmsStrategy = {
   poorTriangleQualityThreshold:           number
@@ -56,6 +57,7 @@ export enum WheelMotion {
   styleUrl:     './main-canvas.css',
 })
 export class MainCanvas implements AfterViewInit {
+  @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
   public  BoundaryMode                                        = BoundaryMode 
   public  sysExecParms!:                SystemExecParms
   public  runResumeButtonLabel:         RunResumeButtonLabel  = "Run"
@@ -64,9 +66,7 @@ export class MainCanvas implements AfterViewInit {
   public  time                                                = signal(0)
   public  timeSubscription?:            Subscription
   public  systemId:                     WritableSignal<string | undefined>    = signal(undefined)
-//public  selectedBoundaryMode:         WritableSignal<BoundaryMode | undefined> = signal(BoundaryMode.inelastic)                   
-  public  selectedBoundaryMode:         BoundaryMode= BoundaryMode.inelastic                   
-  @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
+//public  selectedBoundaryMode:         BoundaryMode= BoundaryMode.rebound                   
 
   constructor(private sys: System) {
     this.sysExecParms = {
@@ -84,7 +84,8 @@ export class MainCanvas implements AfterViewInit {
         showActorObservees:                     false,
         showActorGroupIdAndQuality:             false,
         showActorJourney:                       false,
-        showOneActorOnlyWithTheGivenAgIndex:    -1
+        showOneActorOnlyWithTheGivenAgIndex:    -1,
+        focusAndFollowActGrp0:                  false
       },
       strategy: {
         poorTriangleQualityThreshold:           0.5,
@@ -124,10 +125,11 @@ export class MainCanvas implements AfterViewInit {
 //  console.log(`main-canvas.updateExecParms()`)
     this.sys.updateExecParms(this.sysExecParms)
   }
-  /** run&resume button clicked */
+  /** handle toggled boundary mode */
   public updateBoundaryMode(newBoundaryMode: BoundaryMode): void {
 //  console.log(`main-canvas.updateExecParms()`)
-    this.sys.boundaryMode = newBoundaryMode
+    this.sysExecParms.run.boundaryMode = newBoundaryMode
+    this.sys.updateExecParms(this.sysExecParms)
   }
   public runResumeIterationsHandler() {
 //  console.log(`main-canvas.runResumeIterationsHandler()`)

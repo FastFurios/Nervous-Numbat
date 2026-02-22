@@ -35,7 +35,7 @@ export abstract class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    public mapperBtwRealAndCanvas(manualScaling: number): MapperBtwRealAndCanvas {
+    public mapperBtwRealAndCanvas(manualScaling: number): MapperBtwRealAndCanvas {  // for following actor group, put its center in the canvas' center and scale to fit the canvas 
         const canvasBox: Box      = Box.fromCanvas(this.ctx)
         const boxAroundThis: Box  = this.boxAround()
         const scaleFactorGross    = boxAroundThis.scaleToFitInto(canvasBox)

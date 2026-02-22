@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
-import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight, BoundaryMode } from "./geometry"
+import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
@@ -165,22 +165,22 @@ class ActGrpObserversHistogram {
   providedIn: 'root',
 })
 export class System {
-    public  id:                 string | undefined                      = undefined
-    public  configActGrps:      ConfigActorGroup[]                      = []
-    public  actGrps:            ActorGroup[]                            = []
-    private ctx:                CanvasRenderingContext2D | undefined    = undefined
-    public  maxIterations?:     number
-    public  intervalMillisecs?: number
-    private showActorJourney?:  boolean
-    public  time$?:             Observable<void>
-    private timeSubscription?:  Subscription 
-    public  doneIterations:     number                                  = 0
-    private iterationMode:      IterationMode                           = IterationMode.paused
-    private _boundaryMode:      BoundaryMode                            = BoundaryMode.rebound
-    public  pickedActor:        Actor | null | undefined                = undefined
-    public  colorSchemes                                                = new ColorSchemes(1)  // 1 as default
-    private mbrc:               MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
-    private manualScaling:      number                                  = 1  // the bigger the wider the area displayed i.e. to more zoomed out
+    public  id:                     string | undefined                      = undefined
+    public  configActGrps:          ConfigActorGroup[]                      = []
+    public  actGrps:                ActorGroup[]                            = []
+    private ctx:                    CanvasRenderingContext2D | undefined    = undefined
+    public  maxIterations?:         number
+    public  intervalMillisecs?:     number
+    private showActorJourney?:      boolean
+    private focusAndFollowActGrp0?: boolean
+    public  time$?:                 Observable<void>
+    private timeSubscription?:      Subscription 
+    public  doneIterations:         number                                  = 0
+    private iterationMode:          IterationMode                           = IterationMode.paused
+    public  pickedActor:            Actor | null | undefined                = undefined
+    public  colorSchemes                                                    = new ColorSchemes(1)  // 1 as default
+    private mbrc:                   MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
+    private manualScaling:          number                                  = 1  // the bigger the wider the area displayed i.e. to more zoomed out
     
     constructor() { }
 
@@ -225,25 +225,24 @@ export class System {
 //          console.log(hist.toCsv())
         }
         console.log(`system.initialize(): this.id= ${this.id}`)  
-
-        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
+        this.setMapperBtwRealAndCanvas()
         this.visualize()
-
         console.log(`system.initialize(): Test mappers: ${this.mbrc.canvasToReal(this.mbrc.realToCanvas(new Point(this.ctx, 10, 10)))}`)
     }
-
     public updateExecParms(sep: SystemExecParms): void {
-        this.maxIterations      = sep.run.maxIterations
-        this.intervalMillisecs  = sep.run.intervalMillisecs
-        this.showActorJourney   = sep.display.showActorJourney
+        this.maxIterations          = sep.run.maxIterations
+        this.intervalMillisecs      = sep.run.intervalMillisecs
+        Point.boundaryMode          = sep.run.boundaryMode      
+        this.showActorJourney       = sep.display.showActorJourney
+        this.focusAndFollowActGrp0  = sep.display.focusAndFollowActGrp0 
         this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc.realToCanvas))
         this.clearCanvas()
         this.visualize()
     }
-
-    public set boundaryMode(boundaryMode: BoundaryMode) {
-        this._boundaryMode = boundaryMode
-        console.log(`System.updateExecParms(): boundaryMode= ${this._boundaryMode}`)
+    private setMapperBtwRealAndCanvas(): void {
+        this.mbrc = this.focusAndFollowActGrp0 
+                    ? this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling) 
+                    : mapperBtwRealAndCanvasStraight(this.manualScaling) 
     }
 
 // ---------------------------------------------------------------------------------------
@@ -267,7 +266,7 @@ export class System {
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
             this.actGrps.forEach(ag => ag.moveActors(this.mbrc.realToCanvas))
-            this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
+            this.setMapperBtwRealAndCanvas()
             this.visualize()
         })
         return time$
@@ -355,7 +354,7 @@ export class System {
 
     public handleWheelMotion(motion: WheelMotion): void {
         this.manualScaling *= motion == WheelMotion.up ? 2 : 0.5
-        this.mbrc = this.actGrps[0].mapperBtwRealAndCanvas(this.manualScaling)
+        this.setMapperBtwRealAndCanvas()
         console.log(`system.handleWheelMotion(): this.manualScaling= ${this.manualScaling}`)
         this.visualize()
     }

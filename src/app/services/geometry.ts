@@ -29,10 +29,10 @@ export type MapperBtwRealAndCanvas = {
     realToCanvas: MapperRealToCanvas,  // maps a real Point of the systen onto a Point on the canvas 
     canvasToReal: MapperCanvasToReal   // maps a canvas Point onto a real Point in the system
 }
-export function mapperBtwRealAndCanvasStraight(): MapperBtwRealAndCanvas {
+export function mapperBtwRealAndCanvasStraight(manualScaling: number = 1): MapperBtwRealAndCanvas {
     return {
-        realToCanvas: (rp: Point): Point => rp,
-        canvasToReal: (cp: Point): Point => cp
+        realToCanvas: (rp: Point): Point => rp.scaledBy(1 / manualScaling),
+        canvasToReal: (cp: Point): Point => cp.scaledBy(manualScaling)
     }
 }
 
