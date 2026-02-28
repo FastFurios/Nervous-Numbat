@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { System } from "../services/system"
-import { BoundaryMode } from "../services/geometry"
+import { BoundaryMode, Point } from "../services/geometry"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
 import { Subscription } from 'rxjs'
 
@@ -160,9 +160,13 @@ export class MainCanvas implements AfterViewInit {
 
   public handleMouseDown(event: MouseEvent): void {
       event.preventDefault()
-      this.sys.handleActorSelect(event.offsetX, event.offsetY)
-      this.canvas!.onmousemove = this.handleMouseMove.bind(this)
-      this.canvas!.onmouseup   = this.handleMouseUp.bind(this)
+      const clickedPointInReal = this.sys.mbrc!.canvasToReal(new Point(this.ctx!, event.offsetX, event.offsetY))
+      if (this.sys.actorSelected(clickedPointInReal)) {
+          this.canvas!.onmousemove = this.handleMouseMove.bind(this)
+          this.canvas!.onmouseup   = this.handleMouseUp.bind(this)
+          return
+      }
+      this.sys.centerOfView = clickedPointInReal
   }
   public handleMouseMove(event: MouseEvent): void {
       event.preventDefault()

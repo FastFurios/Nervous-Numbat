@@ -6,7 +6,7 @@
 // $ npm install martinez-polygon-clipping (siehe ChatGPT für "Polygon Union")
 
 import { cDefaultColor, RgbColor } from "./color"
-import { isBetween } from "./helpers"
+import { isBetween, powerFunctionFactory } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
 
@@ -29,23 +29,15 @@ export type MapperBtwRealAndCanvas = {
     realToCanvas: MapperRealToCanvas,  // maps a real Point of the systen onto a Point on the canvas 
     canvasToReal: MapperCanvasToReal   // maps a canvas Point onto a real Point in the system
 }
-export function mapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D, boxAround: Box, manualScaling: number): MapperBtwRealAndCanvas {  // for following actor group, put its center in the canvas' center and scale to fit the canvas 
-    const canvasBox: Box      = Box.fromCanvas(ctx)
-    const boxAroundThis: Box  = boxAround
-    const scaleFactorGross    = boxAroundThis.scaleToFitInto(canvasBox)
-    const scaleFactor: number = (scaleFactorGross > 1 ? 1 : scaleFactorGross) / manualScaling  
-    const shiftVector: Vector = boxAroundThis.scaledBy(scaleFactor).center().vectorTo(canvasBox.center())
-    const mapperRealToCanvas  = (rp: Point) => new Point(ctx, (rp.x * scaleFactor) + shiftVector.dx, (rp.y * scaleFactor) + shiftVector.dy)
-    const mapperCanvasToReal  = (cp: Point) => new Point(ctx, ((cp.x - shiftVector.dx) / scaleFactor) , ((cp.y - shiftVector.dy) / scaleFactor) )
-    return {
-        realToCanvas: mapperRealToCanvas,
-        canvasToReal: mapperCanvasToReal
-    }
+export function canvasCenter(ctx: CanvasRenderingContext2D): Point {
+    return new Point(ctx, ctx.canvas.width / 2, ctx.canvas.height / 2)
 }
-export function mapperBtwRealAndCanvasStraight(manualScaling: number = 1): MapperBtwRealAndCanvas {
+
+export function mapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D, center: Point, scaleFactor: number): MapperBtwRealAndCanvas {
+    const shiftVector: Vector = center.scaledBy(scaleFactor).vectorTo(canvasCenter(ctx)) 
     return {
-        realToCanvas: (rp: Point): Point => rp,//.scaledBy(1), // / manualScaling),
-        canvasToReal: (cp: Point): Point => cp//.scaledBy(1) //manualScaling)
+        realToCanvas: (rp: Point) => rp.scaledBy(scaleFactor).addFree(shiftVector), 
+        canvasToReal: (cp: Point) => cp.addFree(shiftVector.inverted).scaledBy(1 / scaleFactor)
     }
 }
 
@@ -92,9 +84,9 @@ export class Point implements CanvasObject {
     }
     public add(vec: Vector): Point {  // alias
         switch (Point.boundaryMode) {
-            case BoundaryMode.inelastic: return this.addFree(vec)// addConfinedUnelastic(vec)
+            case BoundaryMode.inelastic: return this.addConfinedUnelastic(vec)
             case BoundaryMode.boundless: return this.addFree(vec)
-            default: return this.addFree(vec)//addConfinedElastic(vec)
+            default: return this.addConfinedElastic(vec)
         }
     }
     public vectorTo(p: Point): Vector {
@@ -147,7 +139,8 @@ export class Point implements CanvasObject {
         this.ctx.closePath
         if (label != "") {
             this.ctx.font = "12px Arial"
-            this.ctx.fillText(`${label} (${this.x.toFixed(0)}/${this.y.toFixed(0)})`, this.x, this.y + cTextOffset)
+            const textPos = new Point(this.ctx, this.x, this.y)
+            this.ctx.fillText(`${label} (${this.x.toFixed(0)}/${this.y.toFixed(0)})`, m2c(textPos).x, m2c(textPos).y + cTextOffset)
         }
     }
     public toString(): string {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, interval } from 'rxjs'
 
 import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
-import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, mapperBtwRealAndCanvasStraight } from "./geometry"
+import { Point, Box, Line, UnitVector, Vector, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, canvasCenter } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
@@ -179,8 +179,9 @@ export class System {
     private iterationMode:          IterationMode                           = IterationMode.paused
     public  pickedActor:            Actor | null | undefined                = undefined
     public  colorSchemes                                                    = new ColorSchemes(1)  // 1 as default
-    private mbrc:                   MapperBtwRealAndCanvas                  = mapperBtwRealAndCanvasStraight() // default
-    private manualScaling:          number                                  = 1  // the bigger the wider the area displayed i.e. to more zoomed out
+    public  mbrc?:                  MapperBtwRealAndCanvas
+    public  centerOfView?:          Point                                   
+    private zoom?:                  number  // zoom > 1: zoomed in ; z < 1: zommed out                                  
     
     constructor() { }
 
@@ -202,7 +203,7 @@ export class System {
         if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
         if (!systemExecParms)              throw Error("System.initialize(): missing systemExecParms.")
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
-        this.ctx = ctx
+        this.ctx          = ctx
 
         this.actGrps = []
         for (let cag of this.configActGrps) {
@@ -219,15 +220,13 @@ export class System {
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
-//          const hist = new ActGrpObserversHistogram(ag, 5)
-//          console.log(hist.toString())
-//          console.log(hist.toCsvHeader())
-//          console.log(hist.toCsv())
         }
         console.log(`system.initialize(): this.id= ${this.id}`)  
+        this.centerOfView = canvasCenter(ctx)
+        this.zoom         = 1
         this.setMapperBtwRealAndCanvas()
         this.visualize()
-        console.log(`system.initialize(): Test mappers: ${this.mbrc.canvasToReal(this.mbrc.realToCanvas(new Point(this.ctx, 10, 10)))}`)
+        console.log(`system.initialize(): Test mappers: ${this.mbrc!.canvasToReal(this.mbrc!.realToCanvas(new Point(this.ctx, 10, 10)))}`)
     }
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations          = sep.run.maxIterations
@@ -235,14 +234,13 @@ export class System {
         Point.boundaryMode          = sep.run.boundaryMode      
         this.showActorJourney       = sep.display.showActorJourney
         this.focusAndFollowActGrp0  = sep.display.focusAndFollowActGrp0 
-        this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc.realToCanvas))
+        if (this.focusAndFollowActGrp0) this.centerOfView = this.actGrps[0].centerPoint()
+        this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc!.realToCanvas))
         this.clearCanvas()
         this.visualize()
     }
     private setMapperBtwRealAndCanvas(): void {
-        this.mbrc = this.focusAndFollowActGrp0 
-                    ? mapperBtwRealAndCanvas(this.ctx!, this.actGrps[0].boxAround(), this.manualScaling) 
-                    : mapperBtwRealAndCanvasStraight(this.manualScaling) 
+        this.mbrc = mapperBtwRealAndCanvas(this.ctx!, this.centerOfView!, this.zoom!) 
     }
 
 // ---------------------------------------------------------------------------------------
@@ -265,7 +263,7 @@ export class System {
                 this.time$ = undefined
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
-            this.actGrps.forEach(ag => ag.moveActors(this.mbrc.realToCanvas))
+            this.actGrps.forEach(ag => ag.moveActors(this.mbrc!.realToCanvas))
             this.setMapperBtwRealAndCanvas()
             this.visualize()
         })
@@ -288,26 +286,29 @@ export class System {
     private visualizeGrid(): void {
         const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
         const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")
-        const canvasLowerLeftScaled:  Point = this.mbrc.realToCanvas(canvasLowerLeft)
-        const canvasUpperRightScaled: Point = this.mbrc.realToCanvas(canvasUpperRight)
-        const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
-        canvasBoxScaled.visualize(this.mbrc.realToCanvas)
-
+        const canvasLowerLeftScaled:  Point = this.mbrc!.realToCanvas(canvasLowerLeft)
+        const canvasUpperRightScaled: Point = this.mbrc!.realToCanvas(canvasUpperRight)
+//      const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+        const canvasBox = new Box(this.ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
+//      canvasBoxScaled.visualize(this.mbrc!.realToCanvas)
+        canvasBox.visualize(this.mbrc!.realToCanvas)
+/*
         for (let i=-10, offset = i * canvasBoxScaled.height; i <= 10; i++, offset += canvasBoxScaled.height) {
             const horizontalLine: Line = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(0, offset)), new UnitVector(1, 0))
-            horizontalLine.visualize(this.mbrc.realToCanvas, new RgbColor(230, 230, 230))
+            horizontalLine.visualize(this.mbrc!.realToCanvas, new RgbColor(230, 230, 230))
         }
         for (let i=-10, offset = i * canvasBoxScaled.width;  i <= 10; i++, offset += canvasBoxScaled.width) {
             const verticalLine: Line   = Line.fromPointAndVector(this.ctx!, canvasLowerLeftScaled.add(new Vector(offset, 0)), new UnitVector(0, 1))
-            verticalLine.visualize(this.mbrc.realToCanvas, new RgbColor(230, 230, 230))
+            verticalLine.visualize(this.mbrc!.realToCanvas, new RgbColor(230, 230, 230))
         }
+*/
     }
 
     public visualize(): void {
         if (!this.showActorJourney) this.clearCanvas()
 //      console.log(`system.visualize(): this.showActorJourney= ${this.showActorJourney}; having ${this.actGrps.length} actor groups`)
         this.visualizeGrid()
-        this.actGrps.forEach(ag => ag.visualize(this.mbrc.realToCanvas))
+        this.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
     }
     
     public clearCanvas(): void {
@@ -327,16 +328,20 @@ export class System {
 //      handle UI events
 // ---------------------------------------------------------------------------------------
 
-    public handleActorSelect(x: number, y: number): void {  // x, y are Points on the canvas
-        this.pickedActor = this.closestActorInRange(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)), cActorPickMargin * this.manualScaling)
-        if (!this.pickedActor) return
-        this.pickedActor.turnHaloOn()
-        //this.visualize()
+    public actorSelected(rp: Point): Actor | undefined {  // x, y are real Points 
+        rp.visualize(this.mbrc?.realToCanvas!, new RgbColor(255, 0, 0))
+        this.pickedActor = this.closestActorInRange(rp, cActorPickMargin * this.zoom!)
+        if (this.pickedActor) {
+            this.pickedActor.turnHaloOn() // actor selected, turn halo on, do not change center of view
+            return this.pickedActor
+        }
+        this.centerOfView = rp // no actor selected, so set center of view to the clicked point
+        return undefined
     }
 
     public handleActorMove(x: number, y: number): void {
         if (!this.pickedActor) return
-        this.pickedActor.setPosition(this.mbrc.canvasToReal(new Point(this.ctx!, x, y)))
+        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(this.ctx!, x, y)))
         //this.visualize()
     }
 
@@ -353,9 +358,9 @@ export class System {
     }
 
     public handleWheelMotion(motion: WheelMotion): void {
-        this.manualScaling *= motion == WheelMotion.up ? 0.5 : 2
+        this.zoom! *= motion == WheelMotion.up ? 2 : 0.5
         this.setMapperBtwRealAndCanvas()
-        console.log(`system.handleWheelMotion(): this.manualScaling= ${this.manualScaling}`)
+        console.log(`system.handleWheelMotion(): this.manualScaling= ${this.zoom!}`)
         this.visualize()
     }
 }
