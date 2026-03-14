@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common'
 
 import { now } from './services/helpers'
 import { MainCanvas } from './main-canvas/main-canvas'
-import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration } from "./services/system"
+import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration, JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology  } from "./services/system"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -19,10 +19,39 @@ import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configur
 
 /** list of possible user actions */
 type ActionsPossible = {
-    setupSystem:        WritableSignal<boolean>,
-    downloadConfig:     WritableSignal<boolean>,
-    discard:            WritableSignal<boolean>
+    upload:             boolean,
+    ramdomize:          boolean,
+    setupSystem:        boolean,
+    downloadConfig:     boolean,
+    discard:            boolean
 }
+
+const cActPosStart: ActionsPossible = {
+    upload:             true,
+    ramdomize:          true,
+    setupSystem:        false,
+    downloadConfig:     false,
+    discard:            false
+} 
+
+const cActPosHasConfig: ActionsPossible = {
+    upload:             false,
+    ramdomize:          false,
+    setupSystem:        true,
+    downloadConfig:     true,
+    discard:            true
+} 
+
+const cActPosConfigIsSetUp: ActionsPossible = {
+    upload:             false,
+    ramdomize:          false,
+    setupSystem:        false,
+    downloadConfig:     true,
+    discard:            true
+} 
+
+
+//type ActionsPossibleSignal = WritableSignal<ActionsPossible>
 
 // --------------------------------------------------------------------------------------
 //     System Strcuture Parameters  
@@ -33,75 +62,6 @@ export interface SystemStructParms {
   numActorsPerActGrp: number
   powerCurveFactor:   number
   startBoxMarginPct:  number  // 0..100 in %
-}
-
-// --------------------------------------------------------------------------------------
-//     JSON Configuration   
-// --------------------------------------------------------------------------------------
-
-type Creation_Mode = "automatic" | "explicit"
-
-interface JsonActor {
-  id:         string
-  x:          number
-  y:          number
-  observee1:  string
-  observee2:  string
-}
-
-interface JsonActorGroup {
-  id:                 string
-  creation_mode:      Creation_Mode
-  topology:           JsonExplicitTopology | JsonAutomaticTopology      
-}
-
-type JsonExplicitTopology = JsonActor[]
-
-interface JsonPoint { 
-  x: number
-  y: number 
-}
-
-interface JsonBox {
-  lower_left:  JsonPoint
-  upper_right: JsonPoint
-}
-
-interface JsonAutomaticTopology {
-  id:                   string
-  number_actors:        number 
-  power_curve_factor:   number
-  start_box:            JsonBox
-}
-
-interface JsonConfiguration {
-  id: string
-  actor_groups: JsonActorGroup[]
-}
-
-function configActorAsJson(ca: ConfigActor): JsonActor {
-    return {
-      id: ca.id,
-      x:  ca.p!.x,
-      y:  ca.p!.y,
-      observee1: ca.observee1id!,
-      observee2: ca.observee2id!
-    }
-}
-
-function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
-    return {
-      id: cag.id,
-      creation_mode: "explicit",
-      topology: cag.actors.map(ca => configActorAsJson(ca))
-    }
-}
-
-function configAsJson(c: Configuration): JsonConfiguration {
-  return {
-    id: c.id,
-    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
-  }
 }
 
 // ****************************************************************************************
@@ -125,13 +85,15 @@ export class App {
     powerCurveFactor:   1,
     startBoxMarginPct:  10
   }
-  //public configAsJson: 
+  public actionsPossible = signal(cActPosStart)
   public configFilename:  string | undefined
   public configurationId: string | undefined
   public greyOut = "background-color: lightgrey; border-color: lightgrey;"
 ///public version                = environment.version
 
-  constructor(private sys: System) { } 
+  constructor(private sys: System) { 
+    this.actionsPossible.set(cActPosStart)
+  } 
 
 // --------------------------------------------------------------------------------------
 //     System Setup   
@@ -140,7 +102,8 @@ export class App {
   public onSetupSystem(): void {
     this.sys.id = this.configurationId
     this.sys.configActGrps = this.configuration()!.actorGroups
-    this.showCanvas = !this.showCanvas
+    this.showCanvas = true
+    this.actionsPossible.set(cActPosConfigIsSetUp)
   }
 
   // --------------------------------------------------------------------------------------
@@ -152,6 +115,7 @@ export class App {
     this.configuration.set(undefined)
     this.configurationId = ""
     this.showCanvas      = false
+    this.actionsPossible.set(cActPosStart)
   }
 
   // --------------------------------------------------------------------------------------
@@ -174,6 +138,7 @@ export class App {
         const jsonConfig = JSON.parse(reader.result.toString())
         this.configuration.set(this.configurationFrom(jsonConfig)) 
         this.configurationId = this.configuration()!.id
+        this.actionsPossible.set(cActPosHasConfig)
       }
       catch (error) {
         alert(`app.onConfigFileSelected(): JSON parsing error: ${error}`) 
@@ -217,37 +182,7 @@ export class App {
     }
     this.configuration.set(new Configuration("random", this.actorGroups))
     this.configurationId = this.configuration()!.id
-  }
-
-  // --------------------------------------------------------------------------------------
-  //     Downloading a Configuration  
-  // --------------------------------------------------------------------------------------
-
-  /** write system configuration to json file in the download folder */
-  private downloadToFile(blob: Blob, fileExtension: string): void {
-    const link = document.createElement("a")
-    link.href = URL.createObjectURL(blob)
-    link.download = `${this.configuration()?.id}_${now()}.${fileExtension}`
-    link.click()
-    link.remove()
-  }
-
-  /** download system configuration to json file */
-  public onSaveFile(): void {
-    this.configuration.set(this.sys.exportedAsConfiguration())
-    if (!this.configuration()) {
-      alert("app.onSaveFile(): no configuration.")
-      return
-    }
-    if (!this.configurationId) { 
-      alert("app.onSaveFile(): enter a configuration id!")
-      return
-    }
-    this.configuration()!.id = this.configurationId 
-
-    const fileContent = configAsJson(this.configuration()!)
-    const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
-    this.downloadToFile(blob, "json")
+    this.actionsPossible.set(cActPosHasConfig)
   }
 
   // --------------------------------------------------------------------------------------

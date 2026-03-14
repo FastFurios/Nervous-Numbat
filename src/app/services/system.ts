@@ -7,8 +7,30 @@ import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
 import { cActorPickMargin  } from "./parameters"
-import { now  } from "./helpers"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
+import { now } from "./helpers"
+
+// ---------------------------------------------------------------------------------------
+//      USER CONTROLS
+// ---------------------------------------------------------------------------------------
+
+/** list of possible user actions */
+type ActionsPossible = {
+    run_resume:         boolean,
+    stop:               boolean,
+    rest:               boolean,
+    download:           boolean
+}
+/*
+const cActPosStart: ActionsPossible = {
+    upload:             true,
+    ramdomize:          true,
+    setupSystem:        false,
+    downloadConfig:     false,
+    discard:            false
+} 
+*/
+
 
 // ---------------------------------------------------------------------------------------
 //      SYSTEM SETUP API
@@ -98,6 +120,76 @@ export class ConfigActorGroup {
 export class Configuration {
     constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
 }
+
+// --------------------------------------------------------------------------------------
+//     JSON Configuration   
+// --------------------------------------------------------------------------------------
+
+export type Creation_Mode = "automatic" | "explicit"
+
+export interface JsonActor {
+  id:         string
+  x:          number
+  y:          number
+  observee1:  string
+  observee2:  string
+}
+
+export interface JsonActorGroup {
+  id:                 string
+  creation_mode:      Creation_Mode
+  topology:           JsonExplicitTopology | JsonAutomaticTopology      
+}
+
+export type JsonExplicitTopology = JsonActor[]
+
+interface JsonPoint { 
+  x: number
+  y: number 
+}
+
+export interface JsonBox {
+  lower_left:  JsonPoint
+  upper_right: JsonPoint
+}
+
+export interface JsonAutomaticTopology {
+  id:                   string
+  number_actors:        number 
+  power_curve_factor:   number
+  start_box:            JsonBox
+}
+
+export interface JsonConfiguration {
+  id: string
+  actor_groups: JsonActorGroup[]
+}
+
+function configActorAsJson(ca: ConfigActor): JsonActor {
+    return {
+      id: ca.id,
+      x:  ca.p!.x,
+      y:  ca.p!.y,
+      observee1: ca.observee1id!,
+      observee2: ca.observee2id!
+    }
+}
+
+function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
+    return {
+      id: cag.id,
+      creation_mode: "explicit",
+      topology: cag.actors.map(ca => configActorAsJson(ca))
+    }
+}
+
+function configAsJson(c: Configuration): JsonConfiguration {
+  return {
+    id: c.id,
+    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
+  }
+}
+
 
 
 // --- ACTOR GROUP OBSERVERS HISTOGRAMM ----------------------------------------------------------------------
@@ -285,10 +377,7 @@ export class System {
 
     private visualizeGrid(): void {
         const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
-        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")
-        const canvasLowerLeftScaled:  Point = this.mbrc!.realToCanvas(canvasLowerLeft)
-        const canvasUpperRightScaled: Point = this.mbrc!.realToCanvas(canvasUpperRight)
-//      const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
         const canvasBox = new Box(this.ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
 //      canvasBoxScaled.visualize(this.mbrc!.realToCanvas)
         canvasBox.visualize(this.mbrc!.realToCanvas)
@@ -319,10 +408,40 @@ export class System {
 //      export the system and it's state
 // ---------------------------------------------------------------------------------------
 
-    public exportedAsConfiguration(): Configuration {
-        if (!this.ctx) alert("system.exportedAsConfiguration(): canvas context ctx is undefined.")
+    private exportedAsConfiguration(): Configuration {
         return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroup.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
     }
+
+    /** write system configuration to json file in the download folder */
+    private downloadToFile(blob: Blob, fileExtension: string, configurationId: string): void {
+        const link = document.createElement("a")
+        link.href = URL.createObjectURL(blob)
+        link.download = `${configurationId}_${now()}.${fileExtension}`
+        link.click()
+        link.remove()
+    }
+
+    /** download system configuration to json file */
+    public onSaveFile(): void {
+        const configuration = this.exportedAsConfiguration()
+        if (!configuration) {
+            alert("system.onSaveFile(): no configuration.")
+            return
+        }
+        if (!this.id) { 
+            alert("system.onSaveFile(): no configuration id!")
+            return
+        }
+        console.log("system.onSaveFile(): const configuration = ")
+        console.log(configuration)
+        const fileContent = configAsJson(configuration)
+        const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
+        this.downloadToFile(blob, "json", configuration.id)
+    }
+
+
+
+
 
 // ---------------------------------------------------------------------------------------
 //      handle UI events

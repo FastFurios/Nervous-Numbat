@@ -15,7 +15,7 @@
 .lineContainerFlexStart {
     display: flex;            
     flex-direction: row;       /* arrange children horizontally */
-    justify-content: flex-start;   /* centers them horizontally */
+    justify-content: space-between;  /* centers them horizontally */
     align-items: center;       /* vertically centers content */
 }  
 

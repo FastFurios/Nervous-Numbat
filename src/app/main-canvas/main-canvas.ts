@@ -153,6 +153,10 @@ export class MainCanvas implements AfterViewInit {
     this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Run"
   }
+  /** download button clicked */
+  public onSaveFile() {
+    this.sys.onSaveFile()
+  }
 
   // ---------------------------------------------------------------------------------------
   // canvas mouse event handlers
