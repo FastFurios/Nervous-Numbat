@@ -229,7 +229,6 @@ export class App {
     const upperRight  = new ConfigPoint(area.upperRight.x - xMargin, area.upperRight.y - yMargin)
     return new ConfigBox(lowerLeft, upperRight)
   }
-
 }
 
 
