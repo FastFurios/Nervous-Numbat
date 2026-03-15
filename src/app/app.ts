@@ -9,7 +9,6 @@ import { RouterOutlet } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
-import { now } from './services/helpers'
 import { MainCanvas } from './main-canvas/main-canvas'
 import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration, JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology  } from "./services/system"
 
@@ -50,9 +49,6 @@ const cActPosConfigIsSetUp: ActionsPossible = {
     discard:            true
 } 
 
-
-//type ActionsPossibleSignal = WritableSignal<ActionsPossible>
-
 // --------------------------------------------------------------------------------------
 //     System Strcuture Parameters  
 // --------------------------------------------------------------------------------------
@@ -63,6 +59,9 @@ export interface SystemStructParms {
   powerCurveFactor:   number
   startBoxMarginPct:  number  // 0..100 in %
 }
+
+// --- button grey-out ---------------------
+export const cGreyOut = "background-color: lightgrey; border-color: lightgrey;"
 
 // ****************************************************************************************
 //      APP COMPONENT
@@ -80,15 +79,15 @@ export class App {
   public actorGroups: ConfigActorGroup[]  = []
   public configuration: WritableSignal<Configuration | undefined> = signal(undefined)
   public systemStructParms: SystemStructParms = {
-    numActGrps:         1,
-    numActorsPerActGrp: 15,
-    powerCurveFactor:   1,
-    startBoxMarginPct:  10
-  }
+                                                    numActGrps:         1,
+                                                    numActorsPerActGrp: 15,
+                                                    powerCurveFactor:   1,
+                                                    startBoxMarginPct:  10
+                                                }
   public actionsPossible = signal(cActPosStart)
   public configFilename:  string | undefined
   public configurationId: string | undefined
-  public greyOut = "background-color: lightgrey; border-color: lightgrey;"
+  public greyOut = cGreyOut
 ///public version                = environment.version
 
   constructor(private sys: System) { 

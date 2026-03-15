@@ -4,19 +4,24 @@
         <canvas #myCanvas ></canvas>
     </div>
     <div>
-        <p>System: {{ systemId() }}</p>
+        <button type="button" class="submitButton" (click)="onSaveFile()">
+            Download
+        </button>
+        <button type="button" class="submitButton" (click)="onHome()">
+            Home
+        </button>
+        <button type="button" class="submitButton" (click)="onFocusOnFirstActGrp()">
+            Focus 1st
+        </button>
         <div>
-            <button type="button" class="submitButton" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().run_resume" [style]="!actionsPossible().run_resume ? greyOut : undefined" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
                 {{ runResumeButtonLabel }}
             </button>
-            <button type="button" class="submitButton" (click)="stopIterationsHandler()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().stop" [style]="!actionsPossible().stop ? greyOut : undefined" (click)="stopIterationsHandler()">
                 Stop
             </button>
-            <button type="button" class="submitButton" (click)="resetSystemHandler()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().reset" [style]="!actionsPossible().reset ? greyOut : undefined" (click)="resetSystemHandler()">
                 Reset
-            </button>
-            <button type="button" class="submitButton" (click)="onSaveFile()">
-                Download
             </button>
         </div> 
         <div>
@@ -162,9 +167,6 @@
                 unlimited
             </label>
         </form>
-
-        <p>Selected mode: {{ sysExecParms.run.boundaryMode }}</p>
-
     </div>
 </div>
   

@@ -2,6 +2,7 @@ import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
+import { cGreyOut } from '../app'
 import { System } from "../services/system"
 import { BoundaryMode, Point } from "../services/geometry"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
@@ -46,6 +47,38 @@ export enum WheelMotion {
   down
 }
 
+// ---------------------------------------------------------------------------------------
+//      USER CONTROLS
+// ---------------------------------------------------------------------------------------
+
+/** list of possible user actions */
+type ActionsPossible = {
+    run_resume:         boolean,
+    stop:               boolean,
+    reset:              boolean,
+    download:           boolean
+}
+const cActPosStart: ActionsPossible = {
+    run_resume:         true,
+    stop:               false,
+    reset:              false,
+    download:           true
+} 
+
+const cActPosRunning: ActionsPossible = {
+    run_resume:         false,
+    stop:               true,
+    reset:              false,
+    download:           false
+} 
+
+const cActPosStopped: ActionsPossible = {
+    run_resume:         true,
+    stop:               false,
+    reset:              true,
+    download:           true
+} 
+
 // ****************************************************************************************
 //      MAIN CANVAS COMPONENT
 // ****************************************************************************************
@@ -58,17 +91,21 @@ export enum WheelMotion {
 })
 export class MainCanvas implements AfterViewInit {
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
-  public  BoundaryMode                                        = BoundaryMode 
+  public  BoundaryMode                                                        = BoundaryMode 
   public  sysExecParms!:                SystemExecParms
-  public  runResumeButtonLabel:         RunResumeButtonLabel  = "Run"
+  public  runResumeButtonLabel:         RunResumeButtonLabel                  = "Run"
   private canvas!:                      HTMLCanvasElement | null
   private ctx?:                         CanvasRenderingContext2D | null
-  public  time                                                = signal(0)
+  public  time                                                                = signal(0)
   public  timeSubscription?:            Subscription
   public  systemId:                     WritableSignal<string | undefined>    = signal(undefined)
+  public  actionsPossible                                                     = signal(cActPosStart)
+  public  greyOut                                                             = cGreyOut
+
+
 //public  selectedBoundaryMode:         BoundaryMode= BoundaryMode.rebound                   
 
-  constructor(private sys: System) {
+  constructor(public sys: System) {
     this.sysExecParms = {
       run: {
         intervalMillisecs:                      cIntervalMillisecs,
@@ -89,9 +126,10 @@ export class MainCanvas implements AfterViewInit {
       },
       strategy: {
         poorTriangleQualityThreshold:           0.5,
-        aimAtFartherVertexOnEnduredPoorQuality: true
+        aimAtFartherVertexOnEnduredPoorQuality: false
       }
     }
+    this.actionsPossible.set(cActPosStart)
   }
 
   ngAfterViewInit() {
@@ -101,13 +139,14 @@ export class MainCanvas implements AfterViewInit {
       this.ctx = this.canvas.getContext('2d')
       if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
 
-      window.addEventListener("resize", this.handleCanvasResized.bind(this))
-      this.handleCanvasResized()
+      window.addEventListener("resize", this.ctxHandleCanvasResized.bind(this))
+      this.ctxHandleCanvasResized()
 
-      this.canvas.onmousedown = this.handleMouseDown.bind(this)
-      this.canvas.addEventListener("wheel", this.handleWheelScroll.bind(this))
-      window.addEventListener("resize", this.handleCanvasResized.bind(this))
+      this.canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
+      this.canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
+      window.addEventListener("resize", this.ctxHandleCanvasResized.bind(this))
 
+      this.actionsPossible.set(cActPosStart)
       this.sys.initialize(this.ctx, this.sysExecParms)
       this.systemId.set(this.sys.id)
   }
@@ -120,75 +159,95 @@ export class MainCanvas implements AfterViewInit {
   // button handlers
   // ---------------------------------------------------------------------------------------
 
-  /** update the system with the current execution parameters */
-  public updateExecParms(): void {
-//  console.log(`main-canvas.updateExecParms()`)
-    this.sys.updateExecParms(this.sysExecParms)
-  }
-  /** handle toggled boundary mode */
-  public updateBoundaryMode(newBoundaryMode: BoundaryMode): void {
-//  console.log(`main-canvas.updateExecParms()`)
-    this.sysExecParms.run.boundaryMode = newBoundaryMode
-    this.sys.updateExecParms(this.sysExecParms)
-  }
   public runResumeIterationsHandler() {
-//  console.log(`main-canvas.runResumeIterationsHandler()`)
     this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
       this.time.update(t => t + 1)
-//    console.log(`main-canvas: subscriber triggered; new time is ${this.time}`)
+      this.actionsPossible.set(cActPosRunning)
     } )
   }
-    /* stop button clicked */
+
+  /** stop button clicked */
   public stopIterationsHandler() {
-//  console.log(`main-canvas.stopIterationsHandler()`)
     this.sys.stopIterating()
     this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Resume"
+    this.actionsPossible.set(cActPosStopped)
   }
+
   /** reset button clicked */
   public resetSystemHandler() {
-//  console.log(`main-canvas.resetSystemHandler()`)
     this.sys.reset(this.sysExecParms)
     this.time.set(0)
     this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Run"
+    this.sys.initialize(this.ctx!, this.sysExecParms)
+    this.actionsPossible.set(cActPosStart)
   }
+
   /** download button clicked */
   public onSaveFile() {
     this.sys.onSaveFile()
+  }
+
+  /** home button clicked */
+  public onHome() {
+    this.sys.home(this.ctx!)
+  }
+
+  /** home button clicked */
+  public onFocusOnFirstActGrp() {
+    this.sys.focusOnFirstActGrp(this.ctx!)
+  }
+
+  // ---------------------------------------------------------------------------------------
+  // parameters inputs event handlers
+  // ---------------------------------------------------------------------------------------
+
+  /** update the system with the current execution parameters */
+  public updateExecParms(): void {
+    this.sys.updateExecParms(this.sysExecParms)
+  }
+
+  /** handle toggled boundary mode */
+  public updateBoundaryMode(newBoundaryMode: BoundaryMode): void {
+    this.sysExecParms.run.boundaryMode = newBoundaryMode
+    this.sys.updateExecParms(this.sysExecParms)
   }
 
   // ---------------------------------------------------------------------------------------
   // canvas mouse event handlers
   // ---------------------------------------------------------------------------------------
 
-  public handleMouseDown(event: MouseEvent): void {
+  public ctxHandleMouseDown(event: MouseEvent): void {
       event.preventDefault()
-      const clickedPointInReal = this.sys.mbrc!.canvasToReal(new Point(this.ctx!, event.offsetX, event.offsetY))
+      const clickedPointInReal = this.sys.mbrc!.canvasToReal(new Point(this.ctx!, event.offsetX, event.offsetY, "clicked"))
       if (this.sys.actorSelected(clickedPointInReal)) {
-          this.canvas!.onmousemove = this.handleMouseMove.bind(this)
-          this.canvas!.onmouseup   = this.handleMouseUp.bind(this)
+          this.canvas!.onmousemove = this.ctxHandleMouseMove.bind(this)
+          this.canvas!.onmouseup   = this.ctxHandleMouseUp.bind(this)
           return
       }
       this.sys.centerOfView = clickedPointInReal
   }
-  public handleMouseMove(event: MouseEvent): void {
+
+  public ctxHandleMouseMove(event: MouseEvent): void {
       event.preventDefault()
       this.sys.handleActorMove(event.offsetX, event.offsetY)
   }
-  public handleMouseUp(): void {
+
+  public ctxHandleMouseUp(): void {
       this.sys.handleActorDrop()
       this.canvas!.onmousemove = null
       this.canvas!.onmouseup   = null
   }
-  public handleWheelScroll(event: WheelEvent): void {
+
+  public ctxHandleWheelScroll(event: WheelEvent): void {
      this.sys.handleWheelMotion(event.deltaY < 0 ? WheelMotion.up : WheelMotion.down)
   }
   // ---------------------------------------------------------------------------------------
   // window event handlers
   // ---------------------------------------------------------------------------------------
 
-  public handleCanvasResized(): void {
+  public ctxHandleCanvasResized(): void {
       this.ctx!.canvas.width  = window.innerWidth  - cLeftMargin  - cRightMargin
       this.ctx!.canvas.height = window.innerHeight - cUpperMargin - cLowerMargin
   }

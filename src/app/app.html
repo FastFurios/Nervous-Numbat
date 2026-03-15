@@ -7,14 +7,14 @@
             <input type="file" class="file-input" (change)="onConfigFileSelected($event)" accept=".json" #configFileUpload>
         </div> 
         <div>
-            <button type="button" class="submitButton" [style]="!actionsPossible().upload ? greyOut : undefined" (click)="configFileUpload.click()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().upload" [style]="!actionsPossible().upload ? greyOut : undefined" (click)="configFileUpload.click()">
                 Upload
             </button>
         </div> 
     </div> 
     <div class="lineContainerFlexStart">
         <div>
-            <button type="button" class="submitButton" [style]="!actionsPossible().ramdomize ? greyOut : undefined" (click)="onConfigurationByRandom()" (keyup.enter)="onConfigurationByRandom()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().ramdomize" [style]="!actionsPossible().ramdomize ? greyOut : undefined" (click)="onConfigurationByRandom()" (keyup.enter)="onConfigurationByRandom()">
                 Randomize
             </button>
         </div>
@@ -57,12 +57,12 @@
             <input type="text" [(ngModel)]="configurationId" #configId>
         </div> 
         <div>
-            <button type="button" class="submitButton" [style]="!actionsPossible().setupSystem ? greyOut : undefined" (click)="onSetupSystem()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().setupSystem" [style]="!actionsPossible().setupSystem ? greyOut : undefined" (click)="onSetupSystem()">
                 Setup system
             </button>
         </div> 
         <div>
-            <button type="button" class="submitButton" [style]="!actionsPossible().discard ? greyOut : undefined" (click)="onDiscard()">
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().discard" [style]="!actionsPossible().discard ? greyOut : undefined" (click)="onDiscard()">
                 Discard
             </button>
         </div> 
