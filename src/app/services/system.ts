@@ -225,6 +225,7 @@ export class System {
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
         this.ctx          = ctx
 
+        this.stopIterating()
         this.actGrps = []
         for (let cag of this.configActGrps) {
             const actors: Actor[] = cag.actors.map(ca => new Actor(this.ctx!, ca.id, this.mappedConfigPointOntoCanvas(ca.p!), systemExecParms!))
