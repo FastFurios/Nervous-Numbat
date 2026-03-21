@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal, OnDestroy } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
@@ -149,6 +149,10 @@ export class MainCanvas implements AfterViewInit {
       this.actionsPossible.set(cActPosStart)
       this.sys.initialize(this.ctx, this.sysExecParms)
       this.systemId.set(this.sys.id)
+  }
+
+  ngOnDestroy() {
+      this.sys.stopIterating()
   }
 
   public numActorsOfActGrp(agIdx: number): number | undefined {
