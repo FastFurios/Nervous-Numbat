@@ -28,12 +28,13 @@ export function powerFunctionFactory(power: number, maxX: number): PowerFunction
   return powerOf.bind(null, 1 / lastValue, power);
 }
 
+// import { Actor } from "./actor"
 export function powerCurveBloatedList<T>(list: T[], powFct: PowerFunction): T[] {
   let bloatedList: T[] = [];
   for (let i = 0; i < list.length; i++) {
     const numOfElements = Math.max(1, Math.round(powFct(i)))
     for (let j = 0; j < numOfElements; j++) bloatedList.push(list[i])
   }
-  //console.log(`powerCurveBloatedListOf(${(<Actor[]>list).map(a => a.id)}) => ${(<Actor[]>bloatedList).map(a => a.id)}`)
+//console.log(`powerCurveBloatedListOf(${(<Actor[]>list).map(a => a.id)}) => ${(<Actor[]>bloatedList).map(a => a.id)}`)
   return bloatedList
 }

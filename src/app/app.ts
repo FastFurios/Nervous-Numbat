@@ -80,8 +80,8 @@ export class App {
   public configuration: WritableSignal<Configuration | undefined> = signal(undefined)
   public systemStructParms: SystemStructParms = {
                                                     numActGrps:         1,
-                                                    numActorsPerActGrp: 15,
-                                                    powerCurveFactor:   1,
+                                                    numActorsPerActGrp: 25,
+                                                    powerCurveFactor:   0,
                                                     startBoxMarginPct:  10
                                                 }
   public actionsPossible = signal(cActPosStart)
