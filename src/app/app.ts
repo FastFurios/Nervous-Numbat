@@ -56,7 +56,7 @@ const cActPosConfigIsSetUp: ActionsPossible = {
 export interface SystemStructParms {
   numActGrps:         number
   numActorsPerActGrp: number
-  powerCurveFactor:   number
+  clustering:         number
   startBoxMarginPct:  number  // 0..100 in %
 }
 
@@ -81,7 +81,7 @@ export class App {
   public systemStructParms: SystemStructParms = {
                                                     numActGrps:         1,
                                                     numActorsPerActGrp: 25,
-                                                    powerCurveFactor:   0,
+                                                    clustering:         0,
                                                     startBoxMarginPct:  10
                                                 }
   public actionsPossible = signal(cActPosStart)
@@ -157,9 +157,9 @@ export class App {
     switch (jag.creation_mode) {
       case "automatic" : { 
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
-        this.systemStructParms.powerCurveFactor   = (<JsonAutomaticTopology>jag.topology).power_curve_factor
+        this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
         const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
-        return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, startBox); 
+        return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, startBox); 
       }
       case "explicit" : {
         const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
@@ -177,7 +177,7 @@ export class App {
   public onConfigurationByRandom(): void {
     this.actorGroups = []
     for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
-      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.powerCurveFactor, sbs[i]))
+      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, sbs[i]))
     }
     this.configuration.set(new Configuration("random", this.actorGroups))
     this.configurationId = this.configuration()!.id

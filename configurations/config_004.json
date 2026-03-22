@@ -6,7 +6,7 @@
             "creation_mode" : "automatic",
             "topology": {
                 "number_actors": 60, 
-                "power_curve_factor": -0.8,
+                "clustering": 2.0,
                 "start_box": {
                     "lower_left":  { "x": 10, "y": 10},
                     "upper_right": { "x": 40, "y": 90}
@@ -18,7 +18,7 @@
             "creation_mode" : "automatic",
             "topology": {
                 "number_actors": 60, 
-                "power_curve_factor": -0.8,
+                "clustering": 0,
                 "start_box": {
                     "lower_left":  { "x": 60, "y": 10},
                     "upper_right": { "x": 90, "y": 90}

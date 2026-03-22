@@ -73,10 +73,10 @@ export class ConfigActorGroup {
   static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroup {
     return new ConfigActorGroup(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
   }  
-  static newRandomizedActGrp(id: string, numActors: number, powerCurveFactor: number = 0, startBox?: ConfigBox): ConfigActorGroup {
+  static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, startBox?: ConfigBox): ConfigActorGroup {
     const cag = new ConfigActorGroup(id, [], startBox)
     cag.randomizeActors(numActors, startBox)
-    cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(powerCurveFactor, cag.actors.length)))
+    cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
     return cag
   }
  
@@ -134,7 +134,7 @@ export interface JsonBox {
 export interface JsonAutomaticTopology {
   id:                   string
   number_actors:        number 
-  power_curve_factor:   number
+  clustering:           number
   start_box:            JsonBox
 }
 
