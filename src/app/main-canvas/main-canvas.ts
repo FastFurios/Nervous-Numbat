@@ -23,7 +23,7 @@ export type SystemExecParmsDisplay = {
   showActorGroupIdAndQuality:           boolean
   showActorJourney:                     boolean
   showOneActorOnlyWithTheGivenAgIndex:  number
-  focusAndFollowActGrp0:                boolean
+//focusAndFollowActGrp0:                boolean
 }
 export type SystemExecParmsStrategy = {
   poorTriangleQualityThreshold:           number
@@ -122,7 +122,7 @@ export class MainCanvas implements AfterViewInit {
         showActorGroupIdAndQuality:             false,
         showActorJourney:                       false,
         showOneActorOnlyWithTheGivenAgIndex:    -1,
-        focusAndFollowActGrp0:                  false
+//      focusAndFollowActGrp0:                  false
       },
       strategy: {
         poorTriangleQualityThreshold:           0.5,

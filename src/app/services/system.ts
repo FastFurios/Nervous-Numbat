@@ -191,7 +191,7 @@ export class System {
     public  maxIterations?:         number
     public  intervalMillisecs?:     number
     private showActorJourney?:      boolean
-    private focusAndFollowActGrp0?: boolean
+//  private focusAndFollowActGrp0?: boolean
     public  time$?:                 Observable<void>
     private timeSubscription?:      Subscription 
     public  doneIterations:         number                                  = 0
@@ -249,8 +249,8 @@ export class System {
         this.intervalMillisecs      = sep.run.intervalMillisecs
         Point.boundaryMode          = sep.run.boundaryMode      
         this.showActorJourney       = sep.display.showActorJourney
-        this.focusAndFollowActGrp0  = sep.display.focusAndFollowActGrp0 
-        if (this.focusAndFollowActGrp0) this.centerOfView = this.actGrps[0].centerPoint()
+//      this.focusAndFollowActGrp0  = sep.display.focusAndFollowActGrp0 
+//      if (this.focusAndFollowActGrp0) this.centerOfView = this.actGrps[0].centerPoint()
         this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc!.realToCanvas))
         this.clearCanvas()
         this.visualize()

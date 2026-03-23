@@ -2,7 +2,6 @@
 
 .lineContainer {
     display: flex;             /* places children horizontally */
-    justify-content: center;   /* centers them horizontally */
     align-items: center;       /* vertically centers content */
 }  
 .lineContainerLeftStart {
@@ -19,8 +18,8 @@
     gap: 0px
 }  
 
-.columnContainer h1 {
-    margin: 0;         /* removes default top/bottom margin */
+.lineContainerLeftStart input {
+    margin-right: 10;         /* removes default top/bottom margin */
 }
 
 .columnContainer p {
@@ -34,11 +33,16 @@
     justify-content: space-between;  /* centers them horizontally */
     align-items: center;       /* vertically centers content */
 }  
+.lineContainerFlexStart h1 {
+    margin: 0;         /* removes default top/bottom margin */
+}
+
 
 
 .inputFormNumber {
     width: 50px;
     margin: 3px;
+    margin-right: 10px;
     text-align: right;
     border-radius: 5px;
     border-color: rgb(158, 135, 44);

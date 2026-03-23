@@ -58,7 +58,8 @@ export abstract class ActorGroup implements CanvasObject {
         const expanse = this.expanse(this.centerPoint())
         const avgTriangleQuality = this.avgTriangleQuality
         const performance = expanse * avgTriangleQuality 
-        this.ctx.fillText(`${this.id} ${this.centerPoint()} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
+//      this.ctx.fillText(`${this.id} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
+        this.ctx.fillText(`${this.id} qlty=${(avgTriangleQuality * 100).toFixed(0)}% exp=${(this.expanse(this.centerPoint())).toFixed(0)}: perf=${(expanse * avgTriangleQuality).toFixed(0)} ${remark}`, ctr.x, ctr.y)
     } 
     public nearbyActors(p: Point, margin: number): Actor[] {
         return this.actors.filter(a => p.nearby(a.p, margin))
@@ -89,7 +90,7 @@ export abstract class ActorGroup implements CanvasObject {
         return `Actor Group ${this.id}: #actors= ${this.actors.length}` 
     }
     public updateParameters(sep: SystemExecParms, m2c: MapperRealToCanvas) {
-        console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
+//      console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
         this.showActorJourney = sep.display.showActorJourney
         this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
