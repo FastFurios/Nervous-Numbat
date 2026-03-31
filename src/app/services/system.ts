@@ -5,7 +5,7 @@ import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
 import { Point, Box, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, canvasCenter } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
-import { ActorGroup, ActorGroupDynamic } from "./actorGroup"
+import { ActorGroup, ActorGroupMode } from "./actorGroup"
 import { cActorPickMargin  } from "./parameters"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 import { now } from "./helpers"
@@ -68,13 +68,13 @@ export class ConfigActor {
   }
 } 
 
-// --- CONFIG ACTOR GROUP ----------------------------------------------------------------------
-export class ConfigActorGroup {
-  static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroup {
-    return new ConfigActorGroup(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
+// --- CONFIG ACTOR GROUP DYNAMIC ----------------------------------------------------------------------
+export class ConfigActorGroupDynamic {
+  static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroupDynamic {
+    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
   }  
-  static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, startBox?: ConfigBox): ConfigActorGroup {
-    const cag = new ConfigActorGroup(id, [], startBox)
+  static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, startBox?: ConfigBox): ConfigActorGroupDynamic {
+    const cag = new ConfigActorGroupDynamic(id, [], startBox)
     cag.randomizeActors(numActors, startBox)
     cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
     return cag
@@ -94,9 +94,14 @@ export class ConfigActorGroup {
   }
 }
 
+// --- CONFIG ACTOR GROUP STATIC i.e. a obstacle box ----------------------------------------------------------------------
+export class ConfigActorGroupStatic {
+  constructor(public id: string, public obstacle: ConfigBox) {}
+}
+
 // --- CONFIGURATION ----------------------------------------------------------------------
 export class Configuration {
-    constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
+    constructor(public id: string, public actorGroups: ConfigActorGroupDynamic[]) { }
 }
 
 // --------------------------------------------------------------------------------------
@@ -153,7 +158,7 @@ function configActorAsJson(ca: ConfigActor): JsonActor {
     }
 }
 
-function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
+function configActorGroupAsJson(cag: ConfigActorGroupDynamic): JsonActorGroup {
     return {
       id: cag.id,
       creation_mode: "explicit",
@@ -185,7 +190,7 @@ function configAsJson(c: Configuration): JsonConfiguration {
 })
 export class System {
     public  id:                     string | undefined                      = undefined
-    public  configActGrps:          ConfigActorGroup[]                      = []
+    public  configActGrps:          ConfigActorGroupDynamic[]               = []
     public  actGrps:                ActorGroup[]                            = []
     private ctx:                    CanvasRenderingContext2D | undefined    = undefined
     public  maxIterations?:         number
@@ -237,7 +242,7 @@ export class System {
                 if (!obs1 || !obs2) throw Error(`system.initialize(): missing observee(s) for actor ${ca.id}`)
                 actor.assign2SpecificObservees(obs1, obs2)
             }
-            const ag = new ActorGroupDynamic(this.ctx, cag.id, actors, systemExecParms)
+            const ag = new ActorGroup(this.ctx, cag.id, actors, ActorGroupMode.dynamic)
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
@@ -277,7 +282,7 @@ export class System {
                 this.timeSubscription?.unsubscribe()
                 this.time$ = undefined
             }
-            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), now))
+            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag)))
             this.actGrps.forEach(ag => ag.moveActors(this.mbrc!.realToCanvas))
             this.setMapperBtwRealAndCanvas()
             this.visualize()
@@ -331,7 +336,7 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     private exportedAsConfiguration(): Configuration {
-        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroup.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
+        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
     }
 
     /** write system configuration to json file in the download folder */

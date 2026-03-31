@@ -2,28 +2,31 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
-import { CanvasObject, Point, Box, Vector, MapperBtwRealAndCanvas, MapperRealToCanvas } from "./geometry"
-import { powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
+import { CanvasObject, Point, Box, MapperRealToCanvas } from "./geometry"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
-import { Actor, Halo } from "./actor"
+import { Actor } from "./actor"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
 
+
+export enum ActorGroupMode {
+    dynamic,
+    static
+}
 
 // ****************************************************************************************
 //      abstract ACTOR GROUP
 // ****************************************************************************************
 
-export abstract class ActorGroup implements CanvasObject {
+export class ActorGroup implements CanvasObject {
     private showActorJourney: boolean 
     private showOneActorOnlyWithTheGivenAgIndex: number
     private showActorGroupIdAndQuality: boolean
     public  minTriangleQuality: number = 1
-
-    constructor(public ctx: CanvasRenderingContext2D, 
-                public id: string, 
-                public actors: Actor[] = [], 
-                public colorScheme?: ColorScheme) { 
+    public  log = new Log(1000)
+    private calculatedNewPositions: Point[] = []
+    
+    constructor(public ctx: CanvasRenderingContext2D, public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
         this.showActorJourney = false
         this.showOneActorOnlyWithTheGivenAgIndex = -1
         this.showActorGroupIdAndQuality = false
@@ -98,39 +101,11 @@ export abstract class ActorGroup implements CanvasObject {
         this.actors.forEach(a => a.updateParameters(sep))
         this.visualize(m2c)
     } 
-    abstract calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void
-    abstract moveActors(m2c: MapperRealToCanvas): void
-}
-
-// ****************************************************************************************
-//      ACTOR GROUP DYNAMIC
-// ****************************************************************************************
-
-export class ActorGroupDynamic extends ActorGroup {
-    static newRandomizedActGrp(ctx: CanvasRenderingContext2D, id: string, numActors: number, startBox: Box, sep: SystemExecParms, powerCurveFactor: number = 0) {
-        const ag = new ActorGroupDynamic(ctx, id, [], sep, powerCurveFactor)
-        ag.randomizeActors(startBox, numActors, sep)
-        ag.assign2RandomObservees(powerCurveBloatedListOf(ag.actors, powerFunctionFactory(powerCurveFactor, ag.actors.length)))
-        return ag
-    }
-
-    public log = new Log(1000)
-    private calculatedNewPositions: Point[] = []
-    
-    constructor(ctx: CanvasRenderingContext2D, id: string, actors: Actor[] = [], sep: SystemExecParms, public powerCurveFactor: number = 0) { 
-        super(ctx, id, actors)
-    }
     public addActor(a: Actor): void {
         this.actors.push(a)
     }
-    public randomizeActors(startBox: Box, numActors: number, sep: SystemExecParms): void {
-        for (let i = 0; i < numActors; i++)
-            this.addActor(Actor.newRandomizedActor(this.ctx, `${this.id[0]}${i}`, startBox, sep))
-    }    
-    public assign2RandomObservees(bloatedActorsList: Actor[]): void {
-        this.actors.forEach(a => a.assign2RandomObservees(bloatedActorsList))
-    }
-    public calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void {
+    public calculateNewActorPositions(otherActGrps: ActorGroup[]): void {
+        if (this.mode != ActorGroupMode.dynamic) return
         const qlty = this.avgTriangleQuality  
         if (qlty > this.minTriangleQuality) {
             console.log(`iterations stopped at avg. triangle quality= ${qlty}`)
@@ -146,6 +121,7 @@ export class ActorGroupDynamic extends ActorGroup {
             this.calculatedNewPositions.push(a.newPosition(otherActGrps))
     }
     public moveActors(m2c: MapperRealToCanvas): void {
+        if (this.mode != ActorGroupMode.dynamic) return
         for (let i = 0; i < this.actors.length; i++) {
             this.actors[i].setPosition(this.calculatedNewPositions[i])
         }
@@ -156,7 +132,7 @@ export class ActorGroupDynamic extends ActorGroup {
 // ****************************************************************************************
 //      ACTOR GROUP STATIC BOX
 // ****************************************************************************************
-
+/*
 export class ActorGroupStaticBox extends ActorGroup {
     constructor(ctx: CanvasRenderingContext2D, id: string, box: Box, sep: SystemExecParms, colRgbRanges?: ColorScheme) { 
         const black = new RgbColor(0, 0, 0)
@@ -179,4 +155,4 @@ export class ActorGroupStaticBox extends ActorGroup {
         return 
     }
 }
-
+*/

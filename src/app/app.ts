@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { MainCanvas } from './main-canvas/main-canvas'
-import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroup, Configuration, JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology  } from "./services/system"
+import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, Configuration, JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology  } from "./services/system"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -76,7 +76,7 @@ export const cGreyOut = "background-color: lightgrey; border-color: lightgrey;"
 export class App {
   protected readonly title = signal('Nervous-Numbat');
   public showCanvas : boolean             = false
-  public actorGroups: ConfigActorGroup[]  = []
+  public actorGroups: ConfigActorGroupDynamic[]  = []
   public configuration: WritableSignal<Configuration | undefined> = signal(undefined)
   public systemStructParms: SystemStructParms = {
                                                     numActGrps:         1,
@@ -153,17 +153,17 @@ export class App {
     return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
   }
 
-  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroup | undefined {
+  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroupDynamic | undefined {
     switch (jag.creation_mode) {
       case "automatic" : { 
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
         this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
         const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
-        return ConfigActorGroup.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, startBox); 
+        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, startBox); 
       }
       case "explicit" : {
         const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
-        return new ConfigActorGroup(jag.id, cas)
+        return new ConfigActorGroupDynamic(jag.id, cas)
       } 
       default: alert("JSON file invalid creation_mode.")
     }
@@ -177,7 +177,7 @@ export class App {
   public onConfigurationByRandom(): void {
     this.actorGroups = []
     for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
-      this.actorGroups.push(ConfigActorGroup.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, sbs[i]))
+      this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, sbs[i]))
     }
     this.configuration.set(new Configuration("random", this.actorGroups))
     this.configurationId = this.configuration()!.id
