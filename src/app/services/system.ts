@@ -6,172 +6,12 @@ import { Point, Box, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, canvasCente
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
+import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigActor, ConfigBox, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth } from "./api"
+import { configAsJson } from "./json"
 import { cActorPickMargin  } from "./parameters"
-import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 import { now } from "./helpers"
 
-// ---------------------------------------------------------------------------------------
-//      SYSTEM SETUP API
-// ---------------------------------------------------------------------------------------
 
-const cVirtalGridWidth  = 100
-const cVirtalGridHeight = 100
-
-// --- CONFIG POINT ----------------------------------------------------------------------
-export class ConfigPoint { // virtual grid 
-    static new(pUpperRight: Point, p: Point): ConfigPoint {
-        return new ConfigPoint(p.x / pUpperRight.x * cVirtalGridWidth, p.y / pUpperRight.y * cVirtalGridHeight)
-    } 
-    constructor (public x: number, public y: number) {
-    if (!isBetween(x, 0, cVirtalGridWidth))  throw Error(`ConfigPoint.constructor(): x= ${x} out of range of virtual grid.`) 
-    if (!isBetween(y, 0, cVirtalGridHeight)) throw Error(`ConfigPoint.constructor(): y= ${y} out of range of virtual grid.`) 
-  }
-}
-
-// --- CONFIG BOX ----------------------------------------------------------------------
-export class ConfigBox {
-  static new(pUpperRight: Point, b: Box): ConfigBox {
-      return new ConfigBox(ConfigPoint.new(pUpperRight, b.lowerLeft), ConfigPoint.new(pUpperRight, b.upperRight))
-  } 
-  constructor(public lowerLeft: ConfigPoint, public upperRight: ConfigPoint) {
-  }
-}
-
-// --- CONFIG ACTOR ----------------------------------------------------------------------
-export class ConfigActor {
-  static new(pUpperRight: Point, a: Actor): ConfigActor {
-    return new ConfigActor(a.id, ConfigPoint.new(pUpperRight, a.p).x, ConfigPoint.new(pUpperRight, a.p).y, a.observee1?.id, a.observee2?.id)
-  }
-  static newRandomizedActor(id: string, startBox?: ConfigBox): ConfigActor {
-    if (!startBox) 
-      startBox = new ConfigBox(new ConfigPoint(0, 0), new ConfigPoint(cVirtalGridWidth, cVirtalGridHeight))
-    const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
-    const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-    return new ConfigActor(id, x, y)
-  }
-  public p:            ConfigPoint | undefined
-  public observee1id:  string | undefined
-  public observee2id:  string | undefined
-
-  constructor(public id: string, x: number, y: number, observee1id?: string, observee2id?: string) {
-    this.p = new ConfigPoint(x, y)
-    this.observee1id = observee1id 
-    this.observee2id = observee2id
-  }
-  public assign2RandomObservees(actors: ConfigActor[]): void {
-      const restOfActors1 = actors.filter(a => a !== this)
-      const observee1     = restOfActors1[randomInRange(0, restOfActors1.length)]
-      const restOfActors2 = restOfActors1.filter(a => a !== observee1)
-      const observee2     = restOfActors2[randomInRange(0, restOfActors2.length)]
-      this.observee1id    = observee1.id
-      this.observee2id    = observee2.id
-  }
-} 
-
-// --- CONFIG ACTOR GROUP DYNAMIC ----------------------------------------------------------------------
-export class ConfigActorGroupDynamic {
-  static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroupDynamic {
-    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)))
-  }  
-  static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, startBox?: ConfigBox): ConfigActorGroupDynamic {
-    const cag = new ConfigActorGroupDynamic(id, [], startBox)
-    cag.randomizeActors(numActors, startBox)
-    cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
-    return cag
-  }
- 
-  constructor(public id: string, public actors: ConfigActor[], public startBox?: ConfigBox) {}
- 
-  public addActor(actor: ConfigActor): void {
-    this.actors.push(actor)
-  }
-  public randomizeActors(numActors: number, startBox?: ConfigBox): void {
-      for (let i = 0; i < numActors; i++)
-          this.addActor(ConfigActor.newRandomizedActor(`${this.id[0]}${i}`, startBox))
-  }    
-  public assign2RandomObservees(actors: ConfigActor[]): void {
-    this.actors.forEach(a => a.assign2RandomObservees(actors))
-  }
-}
-
-// --- CONFIG ACTOR GROUP STATIC i.e. a obstacle box ----------------------------------------------------------------------
-export class ConfigActorGroupStatic {
-  constructor(public id: string, public obstacle: ConfigBox) {}
-}
-
-// --- CONFIGURATION ----------------------------------------------------------------------
-export class Configuration {
-    constructor(public id: string, public actorGroups: ConfigActorGroupDynamic[]) { }
-}
-
-// --------------------------------------------------------------------------------------
-//     JSON Configuration   
-// --------------------------------------------------------------------------------------
-
-export type Creation_Mode = "automatic" | "explicit"
-
-export interface JsonActor {
-  id:         string
-  x:          number
-  y:          number
-  observee1:  string
-  observee2:  string
-}
-
-export interface JsonActorGroup {
-  id:                 string
-  creation_mode:      Creation_Mode
-  topology:           JsonExplicitTopology | JsonAutomaticTopology      
-}
-
-export type JsonExplicitTopology = JsonActor[]
-
-interface JsonPoint { 
-  x: number
-  y: number 
-}
-
-export interface JsonBox {
-  lower_left:  JsonPoint
-  upper_right: JsonPoint
-}
-
-export interface JsonAutomaticTopology {
-  id:                   string
-  number_actors:        number 
-  clustering:           number
-  start_box:            JsonBox
-}
-
-export interface JsonConfiguration {
-  id: string
-  actor_groups: JsonActorGroup[]
-}
-
-function configActorAsJson(ca: ConfigActor): JsonActor {
-    return {
-      id: ca.id,
-      x:  ca.p!.x,
-      y:  ca.p!.y,
-      observee1: ca.observee1id!,
-      observee2: ca.observee2id!
-    }
-}
-
-function configActorGroupAsJson(cag: ConfigActorGroupDynamic): JsonActorGroup {
-    return {
-      id: cag.id,
-      creation_mode: "explicit",
-      topology: cag.actors.map(ca => configActorAsJson(ca))
-    }
-}
-
-function configAsJson(c: Configuration): JsonConfiguration {
-  return {
-    id: c.id,
-    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
-  }
-}
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
 
@@ -190,7 +30,7 @@ function configAsJson(c: Configuration): JsonConfiguration {
 })
 export class System {
     public  id:                     string | undefined                      = undefined
-    public  configActGrps:          ConfigActorGroupDynamic[]               = []
+    public  configActGrps:          ConfigActorGroup[]                      = []
     public  actGrps:                ActorGroup[]                            = []
     private ctx:                    CanvasRenderingContext2D | undefined    = undefined
     public  maxIterations?:         number
@@ -242,7 +82,7 @@ export class System {
                 if (!obs1 || !obs2) throw Error(`system.initialize(): missing observee(s) for actor ${ca.id}`)
                 actor.assign2SpecificObservees(obs1, obs2)
             }
-            const ag = new ActorGroup(this.ctx, cag.id, actors, ActorGroupMode.dynamic)
+            const ag = new ActorGroup(this.ctx, cag.id, actors, cag.mode)
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))

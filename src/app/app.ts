@@ -10,7 +10,11 @@ import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
 import { MainCanvas } from './main-canvas/main-canvas'
-import { System, ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, Configuration, JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology  } from "./services/system"
+import { System } from "./services/system"
+import { ActorGroupMode } from "./services/actorGroup"
+
+import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
+import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration } from "./services/api"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -147,23 +151,30 @@ export class App {
   
   private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
     const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
+            console.log("app.onConfigFileSelected(): configActGrps=")
+        console.log(configActGrps)
+
+
     if (configActGrps.find(cag => cag == undefined)) {
       alert("A JSON file actor_group is invalid.")
     }  
     return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
   }
 
-  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroupDynamic | undefined {
+  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroupDynamic | ConfigActorGroupStaticBox | undefined {
     switch (jag.creation_mode) {
       case "automatic" : { 
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
         this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
         const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
-        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, startBox); 
+        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, startBox); 
       }
       case "explicit" : {
         const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
-        return new ConfigActorGroupDynamic(jag.id, cas)
+        return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode)
+      } 
+      case "obstacle" : {
+        return new ConfigActorGroupStaticBox(jag.id, new ConfigBox(new ConfigPoint(jag.obstacle!.lower_left.x, jag.obstacle!.lower_left.y), new ConfigPoint(jag.obstacle!.upper_right.x, jag.obstacle!.upper_right.y)))
       } 
       default: alert("JSON file invalid creation_mode.")
     }
@@ -177,7 +188,7 @@ export class App {
   public onConfigurationByRandom(): void {
     this.actorGroups = []
     for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
-      this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, sbs[i]))
+      this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, sbs[i]))
     }
     this.configuration.set(new Configuration("random", this.actorGroups))
     this.configurationId = this.configuration()!.id

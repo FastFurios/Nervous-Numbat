@@ -10,8 +10,8 @@ import { SystemExecParms } from "../main-canvas/main-canvas"
 
 
 export enum ActorGroupMode {
-    dynamic,
-    static
+    dynamic = "dynamic",
+    static  = "static"
 }
 
 // ****************************************************************************************
@@ -128,31 +128,3 @@ export class ActorGroup implements CanvasObject {
         this.visualize(m2c)
     }
 }
-
-// ****************************************************************************************
-//      ACTOR GROUP STATIC BOX
-// ****************************************************************************************
-/*
-export class ActorGroupStaticBox extends ActorGroup {
-    constructor(ctx: CanvasRenderingContext2D, id: string, box: Box, sep: SystemExecParms, colRgbRanges?: ColorScheme) { 
-        const black = new RgbColor(0, 0, 0)
-        const actors = [
-            new Actor(ctx, "lowerLeft",  new Point(ctx, box.lowerLeft.x,  box.lowerLeft.y),  sep, black),
-            new Actor(ctx, "upperLeft",  new Point(ctx, box.lowerLeft.x,  box.upperRight.y), sep, black),
-            new Actor(ctx, "upperRight", new Point(ctx, box.upperRight.x, box.upperRight.y), sep, black),
-            new Actor(ctx, "lowerRight", new Point(ctx, box.upperRight.x, box.lowerLeft.y),  sep, black)
-        ]
-        super(ctx, id, actors, colRgbRanges)
-        actors[0].observee1 = actors[1]
-        actors[0].observee2 = actors[3]
-        actors[2].observee1 = actors[1]
-        actors[2].observee2 = actors[3]
-    }
-    public calculateNewActorPositions(otherActGrps: ActorGroup[], iteration: number): void { 
-        return 
-    }    
-    public moveActors(): void { 
-        return 
-    }
-}
-*/
