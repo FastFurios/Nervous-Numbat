@@ -68,8 +68,10 @@ function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
 }
 
 export function configAsJson(c: Configuration): JsonConfiguration {
+  console.log("json.configAsJson(c)")
+  console.log(c)
   return {
-    id: c.id,
+    id: c.id, 
     actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
   }
 }

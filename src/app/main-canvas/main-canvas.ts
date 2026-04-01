@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal, OnDestroy } from '@angular/core'
+import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
@@ -186,11 +186,6 @@ export class MainCanvas implements AfterViewInit {
     this.runResumeButtonLabel = "Run"
     this.sys.initialize(this.ctx!, this.sysExecParms)
     this.actionsPossible.set(cActPosStart)
-  }
-
-  /** download button clicked */
-  public onSaveFile() {
-    this.sys.onSaveFile()
   }
 
   /** home button clicked */

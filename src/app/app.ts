@@ -12,6 +12,10 @@ import { CommonModule } from '@angular/common'
 import { MainCanvas } from './main-canvas/main-canvas'
 import { System } from "./services/system"
 import { ActorGroupMode } from "./services/actorGroup"
+import { configAsJson } from "./services/json"
+import { now } from "./services/helpers"
+
+
 
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
 import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration } from "./services/api"
@@ -179,6 +183,37 @@ export class App {
       default: alert("JSON file invalid creation_mode.")
     }
     return undefined
+  }
+
+  // --------------------------------------------------------------------------------------
+  //     Downloading a Configuration  
+  // --------------------------------------------------------------------------------------
+
+  private downloadToFile(blob: Blob, fileExtension: string, configurationId: string): void {
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = `${configurationId}_${now()}.${fileExtension}`
+      link.click()
+      link.remove()
+  }
+  
+  
+  /** download configuration json file for the current system */
+  public onDownload(): void { 
+    const configuration = this.sys.exportedAsConfiguration()
+    if (!configuration) {
+        alert("system.onSaveFile(): no configuration.")
+        return
+    }
+    if (!configuration.id) { 
+        alert("system.onSaveFile(): no configuration id!")
+        return
+    }
+    console.log("app.onDownload(): const configuration = ")
+    console.log(configuration)
+    const fileContent = configAsJson(configuration)
+    const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
+    this.downloadToFile(blob, "json", configuration.id)
   }
 
   // --------------------------------------------------------------------------------------

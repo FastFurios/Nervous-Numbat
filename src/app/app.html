@@ -3,7 +3,7 @@
     <img src="assets/numbat.jpg" alt="Numbat" width="60" height="60"  style="margin-right: 10px">
     <div class="columnContainer">
         <h1>Welcome to Nervous Numbat!</h1>
-        <p>"Living" complex systems built by magic triangles. <small>(Version 0.9.4)</small></p>
+        <p>"Living" complex systems built by magic triangles. <small>(Version 0.9.5)</small></p>
     </div>
 </div>
 <div class="lineContainerFlexStart">
@@ -57,20 +57,17 @@
         </div>
     </div> 
     <div class="lineContainerFlexStart">
-        <div>
-            <label for="configId">Configuration id:</label>
-            <input type="text" [(ngModel)]="configurationId" #configId>
-        </div> 
-        <div>
-            <button type="button" class="submitButton" [disabled]="!actionsPossible().setupSystem" [style]="!actionsPossible().setupSystem ? greyOut : undefined" (click)="onSetupSystem()">
-                Setup system
-            </button>
-        </div> 
-        <div>
-            <button type="button" class="submitButton" [disabled]="!actionsPossible().discard" [style]="!actionsPossible().discard ? greyOut : undefined" (click)="onDiscard()">
-                Discard
-            </button>
-        </div> 
+        <label for="configId">Configuration id:</label>
+        <input type="text" [(ngModel)]="configurationId" #configId>
+        <button type="button" class="submitButton" [disabled]="!actionsPossible().setupSystem" [style]="!actionsPossible().setupSystem ? greyOut : undefined" (click)="onSetupSystem()">
+            Setup system
+        </button>
+        <button type="button" class="submitButton" [disabled]="!actionsPossible().downloadConfig" [style]="!actionsPossible().downloadConfig ? greyOut : undefined" (click)="onDownload()">
+            Download
+        </button>
+        <button type="button" class="submitButton" [disabled]="!actionsPossible().discard" [style]="!actionsPossible().discard ? greyOut : undefined" (click)="onDiscard()">
+            Discard
+        </button>
     </div>
 </div>
 

@@ -5,8 +5,8 @@ import { SystemExecParms, WheelMotion } from "../main-canvas/main-canvas"
 import { Point, Box, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, canvasCenter } from "./geometry"
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
-import { ActorGroup, ActorGroupMode } from "./actorGroup"
-import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigActor, ConfigBox, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth } from "./api"
+import { ActorGroup } from "./actorGroup"
+import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth } from "./api"
 import { configAsJson } from "./json"
 import { cActorPickMargin  } from "./parameters"
 import { now } from "./helpers"
@@ -175,35 +175,8 @@ export class System {
 //      export the system and it's state
 // ---------------------------------------------------------------------------------------
 
-    private exportedAsConfiguration(): Configuration {
+    public exportedAsConfiguration(): Configuration {
         return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
-    }
-
-    /** write system configuration to json file in the download folder */
-    private downloadToFile(blob: Blob, fileExtension: string, configurationId: string): void {
-        const link = document.createElement("a")
-        link.href = URL.createObjectURL(blob)
-        link.download = `${configurationId}_${now()}.${fileExtension}`
-        link.click()
-        link.remove()
-    }
-
-    /** download system configuration to json file */
-    public onSaveFile(): void {
-        const configuration = this.exportedAsConfiguration()
-        if (!configuration) {
-            alert("system.onSaveFile(): no configuration.")
-            return
-        }
-        if (!this.id) { 
-            alert("system.onSaveFile(): no configuration id!")
-            return
-        }
-        console.log("system.onSaveFile(): const configuration = ")
-        console.log(configuration)
-        const fileContent = configAsJson(configuration)
-        const blob = new Blob([JSON.stringify(fileContent, null, "\t")], { type: "application/json" })
-        this.downloadToFile(blob, "json", configuration.id)
     }
 
 // ---------------------------------------------------------------------------------------

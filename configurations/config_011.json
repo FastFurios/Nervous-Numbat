@@ -28,8 +28,8 @@
             "creation_mode" : "automatic",
             "iteration_mode": "dynamic",
             "topology": {
-                "number_actors": 15, 
-                "clustering": 0,
+                "number_actors": 35, 
+                "clustering": 1.0,
                 "start_box": {
                     "lower_left":  { "x": 90, "y": 50},
                     "upper_right": { "x": 98, "y": 95}
