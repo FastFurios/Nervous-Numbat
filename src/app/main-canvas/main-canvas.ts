@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, signal, WritableSignal } from '@angular/core'
+import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, signal, WritableSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
@@ -89,7 +89,7 @@ const cActPosStopped: ActionsPossible = {
   templateUrl:  './main-canvas.html',
   styleUrl:     './main-canvas.css',
 })
-export class MainCanvas implements AfterViewInit {
+export class MainCanvas implements OnInit, AfterViewInit {
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
   public  BoundaryMode                                                        = BoundaryMode 
   public  sysExecParms!:                SystemExecParms
@@ -132,6 +132,11 @@ export class MainCanvas implements AfterViewInit {
     this.actionsPossible.set(cActPosStart)
   }
 
+  ngOnInit() {
+    this.sysExecParms.run.boundaryMode = BoundaryMode.rebound
+    this.updateExecParms()
+}
+
   ngAfterViewInit() {
       if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
       this.canvas  = this.canvasRef.nativeElement
@@ -164,6 +169,7 @@ export class MainCanvas implements AfterViewInit {
   // ---------------------------------------------------------------------------------------
 
   public runResumeIterationsHandler() {
+    this.updateExecParms()
     this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
       this.time.update(t => t + 1)
       this.actionsPossible.set(cActPosRunning)
@@ -180,6 +186,7 @@ export class MainCanvas implements AfterViewInit {
 
   /** reset button clicked */
   public resetSystemHandler() {
+    this.updateExecParms()
     this.sys.reset(this.sysExecParms)
     this.time.set(0)
     this.timeSubscription?.unsubscribe()

@@ -7,9 +7,7 @@ import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth } from "./api"
-import { configAsJson } from "./json"
 import { cActorPickMargin  } from "./parameters"
-import { now } from "./helpers"
 
 
 
@@ -97,6 +95,8 @@ export class System {
 //      this.focusAndFollowActGrp0  = sep.display.focusAndFollowActGrp0 
 //      if (this.focusAndFollowActGrp0) this.centerOfView = this.actGrps[0].centerPoint()
         this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc!.realToCanvas))
+    }
+    public initializeCanvas() {
         this.clearCanvas()
         this.visualize()
     }
