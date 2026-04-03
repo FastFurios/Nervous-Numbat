@@ -13,12 +13,12 @@ import { MainCanvas } from './main-canvas/main-canvas'
 import { System } from "./services/system"
 import { ActorGroupMode } from "./services/actorGroup"
 import { configAsJson } from "./services/json"
-import { now } from "./services/helpers"
+import { now, randomInRange } from "./services/helpers"
 
 
 
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
-import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration } from "./services/api"
+import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration, cVirtalGridWidth, cVirtalGridHeight } from "./services/api"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -154,11 +154,10 @@ export class App {
   }
   
   private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
+    console.log(`app.configurationFrom() entered. `)
     const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
-            console.log("app.onConfigFileSelected(): configActGrps=")
-        console.log(configActGrps)
-
-
+//  console.log("app.onConfigFileSelected(): configActGrps=")
+//  console.log(configActGrps)
     if (configActGrps.find(cag => cag == undefined)) {
       alert("A JSON file actor_group is invalid.")
     }  
@@ -174,7 +173,8 @@ export class App {
         return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, startBox); 
       }
       case "explicit" : {
-        const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x, ja.y, ja.observee1, ja.observee2)) 
+        console.log(`app.configActorGroupFrom(): jag.topology[0].id= ${(<JsonExplicitTopology>jag.topology)[0].id}`)
+        const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x || randomInRange(0, cVirtalGridWidth), ja.y || randomInRange(0, cVirtalGridHeight), ja.observee1, ja.observee2)) 
         return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode)
       } 
       case "obstacle" : {
