@@ -15,10 +15,8 @@ import { ActorGroupMode } from "./services/actorGroup"
 import { configAsJson } from "./services/json"
 import { now, randomInRange } from "./services/helpers"
 
-
-
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
-import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration, cVirtalGridWidth, cVirtalGridHeight } from "./services/api"
+import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration, cVirtalGridWidth, cVirtalGridHeight, CoordinateType } from "./services/api"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -169,16 +167,31 @@ export class App {
       case "automatic" : { 
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
         this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
-        const startBox = new ConfigBox((<JsonAutomaticTopology>jag.topology).start_box.lower_left, (<JsonAutomaticTopology>jag.topology).start_box.upper_right)  
-        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, startBox); 
+        const startBox = new ConfigBox(
+            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.lower_left, jag.coordinate_type), 
+            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.upper_right, jag.coordinate_type))  
+        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, 
+                                                           this.systemStructParms.numActorsPerActGrp, 
+                                                           this.systemStructParms.clustering, 
+                                                           ActorGroupMode.dynamic, 
+                                                           startBox); 
       }
       case "explicit" : {
         console.log(`app.configActorGroupFrom(): jag.topology[0].id= ${(<JsonExplicitTopology>jag.topology)[0].id}`)
-        const cas = (<JsonExplicitTopology>jag.topology).map(ja => new ConfigActor(ja.id, ja.x || randomInRange(0, cVirtalGridWidth), ja.y || randomInRange(0, cVirtalGridHeight), ja.observee1, ja.observee2)) 
-        return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode)
+        const cas = (<JsonExplicitTopology>jag.topology).map(ja => 
+          new ConfigActor(ja.id, 
+                          ja.x || randomInRange(0, cVirtalGridWidth), 
+                          ja.y || randomInRange(0, cVirtalGridHeight), 
+                          jag.coordinate_type, 
+                          ja.observee1, 
+                          ja.observee2)) 
+        return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode, jag.coordinate_type)
       } 
       case "obstacle" : {
-        return new ConfigActorGroupStaticBox(jag.id, new ConfigBox(new ConfigPoint(jag.obstacle!.lower_left.x, jag.obstacle!.lower_left.y), new ConfigPoint(jag.obstacle!.upper_right.x, jag.obstacle!.upper_right.y)))
+        return new ConfigActorGroupStaticBox(jag.id, 
+                                             jag.coordinate_type, 
+                                             new ConfigBox(new ConfigPoint(jag.obstacle!.lower_left.x, jag.obstacle!.lower_left.y, jag.coordinate_type), 
+                                                           new ConfigPoint(jag.obstacle!.upper_right.x, jag.obstacle!.upper_right.y, jag.coordinate_type)))
       } 
       default: alert("JSON file invalid creation_mode.")
     }
@@ -196,8 +209,7 @@ export class App {
       link.click()
       link.remove()
   }
-  
-  
+    
   /** download configuration json file for the current system */
   public onDownload(): void { 
     const configuration = this.sys.exportedAsConfiguration()
@@ -237,31 +249,31 @@ export class App {
   private startBoxesForNumGrps(n: number): ConfigBox[] {
     if (n  < 1) return []  // error
 
-    if (n == 1) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint(100,  100)))]
+    if (n == 1) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0, CoordinateType.relative), new ConfigPoint(100,  100, CoordinateType.relative)))]
 
-    if (n == 2) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 50,  100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint(100,  100)))]
+    if (n == 2) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0, CoordinateType.relative), new ConfigPoint( 50,  100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0, CoordinateType.relative), new ConfigPoint(100,  100, CoordinateType.relative)))]
       
-    if (n <= 4) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 50,   50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint(100,   50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 50,  100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50), new ConfigPoint(100,  100)))]
+    if (n <= 4) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0, CoordinateType.relative), new ConfigPoint( 50,   50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0, CoordinateType.relative), new ConfigPoint(100,   50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50, CoordinateType.relative), new ConfigPoint( 50,  100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50, CoordinateType.relative), new ConfigPoint(100,  100, CoordinateType.relative)))]
 
-    if (n <= 6) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 33,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33,  0), new ConfigPoint( 67,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67,  0), new ConfigPoint(100,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 33, 100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33, 50), new ConfigPoint( 67, 100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67, 50), new ConfigPoint(100, 100)))]
+    if (n <= 6) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0, CoordinateType.relative), new ConfigPoint( 33,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33,  0, CoordinateType.relative), new ConfigPoint( 67,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67,  0, CoordinateType.relative), new ConfigPoint(100,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50, CoordinateType.relative), new ConfigPoint( 33, 100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(33, 50, CoordinateType.relative), new ConfigPoint( 67, 100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(67, 50, CoordinateType.relative), new ConfigPoint(100, 100, CoordinateType.relative)))]
 
-    if (n <= 8) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0), new ConfigPoint( 25,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25,  0), new ConfigPoint( 50,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0), new ConfigPoint( 75,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75,  0), new ConfigPoint(100,  50))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50), new ConfigPoint( 25, 100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25, 50), new ConfigPoint( 50, 100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50), new ConfigPoint( 75, 100))),
-                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75, 50), new ConfigPoint(100, 100)))]
+    if (n <= 8) return [this.configBoxWithin(new ConfigBox(new ConfigPoint( 0,  0, CoordinateType.relative), new ConfigPoint( 25,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25,  0, CoordinateType.relative), new ConfigPoint( 50,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50,  0, CoordinateType.relative), new ConfigPoint( 75,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75,  0, CoordinateType.relative), new ConfigPoint(100,  50, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint( 0, 50, CoordinateType.relative), new ConfigPoint( 25, 100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(25, 50, CoordinateType.relative), new ConfigPoint( 50, 100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(50, 50, CoordinateType.relative), new ConfigPoint( 75, 100, CoordinateType.relative))),
+                        this.configBoxWithin(new ConfigBox(new ConfigPoint(75, 50, CoordinateType.relative), new ConfigPoint(100, 100, CoordinateType.relative)))]
     return []  // error
   }
 
@@ -271,8 +283,8 @@ export class App {
     const boxHeight   = area.upperRight.y - area.lowerLeft.y
     const xMargin     = boxWidth  * this.systemStructParms.startBoxMarginPct / 100
     const yMargin     = boxHeight * this.systemStructParms.startBoxMarginPct / 100
-    const lowerLeft   = new ConfigPoint(area.lowerLeft.x  + xMargin, area.lowerLeft.y  + yMargin)
-    const upperRight  = new ConfigPoint(area.upperRight.x - xMargin, area.upperRight.y - yMargin)
+    const lowerLeft   = new ConfigPoint(area.lowerLeft.x  + xMargin, area.lowerLeft.y  + yMargin, CoordinateType.relative)
+    const upperRight  = new ConfigPoint(area.upperRight.x - xMargin, area.upperRight.y - yMargin, CoordinateType.relative)
     return new ConfigBox(lowerLeft, upperRight)
   }
 }

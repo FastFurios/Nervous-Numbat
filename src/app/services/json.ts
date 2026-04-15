@@ -2,7 +2,7 @@
 //     JSON Configuration   
 // --------------------------------------------------------------------------------------
 import { ActorGroupMode } from "./actorGroup"
-import { Configuration, ConfigActorGroup,ConfigActor } from "./api"
+import { Configuration, ConfigActorGroup, ConfigActor, CoordinateType } from "./api"
 
 export type Creation_Mode = "automatic" | "explicit" | "obstacle"
 
@@ -21,13 +21,14 @@ export interface JsonActorGroup {
   id:                 string
   creation_mode:      Creation_Mode
   iteration_mode:     ActorGroupMode
+  coordinate_type:    CoordinateType,   // either % of iniial canvas or absolute, real coordinates 
   topology?:          JsonExplicitTopology | JsonAutomaticTopology
   obstacle?:          JsonObstacle       
 }
 
-interface JsonPoint { 
-  x: number
-  y: number 
+export interface JsonPoint { 
+  x:      number
+  y:      number 
 }
 
 export interface JsonBox {
@@ -61,6 +62,7 @@ function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
     return {
       id: cag.id,
       creation_mode: "explicit",
+      coordinate_type: cag.coordType,
       iteration_mode: cag.mode,
       topology: cag.actors.map(ca => configActorAsJson(ca)),
       obstacle: undefined

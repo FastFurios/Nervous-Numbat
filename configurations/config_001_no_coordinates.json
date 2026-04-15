@@ -3,8 +3,9 @@
     "actor_groups": [
         {
             "id": "Group A",
-            "creation_mode" : "explicit",
-            "iteration_mode": "dynamic",
+            "creation_mode" :  "explicit",
+            "iteration_mode":  "dynamic",
+            "coordinate_type": "relative",
             "topology": [
                 { "id" : "Bird-00", "x": 5, "y": 5, "observee1" : "Bird-05", "observee2" : "Bird-13"},
                 { "id" : "Bird-01", "observee1" : "Bird-03", "observee2" : "Bird-02"},

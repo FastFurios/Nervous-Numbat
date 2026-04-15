@@ -1,4 +1,3 @@
-
 import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, signal, WritableSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
@@ -8,6 +7,10 @@ import { System } from "../services/system"
 import { BoundaryMode, Point } from "../services/geometry"
 import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin } from "./library/parameters"
 import { Subscription } from 'rxjs'
+
+// ---------------------------------------------------------------------------------------
+//      SYSTEM EXECUTION PARAMETERS
+// ---------------------------------------------------------------------------------------
 
 export type SystemExecParmsRun = {
   intervalMillisecs:  number
@@ -171,7 +174,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   public runResumeIterationsHandler() {
     this.updateExecParms()
-    this.timeSubscription = this.sys.runResumeIterating()?.subscribe(() => {
+    this.timeSubscription = this.sys.runResumeIterating(this.ctx!)?.subscribe(() => {
       this.time.update(t => t + 1)
       this.actionsPossible.set(cActPosRunning)
     } )
@@ -188,7 +191,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
   /** reset button clicked */
   public resetSystemHandler() {
     this.updateExecParms()
-    this.sys.reset(this.sysExecParms)
+    this.sys.reset(this.ctx!, this.sysExecParms)
     this.time.set(0)
     this.timeSubscription?.unsubscribe()
     this.runResumeButtonLabel = "Run"
@@ -228,7 +231,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
   public ctxHandleMouseDown(event: MouseEvent): void {
       event.preventDefault()
       const clickedPointInReal = this.sys.mbrc!.canvasToReal(new Point(this.ctx!, event.offsetX, event.offsetY, "clicked"))
-      if (this.sys.actorSelected(clickedPointInReal)) {
+      if (this.sys.actorSelected(this.ctx!, clickedPointInReal)) {
           this.canvas!.onmousemove = this.ctxHandleMouseMove.bind(this)
           this.canvas!.onmouseup   = this.ctxHandleMouseUp.bind(this)
           return
@@ -238,17 +241,17 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   public ctxHandleMouseMove(event: MouseEvent): void {
       event.preventDefault()
-      this.sys.handleActorMove(event.offsetX, event.offsetY)
+      this.sys.handleActorMove(this.ctx!, event.offsetX, event.offsetY)
   }
 
   public ctxHandleMouseUp(): void {
-      this.sys.handleActorDrop()
+      this.sys.handleActorDrop(this.ctx!)
       this.canvas!.onmousemove = null
       this.canvas!.onmouseup   = null
   }
 
   public ctxHandleWheelScroll(event: WheelEvent): void {
-     this.sys.handleWheelMotion(event.deltaY < 0 ? WheelMotion.up : WheelMotion.down)
+     this.sys.handleWheelMotion(this.ctx!, event.deltaY < 0 ? WheelMotion.up : WheelMotion.down)
   }
   // ---------------------------------------------------------------------------------------
   // window event handlers

@@ -5,20 +5,33 @@
 import { Point, Box } from "./geometry"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
-import { RgbColor } from "./color"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
+import { JsonPoint } from "./json"
 
 export const cVirtalGridWidth  = 100
 export const cVirtalGridHeight = 100
 
+export enum CoordinateType {
+  relative = "relative",
+  real     = "real"   
+}
+
 // --- CONFIG POINT ----------------------------------------------------------------------
+
 export class ConfigPoint { // virtual grid 
-    static new(pUpperRight: Point, p: Point): ConfigPoint {
-        return new ConfigPoint(p.x / pUpperRight.x * cVirtalGridWidth, p.y / pUpperRight.y * cVirtalGridHeight)
-    } 
-    constructor (public x: number, public y: number) {
-//  if (!isBetween(x, 0, cVirtalGridWidth))  throw Error(`ConfigPoint.constructor(): x= ${x} out of range of virtual grid.`) 
-//  if (!isBetween(y, 0, cVirtalGridHeight)) throw Error(`ConfigPoint.constructor(): y= ${y} out of range of virtual grid.`) 
+/*
+  static newPercent(pUpperRight: Point, p: Point): ConfigPoint {
+      return new ConfigPoint(p.x / pUpperRight.x * cVirtalGridWidth, p.y / pUpperRight.y * cVirtalGridHeight)
+  } 
+  static newReal(p: Point): ConfigPoint {
+      return new ConfigPoint(p.x, p.y)
+  } 
+*/
+  static newFromJson(jp: JsonPoint, coordType: CoordinateType): ConfigPoint {
+    return new ConfigPoint(jp.x, jp.y, coordType)
+  } 
+
+  constructor (public x: number, public y: number, public coordType: CoordinateType) {
   }
   public toString(): string {
     return `[${this.x}/${this.y}]`
@@ -27,34 +40,40 @@ export class ConfigPoint { // virtual grid
 
 // --- CONFIG BOX ----------------------------------------------------------------------
 export class ConfigBox {
-  static new(pUpperRight: Point, b: Box): ConfigBox {
-      return new ConfigBox(ConfigPoint.new(pUpperRight, b.lowerLeft), ConfigPoint.new(pUpperRight, b.upperRight))
+/*
+  static newPercent(pUpperRight: Point, b: Box): ConfigBox {
+      return new ConfigBox(ConfigPoint.newPercent(pUpperRight, b.lowerLeft), ConfigPoint.newPercent(pUpperRight, b.upperRight))
   } 
+  static newReal(pUpperRight: Point, b: Box): ConfigBox {
+      return new ConfigBox(ConfigPoint.newPercent(pUpperRight, b.lowerLeft), ConfigPoint.newPercent(pUpperRight, b.upperRight))
+  } 
+*/
   constructor(public lowerLeft: ConfigPoint, public upperRight: ConfigPoint) {
   }
 }
 
 // --- CONFIG ACTOR ----------------------------------------------------------------------
 export class ConfigActor {
-  static new(pUpperRight: Point, a: Actor): ConfigActor {
-    return new ConfigActor(a.id, ConfigPoint.new(pUpperRight, a.p).x, ConfigPoint.new(pUpperRight, a.p).y, a.observee1?.id, a.observee2?.id)
+  static newFromSystem(a: Actor): ConfigActor {
+    return new ConfigActor(a.id, a.p.x, a.p.y, CoordinateType.real, a.observee1?.id, a.observee2?.id)
   }
   static newRandomizedActor(id: string, startBox?: ConfigBox): ConfigActor {
     if (!startBox) 
-      startBox = new ConfigBox(new ConfigPoint(0, 0), new ConfigPoint(cVirtalGridWidth, cVirtalGridHeight))
+      startBox = new ConfigBox(new ConfigPoint(0, 0, CoordinateType.relative), new ConfigPoint(cVirtalGridWidth, cVirtalGridHeight, CoordinateType.relative))
     const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
     const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-    return new ConfigActor(id, x, y)
+    return new ConfigActor(id, x, y, CoordinateType.relative)
   }
   public p:            ConfigPoint | undefined
   public observee1id:  string | undefined
   public observee2id:  string | undefined
 
-  constructor(public id: string, x: number, y: number, observee1id?: string, observee2id?: string) {
-    this.p = new ConfigPoint(x, y)
+  constructor(public id: string, x: number, y: number, coordType: CoordinateType, observee1id?: string, observee2id?: string) {
+    this.p = new ConfigPoint(x, y, coordType)
     this.observee1id = observee1id 
     this.observee2id = observee2id
   }
+
   public assign2RandomObservees(actors: ConfigActor[]): void {
       const restOfActors1 = actors.filter(a => a !== this)
       const observee1     = restOfActors1[randomInRange(0, restOfActors1.length)]
@@ -70,24 +89,28 @@ export class ConfigActor {
 
 // --- abstract CONFIG ACTOR GROUP ----------------------------------------------------------------------
 export abstract class ConfigActorGroup {
-  abstract actors: ConfigActor[]
-  constructor(public id: string, public mode: ActorGroupMode) {}
+  constructor(public id: string, public actors: ConfigActor[], public mode: ActorGroupMode, public coordType: CoordinateType) {}
 } 
 
 // --- CONFIG ACTOR GROUP DYNAMIC ----------------------------------------------------------------------
 export class ConfigActorGroupDynamic extends ConfigActorGroup {
-  static new(pUpperRight: Point, ag: ActorGroup): ConfigActorGroupDynamic {
-    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.new(pUpperRight, a)), ag.mode)
-  }  
+/*
+  static new(pUpperRight: Point, ag: ActorGroup, coordType: CoordinateType): ConfigActorGroupDynamic {
+    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.newFromSystem(a)), ag.mode, coordType)
+  }
+*/
+  static newFromSystem(ag: ActorGroup): ConfigActorGroupDynamic {
+    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.newFromSystem(a)), ag.mode, CoordinateType.real)
+  }
   static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, mode: ActorGroupMode, startBox?: ConfigBox): ConfigActorGroupDynamic {
-    const cag = new ConfigActorGroupDynamic(id, [], mode, startBox)
+    const cag = new ConfigActorGroupDynamic(id, [], mode, CoordinateType.relative, startBox)
     cag.randomizeActors(numActors, startBox)
     cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
     return cag
   }
  
-  constructor(id: string, public actors: ConfigActor[], mode: ActorGroupMode, public startBox?: ConfigBox) {
-    super(id, mode)
+  constructor(id: string, actors: ConfigActor[], mode: ActorGroupMode, coordType: CoordinateType, public startBox?: ConfigBox) {
+    super(id, actors, mode, coordType)
   }
  
   public addActor(actor: ConfigActor): void {
@@ -104,15 +127,14 @@ export class ConfigActorGroupDynamic extends ConfigActorGroup {
 
 // --- CONFIG ACTOR GROUP STATIC i.e. a obstacle box ----------------------------------------------------------------------
 export class ConfigActorGroupStaticBox extends ConfigActorGroup  {
-    public actors: ConfigActor[] = []
 
-    constructor(id: string, obstableBox: ConfigBox) {
-        super(id, ActorGroupMode.static) 
+    constructor(id: string, coordType: CoordinateType, obstableBox: ConfigBox) {
+        super(id, [], ActorGroupMode.static, coordType) 
         this.actors = [
-            new ConfigActor("lowerLeft",  obstableBox.lowerLeft.x,  obstableBox.lowerLeft.y ),
-            new ConfigActor("upperLeft",  obstableBox.lowerLeft.x,  obstableBox.upperRight.y),
-            new ConfigActor("upperRight", obstableBox.upperRight.x, obstableBox.upperRight.y),
-            new ConfigActor("lowerRight", obstableBox.upperRight.x, obstableBox.lowerLeft.y )
+            new ConfigActor("lowerLeft",  obstableBox.lowerLeft.x,  obstableBox.lowerLeft.y,  coordType),
+            new ConfigActor("upperLeft",  obstableBox.lowerLeft.x,  obstableBox.upperRight.y, coordType),
+            new ConfigActor("upperRight", obstableBox.upperRight.x, obstableBox.upperRight.y, coordType),
+            new ConfigActor("lowerRight", obstableBox.upperRight.x, obstableBox.lowerLeft.y,  coordType)
         ]
         this.actors[0].observee1id = this.actors[1].id
         this.actors[0].observee2id = this.actors[3].id
@@ -125,8 +147,6 @@ export class ConfigActorGroupStaticBox extends ConfigActorGroup  {
 
         console.log("api.ConfigActorGroupStaticBox.constructor(): this.actors=")
         console.log(this.actors)
-
-
     }
 }
 

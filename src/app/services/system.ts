@@ -6,7 +6,7 @@ import { Point, Box, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas, canvasCente
 import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
-import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth } from "./api"
+import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth, CoordinateType } from "./api"
 import { cActorPickMargin  } from "./parameters"
 
 
@@ -30,7 +30,7 @@ export class System {
     public  id:                     string | undefined                      = undefined
     public  configActGrps:          ConfigActorGroup[]                      = []
     public  actGrps:                ActorGroup[]                            = []
-    private ctx:                    CanvasRenderingContext2D | undefined    = undefined
+//  private ctx:                    CanvasRenderingContext2D | undefined    = undefined
     public  maxIterations?:         number
     public  intervalMillisecs?:     number
     private showActorJourney?:      boolean
@@ -52,9 +52,12 @@ export class System {
 //      create the system and setting parameters
 // ---------------------------------------------------------------------------------------
 
-    private mappedConfigPointOntoCanvas(cp: ConfigPoint): Point {
-        if (!this.ctx) throw Error("System.fitInto(): missing canvas context.")
-        return new Point(this.ctx, this.ctx.canvas.width * cp.x / cVirtalGridWidth, this.ctx.canvas.height * cp.y / cVirtalGridHeight) 
+    private mappedConfigPointOntoCanvas(ctx: CanvasRenderingContext2D, cp: ConfigPoint, coordType: CoordinateType): Point {
+        if (!ctx) throw Error("System.fitInto(): missing canvas context.")
+        if (coordType == CoordinateType.relative)    
+            return new Point(ctx, ctx.canvas.width * cp.x / cVirtalGridWidth, ctx.canvas.height * cp.y / cVirtalGridHeight) 
+        return new Point(ctx, cp.x, cp.y) 
+
     }
 
     public set configuration(configuration: Configuration) {
@@ -66,12 +69,12 @@ export class System {
         if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
         if (!systemExecParms)              throw Error("System.initialize(): missing systemExecParms.")
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
-        this.ctx          = ctx
+//      ctx          = ctx
 
         this.stopIterating()
         this.actGrps = []
         for (let cag of this.configActGrps) {
-            const actors: Actor[] = cag.actors.map(ca => new Actor(this.ctx!, ca.id, this.mappedConfigPointOntoCanvas(ca.p!), systemExecParms!))
+            const actors: Actor[] = cag.actors.map(ca => new Actor(ctx!, ca.id, this.mappedConfigPointOntoCanvas(ctx, ca.p!, cag.coordType), systemExecParms!))
             for (let ca of cag.actors) {
                 const actor: Actor | undefined = actors.find(a => a.id == ca.id)
                 if (!actor) throw Error(`system.initialize(): could not find ${ca.id} in actors`)
@@ -80,7 +83,7 @@ export class System {
                 if (!obs1 || !obs2) throw Error(`system.initialize(): missing observee(s) for actor ${ca.id}`)
                 actor.assign2SpecificObservees(obs1, obs2)
             }
-            const ag = new ActorGroup(this.ctx, cag.id, actors, cag.mode)
+            const ag = new ActorGroup(ctx, cag.id, actors, cag.mode)
             this.actGrps.push(ag)
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
@@ -96,12 +99,12 @@ export class System {
 //      if (this.focusAndFollowActGrp0) this.centerOfView = this.actGrps[0].centerPoint()
         this.actGrps.forEach(ag => ag.updateParameters(sep, this.mbrc!.realToCanvas))
     }
-    public initializeCanvas() {
-        this.clearCanvas()
-        this.visualize()
+    public initializeCanvas(ctx: CanvasRenderingContext2D) {
+        this.clearCanvas(ctx)
+        this.visualize(ctx)
     }
-    private setMapperBtwRealAndCanvas(): void {
-        this.mbrc = mapperBtwRealAndCanvas(this.ctx!, this.centerOfView!, this.zoom!) 
+    private setMapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D): void {
+        this.mbrc = mapperBtwRealAndCanvas(ctx!, this.centerOfView!, this.zoom!) 
     }
 
 // ---------------------------------------------------------------------------------------
@@ -112,7 +115,7 @@ export class System {
         this.iterationMode = IterationMode.paused
     }
 
-    public runResumeIterating(): Observable<number> | undefined {
+    public runResumeIterating(ctx: CanvasRenderingContext2D): Observable<number> | undefined {
         if (this.iterationMode == IterationMode.iterating) return undefined
         this.iterationMode = IterationMode.iterating
         if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
@@ -124,8 +127,8 @@ export class System {
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag)))
             this.actGrps.forEach(ag => ag.moveActors(this.mbrc!.realToCanvas))
-            this.setMapperBtwRealAndCanvas()
-            this.visualize()
+            this.setMapperBtwRealAndCanvas(ctx)
+            this.visualize(ctx)
         })
         return time$
     }
@@ -142,77 +145,77 @@ export class System {
         return actorsInRange.find(a => p.distanceTo(a.p) == minDistance) || actorsInRange[0]
     }
 
-    private visualizeCanvasInReal(): void {
-        const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
-        const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(this.ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
-        const canvasBox = new Box(this.ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
+    private visualizeCanvasInReal(ctx: CanvasRenderingContext2D): void {
+        const canvasLowerLeft  = new Point(ctx!, 0, 0, "Canvas-lower-left")
+        const canvasUpperRight = new Point(ctx!, ctx!.canvas.width, ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+        const canvasBox = new Box(ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
         canvasBox.visualize(this.mbrc!.realToCanvas)
     }
 
-    public visualize(): void {
-        if (!this.showActorJourney) this.clearCanvas()
-        this.visualizeCanvasInReal()
+    public visualize(ctx: CanvasRenderingContext2D): void {
+        if (!this.showActorJourney) this.clearCanvas(ctx)
+        this.visualizeCanvasInReal(ctx)
         this.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
     }
     
-    public clearCanvas(): void {
-        this.ctx!.clearRect(0, 0, this.ctx!.canvas.width, this.ctx!.canvas.height)
+    public clearCanvas(ctx: CanvasRenderingContext2D): void {
+        ctx!.clearRect(0, 0, ctx!.canvas.width, ctx!.canvas.height)
     }
 
     public home(ctx: CanvasRenderingContext2D): void {
         this.centerOfView = canvasCenter(ctx)
         this.zoom         = 1
-        this.setMapperBtwRealAndCanvas()
-        this.visualize()
+        this.setMapperBtwRealAndCanvas(ctx)
+        this.visualize(ctx)
     }
 
     public focusOnFirstActGrp(ctx: CanvasRenderingContext2D): void {
         this.centerOfView = this.actGrps[0].centerPoint()
-        this.setMapperBtwRealAndCanvas()
-        this.visualize()
+        this.setMapperBtwRealAndCanvas(ctx)
+        this.visualize(ctx)
     }
 // ---------------------------------------------------------------------------------------
 //      export the system and it's state
 // ---------------------------------------------------------------------------------------
 
     public exportedAsConfiguration(): Configuration {
-        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.new(new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height), ag)))
+        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.newFromSystem(ag)))
     }
 
 // ---------------------------------------------------------------------------------------
 //      handle canvas UI events
 // ---------------------------------------------------------------------------------------
 
-    public actorSelected(rp: Point): Actor | undefined {  // x, y are real Points 
+    public actorSelected(ctx: CanvasRenderingContext2D, rp: Point): Actor | undefined {  // x, y are real Points 
         this.pickedActor = this.closestActorInRange(rp, cActorPickMargin / this.zoom!)
         if (this.pickedActor) {
             this.pickedActor.turnHaloOn() // actor selected, turn halo on, do not change center of view
-            this.visualize()
+            this.visualize(ctx)
             return this.pickedActor
         }
         this.centerOfView = rp // no actor selected, so set center of view to the clicked point
         return undefined
     }
 
-    public handleActorMove(x: number, y: number): void {
+    public handleActorMove(ctx: CanvasRenderingContext2D, x: number, y: number): void {
         if (!this.pickedActor) return
-        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(this.ctx!, x, y)))
-        this.visualize()
+        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(ctx!, x, y)))
+        this.visualize(ctx)
     }
 
-    public handleActorDrop(): void {
+    public handleActorDrop(ctx: CanvasRenderingContext2D): void {
         this.pickedActor?.turnHaloOff()
         this.pickedActor = undefined
-        this.visualize()
+        this.visualize(ctx)
     }
 
-    public reset(systemExecParms: SystemExecParms): void {
-        this.clearCanvas()
+    public reset(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
+        this.clearCanvas(ctx)
     }
 
-    public handleWheelMotion(motion: WheelMotion): void {
+    public handleWheelMotion(ctx: CanvasRenderingContext2D, motion: WheelMotion): void {
         this.zoom! *= motion == WheelMotion.up ? 2 : 0.5
-        this.setMapperBtwRealAndCanvas()
-        this.visualize()
+        this.setMapperBtwRealAndCanvas(ctx)
+        this.visualize(ctx)
     }
 }
