@@ -120,11 +120,11 @@ export class ActorGroup implements CanvasObject {
         for (let a of this.actors)
             this.calculatedNewPositions.push(a.newPosition(otherActGrps))
     }
-    public moveActors(m2c: MapperRealToCanvas): void {
+    public moveActors(/*m2c: MapperRealToCanvas*/): void {
         if (this.mode != ActorGroupMode.dynamic) return
         for (let i = 0; i < this.actors.length; i++) {
             this.actors[i].setPosition(this.calculatedNewPositions[i])
         }
-        this.visualize(m2c)
+//      this.visualize(m2c)
     }
 }
