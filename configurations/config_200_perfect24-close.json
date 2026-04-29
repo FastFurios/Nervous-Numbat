@@ -1,0 +1,36 @@
+{
+    "id": "Perfect-24",
+    "actor_groups": [
+        {
+            "id": "Perfect24",
+            "creation_mode" : "explicit",
+            "coordinate_type": "relative",
+            "iteration_mode": "dynamic",
+            "topology": [
+                { "id" : "Bird-00", "x": 45, "y": 28, "observee1" : "Bird-02", "observee2" : "Bird-06"},
+                { "id" : "Bird-01", "x": 54, "y": 34, "observee1" : "Bird-00", "observee2" : "Bird-02"},
+                { "id" : "Bird-02", "x": 43, "y": 43, "observee1" : "Bird-01", "observee2" : "Bird-04"},
+                { "id" : "Bird-03", "x": 58, "y": 35, "observee1" : "Bird-01", "observee2" : "Bird-04"},
+                { "id" : "Bird-04", "x": 56, "y": 39, "observee1" : "Bird-03", "observee2" : "Bird-10"},
+                { "id" : "Bird-05", "x": 32, "y": 54,   "observee1" : "Bird-06", "observee2" : "Bird-07"},
+                { "id" : "Bird-06", "x": 33, "y": 40, "observee1" : "Bird-02", "observee2" : "Bird-07"},
+                { "id" : "Bird-07", "x": 42, "y": 48,   "observee1" : "Bird-02", "observee2" : "Bird-08"},
+                { "id" : "Bird-08", "x": 48, "y": 52,   "observee1" : "Bird-02", "observee2" : "Bird-04"},
+                { "id" : "Bird-09", "x": 64, "y": 53,   "observee1" : "Bird-04", "observee2" : "Bird-08"},
+                { "id" : "Bird-10", "x": 63, "y": 44, "observee1" : "Bird-04", "observee2" : "Bird-09"},
+                { "id" : "Bird-11", "x": 68, "y": 53,   "observee1" : "Bird-09", "observee2" : "Bird-10"},
+                { "id" : "Bird-12", "x": 38, "y": 60, "observee1" : "Bird-05", "observee2" : "Bird-07"},
+                { "id" : "Bird-13", "x": 47, "y": 58, "observee1" : "Bird-07", "observee2" : "Bird-12"},
+                { "id" : "Bird-14", "x": 42, "y": 57, "observee1" : "Bird-07", "observee2" : "Bird-08"},
+                { "id" : "Bird-15", "x": 57, "y": 55, "observee1" : "Bird-08", "observee2" : "Bird-14"},
+                { "id" : "Bird-16", "x": 53, "y": 59, "observee1" : "Bird-08", "observee2" : "Bird-09"},
+                { "id" : "Bird-17", "x": 64, "y": 55, "observee1" : "Bird-09", "observee2" : "Bird-16"},
+                { "id" : "Bird-18", "x": 66, "y": 58, "observee1" : "Bird-09", "observee2" : "Bird-11"},
+                { "id" : "Bird-19", "x": 43, "y": 64, "observee1" : "Bird-12", "observee2" : "Bird-14"},
+                { "id" : "Bird-20", "x": 56, "y": 64, "observee1" : "Bird-14", "observee2" : "Bird-19"},
+                { "id" : "Bird-21", "x": 53, "y": 68, "observee1" : "Bird-14", "observee2" : "Bird-15"},
+                { "id" : "Bird-22", "x": 63, "y": 65, "observee1" : "Bird-16", "observee2" : "Bird-21"},
+                { "id" : "Bird-23", "x": 61, "y": 69, "observee1" : "Bird-16", "observee2" : "Bird-17"}
+            ]
+        }    ]
+}

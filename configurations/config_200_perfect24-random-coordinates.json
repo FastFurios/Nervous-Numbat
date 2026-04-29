@@ -1,0 +1,36 @@
+{
+    "id": "Perfect-24",
+    "actor_groups": [
+        {
+            "id": "Perfect24",
+            "creation_mode" : "explicit",
+            "coordinate_type": "relative",
+            "iteration_mode": "dynamic",
+            "topology": [
+                { "id" : "Bird-00", "observee1" : "Bird-02", "observee2" : "Bird-06"},
+                { "id" : "Bird-01", "observee1" : "Bird-00", "observee2" : "Bird-02"},
+                { "id" : "Bird-02", "observee1" : "Bird-01", "observee2" : "Bird-04"},
+                { "id" : "Bird-03", "observee1" : "Bird-01", "observee2" : "Bird-04"},
+                { "id" : "Bird-04", "observee1" : "Bird-03", "observee2" : "Bird-10"},
+                { "id" : "Bird-05", "observee1" : "Bird-06", "observee2" : "Bird-07"},
+                { "id" : "Bird-06", "observee1" : "Bird-02", "observee2" : "Bird-07"},
+                { "id" : "Bird-07", "observee1" : "Bird-02", "observee2" : "Bird-08"},
+                { "id" : "Bird-08", "observee1" : "Bird-02", "observee2" : "Bird-04"},
+                { "id" : "Bird-09", "observee1" : "Bird-04", "observee2" : "Bird-08"},
+                { "id" : "Bird-10", "observee1" : "Bird-04", "observee2" : "Bird-09"},
+                { "id" : "Bird-11", "observee1" : "Bird-09", "observee2" : "Bird-10"},
+                { "id" : "Bird-12", "observee1" : "Bird-05", "observee2" : "Bird-07"},
+                { "id" : "Bird-13", "observee1" : "Bird-07", "observee2" : "Bird-12"},
+                { "id" : "Bird-14", "observee1" : "Bird-07", "observee2" : "Bird-08"},
+                { "id" : "Bird-15", "observee1" : "Bird-08", "observee2" : "Bird-14"},
+                { "id" : "Bird-16", "observee1" : "Bird-08", "observee2" : "Bird-09"},
+                { "id" : "Bird-17", "observee1" : "Bird-09", "observee2" : "Bird-16"},
+                { "id" : "Bird-18", "observee1" : "Bird-09", "observee2" : "Bird-11"},
+                { "id" : "Bird-19", "observee1" : "Bird-12", "observee2" : "Bird-14"},
+                { "id" : "Bird-20", "observee1" : "Bird-14", "observee2" : "Bird-19"},
+                { "id" : "Bird-21", "observee1" : "Bird-14", "observee2" : "Bird-15"},
+                { "id" : "Bird-22", "observee1" : "Bird-16", "observee2" : "Bird-21"},
+                { "id" : "Bird-23", "observee1" : "Bird-16", "observee2" : "Bird-17"}
+            ]
+        }    ]
+}

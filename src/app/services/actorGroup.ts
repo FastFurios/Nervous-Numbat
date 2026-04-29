@@ -92,14 +92,14 @@ export class ActorGroup implements CanvasObject {
     public toString(): string {
         return `Actor Group ${this.id}: #actors= ${this.actors.length}` 
     }
-    public updateParameters(sep: SystemExecParms, m2c: MapperRealToCanvas) {
+    public updateParameters(sep: SystemExecParms) {
 //      console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
         this.showActorJourney = sep.display.showActorJourney
         this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
         this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))
-        this.visualize(m2c)
+//      this.visualize(m2c)
     } 
     public addActor(a: Actor): void {
         this.actors.push(a)

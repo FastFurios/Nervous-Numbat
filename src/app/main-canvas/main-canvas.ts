@@ -134,7 +134,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
         showActorGroupIdAndQuality:             false,
         showActorJourney:                       false,
         showOneActorOnlyWithTheGivenAgIndex:    -1,
-//      focusAndFollowActGrp0:                  false
       },
       strategy: {
         poorTriangleQualityThreshold:           0.5,
@@ -147,7 +146,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
   ngOnInit() {
     this.sysExecParms.run.boundaryMode = BoundaryMode.rebound
     this.updateExecParms()
-}
+  }
 
   ngAfterViewInit() {
       if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
@@ -163,11 +162,11 @@ export class MainCanvas implements OnInit, AfterViewInit {
       this.canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
       window.addEventListener("resize", this.ctxHandleCanvasResized.bind(this))
 
-      this.actionsPossible.set(cActPosStart)
       this.sys.initialize(this.ctx, this.sysExecParms)
       this.systemId.set(this.sys.id)
       this.home()
       this.visualize()
+      this.actionsPossible.set(cActPosStart)
   }
 
   ngOnDestroy() {
@@ -180,12 +179,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
     this.setMapperBtwRealAndCanvas(this.ctx!)
   }
 
-  public visualize(): void {
-    if (!this.sysExecParms.display.showActorJourney) this.clearCanvas()
-    this.visualizeCanvasInReal()
-    this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
-  }
-
   public setMapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D): void {
       this.mbrc = mapperBtwRealAndCanvas(ctx!, this.centerOfView!, this.zoom!) 
   }
@@ -194,8 +187,10 @@ export class MainCanvas implements OnInit, AfterViewInit {
       this.ctx!.clearRect(0, 0, this.ctx!.canvas.width, this.ctx!.canvas.height)
   }
 
-  public numActorsOfActGrp(agIdx: number): number | undefined {
-      return this.sys.actGrps[agIdx].actors.length
+  public visualize(): void {
+    if (!this.sysExecParms.display.showActorJourney) this.clearCanvas()
+    this.visualizeCanvasInReal()
+    this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
   }
 
   public  visualizeCanvasInReal(): void {
@@ -203,6 +198,10 @@ export class MainCanvas implements OnInit, AfterViewInit {
       const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
       const canvasBox = new Box(this.ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
       canvasBox.visualize(this.mbrc!.realToCanvas)
+  }
+
+  public numActorsOfActGrp(agIdx: number): number | undefined {
+      return this.sys.actGrps[agIdx].actors.length
   }
 
   // ---------------------------------------------------------------------------------------
@@ -240,14 +239,12 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   /** home button clicked */
   public onHome() {
-//  this.sys.home(this.ctx!)
     this.home()
     this.visualize()
   }
 
   /** home button clicked */
   public onFocusOnFirstActGrp() {
-//  this.sys.focusOnFirstActGrp(this.ctx!)
     this.centerOfView = this.sys.actGrps[0].centerPoint()
     this.setMapperBtwRealAndCanvas(this.ctx!)
     this.visualize()
@@ -259,9 +256,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   /** update the system with the current execution parameters */
   public updateExecParms(): void {
-//  this.sys.updateExecParms(this.sysExecParms)
-    this.sys.actGrps.forEach(ag => ag.updateParameters(this.sysExecParms, this.mbrc!.realToCanvas))
-
+    this.sys.actGrps.forEach(ag => ag.updateParameters(this.sysExecParms))
   }
 
   /** handle toggled boundary mode */
