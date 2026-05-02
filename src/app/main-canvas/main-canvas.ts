@@ -145,7 +145,11 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.sysExecParms.run.boundaryMode = BoundaryMode.rebound
-    this.updateExecParms()
+    this.sys.updateExecParms(this.sysExecParms)
+    this.time.set(0)
+    this.timeSubscription?.unsubscribe()
+    this.runResumeButtonLabel = "Run"
+    this.actionsPossible.set(cActPosStart)
   }
 
   ngAfterViewInit() {
@@ -165,6 +169,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
       this.sys.initialize(this.ctx, this.sysExecParms)
       this.systemId.set(this.sys.id)
       this.home()
+      this.clearCanvas()
       this.visualize()
       this.actionsPossible.set(cActPosStart)
   }
