@@ -1,5 +1,5 @@
 {
-    "id": "EarlyBird",
+    "id": "Barrier Competition",
     "actor_groups": [
         {
             "id": "Group A",
@@ -23,15 +23,13 @@
                 { "id" : "Bird-13", "x":  9, "y":  55, "observee1" : "Bird-00", "observee2" : "Bird-12"},
                 { "id" : "Bird-14", "x":  6, "y":  35, "observee1" : "Bird-07", "observee2" : "Bird-11"}
             ]
-        },
-        {
-            "id": "Obstacle",
-            "creation_mode" : "obstacle",
-            "coordinate_type": "relative",
-            "obstacle": {
-                "lower_left":  { "x": 20, "y":  30},
-                "upper_right": { "x": 23, "y": 100}
-            }
         }
-    ]
+    ],
+    "barrier_set": {
+        "coordinate_type": "relative",
+        "barriers": [
+            { "orientation": "vertical",   "at": 20, "from": 30, "to": 100 },
+            { "orientation": "horizontal", "at": 60, "from": 50, "to": 100 }
+        ]
+    }
 }

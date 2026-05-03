@@ -196,6 +196,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
     if (!this.sysExecParms.display.showActorJourney) this.clearCanvas()
     this.visualizeCanvasInReal()
     this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
+    this.sys.barrierSet?.visualize(this.mbrc!.realToCanvas)
   }
 
   public  visualizeCanvasInReal(): void {

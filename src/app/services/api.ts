@@ -5,6 +5,7 @@
 import { Point, Box } from "./geometry"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
+import { BarrierSet } from "./barrier"
 import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 import { JsonPoint } from "./json"
 
@@ -14,6 +15,11 @@ export const cVirtalGridHeight = 100
 export enum CoordinateType {
   relative = "relative",
   real     = "real"   
+}
+
+export enum BarrierOrientation {
+  vertical    = "vertical",
+  horizontal  = "horizontal"   
 }
 
 // --- CONFIG POINT ----------------------------------------------------------------------
@@ -150,8 +156,24 @@ export class ConfigActorGroupStaticBox extends ConfigActorGroup  {
     }
 }
 
+// --- CONFIG BARRIERS ----------------------------------------------------------------------
+export class ConfigBarrier {
+    constructor(public orientation: BarrierOrientation, public at: number, public from: number, public to: number) { }
+}
 
+export class ConfigBarrierSet {
+    static newFromSystem(bs: BarrierSet | undefined): ConfigBarrierSet | undefined {
+      if (!bs) return undefined
+      const horizontalBarriers = bs.barriers.filter(b => b.base.y == b.p2.y)
+      const verticalBarriers   = bs.barriers.filter(b => b.base.x == b.p2.x)
+      const horizontalConfigBarriers = horizontalBarriers.map(hb => new ConfigBarrier(BarrierOrientation.horizontal, hb.base.y, hb.base.x, hb.p2.x))  
+      const verticalConfigBarriers   = verticalBarriers.map(hb => new ConfigBarrier(BarrierOrientation.vertical, hb.base.x, hb.base.y, hb.p2.y))  
+      return new ConfigBarrierSet(CoordinateType.real, horizontalConfigBarriers.concat(verticalConfigBarriers))
+    }
+
+    constructor(public coordType: CoordinateType, public barriers: ConfigBarrier[]) { }
+}
 // --- CONFIGURATION ----------------------------------------------------------------------
 export class Configuration {
-    constructor(public id: string, public actorGroups: ConfigActorGroup[]) { }
+    constructor(public id: string, public actorGroups: ConfigActorGroup[], public barrierSet?: ConfigBarrierSet) { }
 }

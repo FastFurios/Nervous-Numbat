@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core'
-import { Observable, Subscription, interval } from 'rxjs'
+import { Observable, Subscription, from, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
-import { Point } from "./geometry"
+import { LineSegment, Point } from "./geometry"
 import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
-import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, cVirtalGridHeight, cVirtalGridWidth, CoordinateType } from "./api"
+import { BarrierSet } from "./barrier"
+import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, BarrierOrientation, ConfigBarrierSet, cVirtalGridHeight, cVirtalGridWidth, CoordinateType } from "./api"
 
 
 
@@ -29,6 +30,8 @@ export class System {
     public  id:                     string | undefined                      = undefined
     public  configActGrps:          ConfigActorGroup[]                      = []
     public  actGrps:                ActorGroup[]                            = []
+    public  configBarrierSet?:      ConfigBarrierSet                        
+    public  barrierSet?:            BarrierSet
     public  maxIterations?:         number
     public  intervalMillisecs?:     number
     public  time$?:                 Observable<void>
@@ -54,8 +57,9 @@ export class System {
     }
 
     public set configuration(configuration: Configuration) {
-        this.id = configuration.id
-        this.configActGrps = configuration.actorGroups
+        this.id               = configuration.id
+        this.configActGrps    = configuration.actorGroups
+        this.configBarrierSet = configuration.barrierSet
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -64,6 +68,7 @@ export class System {
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
 
         this.stopIterating()
+
         this.actGrps = []
         for (let cag of this.configActGrps) {
             const actors: Actor[] = cag.actors.map(ca => new Actor(ctx!, ca.id, this.mappedConfigPointOntoCanvas(ctx, ca.p!, cag.coordType), systemExecParms!))
@@ -80,6 +85,28 @@ export class System {
             this.colorSchemes = new ColorSchemes(this.actGrps.length)
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
         }
+        
+        if (!this.configBarrierSet?.barriers || !this.configBarrierSet?.coordType) return
+        this.barrierSet = new BarrierSet(ctx, this.configBarrierSet.coordType, [])
+        for (let cb of this.configBarrierSet.barriers) {
+            let base, p2: ConfigPoint 
+            if (cb.orientation == BarrierOrientation.horizontal) { 
+                base    = new ConfigPoint(cb.from, cb.at, this.configBarrierSet.coordType)
+                p2      = new ConfigPoint(cb.to,   cb.at, this.configBarrierSet.coordType)
+            }
+            else {
+                base    = new ConfigPoint(cb.at, cb.from, this.configBarrierSet.coordType)
+                p2      = new ConfigPoint(cb.at, cb.to,   this.configBarrierSet.coordType)
+            } 
+            this.barrierSet.barriers.push(new LineSegment(
+                ctx, 
+                this.mappedConfigPointOntoCanvas(ctx, base, this.configBarrierSet.coordType),
+                this.mappedConfigPointOntoCanvas(ctx, p2,   this.configBarrierSet.coordType)
+            ))
+        }
+         
+        console.log("System.initialize(): Barriers:")
+        console.log(this.barrierSet)
     }
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations          = sep.run.maxIterations
@@ -129,6 +156,6 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     public exportedAsConfiguration(): Configuration {
-        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.newFromSystem(ag)))
+        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.newFromSystem(ag)), ConfigBarrierSet.newFromSystem(this.barrierSet))
     }
 }

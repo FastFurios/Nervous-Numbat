@@ -16,11 +16,17 @@ export const cMinTriangleAltitude = 20
 
 type  Infinite           = undefined
 const infinite: Infinite = undefined
+
 export interface CanvasObject {
-    ctx: CanvasRenderingContext2D
-    visualize(m2c: MapperRealToCanvas, color?: RgbColor): void
-    toString(): string
+    ctx:                                                    CanvasRenderingContext2D
+    visualize(m2c: MapperRealToCanvas, color?: RgbColor):   void
+    toString():                                             string
 }
+
+export interface Boxable {
+    boxAround():                                            Box
+}
+
 
 // "real": means a real coordinate as it lives in the geometry before being mapped onto the canvas for display 
 export type MapperRealToCanvas = (rp: Point) => Point
@@ -50,7 +56,7 @@ export enum BoundaryMode {
 // --------------------------------------------------------------------------------------
 //     POINT  
 // --------------------------------------------------------------------------------------
-export class Point implements CanvasObject {
+export class Point implements CanvasObject, Boxable {
     static boundaryMode: BoundaryMode = BoundaryMode.rebound
 
     constructor (public ctx: CanvasRenderingContext2D, public x: number, public y: number, public id: string = "") {
@@ -98,12 +104,20 @@ export class Point implements CanvasObject {
     public nearby(p: Point, margin: number): boolean {
         return this.distanceTo(p) < margin
     }
-    public isInBox(p1: Point, p2: Point): boolean {
+    public boxAround(): Box {
+        return new Box(this.ctx, `Box of ${this.id}`, new Point(this.ctx, this.x, this.y), new Point(this.ctx, this.x, this.y))
+    }
+/*
+    public isInBox(p1: Point, p2: Point): boolean {  // ## public isIn(b: Box): boolean
         const xMin = Math.min(p1.x, p2.x)
         const xMax = Math.max(p1.x, p2.x)
         const yMin = Math.min(p1.y, p2.y)
         const yMax = Math.max(p1.y, p2.y)
         return isBetween(this.x, xMin, xMax) && isBetween(this.y, yMin, yMax)
+    }
+*/
+    public isIn(b: Box): boolean {
+        return isBetween(this.x, b.lowerLeft.x, b.upperRight.x) && isBetween(this.y, b.lowerLeft.y, b.upperRight.y)
     }
     public closerTo(toPoints: [Point, Point]): Point {
         return this.distanceTo(toPoints[0]) < this.distanceTo(toPoints[1]) ? toPoints[0] : toPoints[1] 
@@ -151,18 +165,26 @@ export class Point implements CanvasObject {
 // --------------------------------------------------------------------------------------
 //     BOX  
 // --------------------------------------------------------------------------------------
-export class Box implements CanvasObject {
+export class Box implements CanvasObject, Boxable {
     static fromCanvas(ctx: CanvasRenderingContext2D): Box {
         return new Box(ctx, "canvas", new Point(ctx, 0, 0), new Point(ctx, ctx.canvas.width, ctx.canvas.height), cDefaultColor)
     }
 
-    constructor(public ctx: CanvasRenderingContext2D, public id: string, public lowerLeft: Point, public upperRight: Point, public color: RgbColor) { }
+    constructor(public ctx: CanvasRenderingContext2D, public id: string, public lowerLeft: Point, public upperRight: Point, public color: RgbColor = new RgbColor(0, 0, 0)) { }
 
     public get width(): number {
         return this.upperRight.x - this.lowerLeft.x
     }
     public get height(): number {
         return this.upperRight.y - this.lowerLeft.y
+    }
+    public boxAround(): Box {
+        return this
+    }
+    public overlaps(b: Box): boolean {
+        const bUpperLeft  = new Point(this.ctx, b.lowerLeft.x, b.upperRight.y)
+        const bLowerRight = new Point(this.ctx, b.upperRight.x, b.lowerLeft.y)
+        return b.lowerLeft.isIn(b) || b.upperRight.isIn(b) || bUpperLeft.isIn(b) || bLowerRight.isIn(b)
     }
     public center(): Point {
         return new Point(this.ctx, this.lowerLeft.x + (this.width / 2), this.upperRight.y - (this.height / 2) )
@@ -345,7 +367,7 @@ export class Line implements CanvasObject {
 // --------------------------------------------------------------------------------------
 //     LINE SEGMENT  
 // --------------------------------------------------------------------------------------
-export class LineSegment extends Line {
+export class LineSegment extends Line implements Boxable {
     constructor(ctx: CanvasRenderingContext2D, base: Point, public p2: Point, id: string = "") {
         super(ctx, base, p2, id)
     }
@@ -356,7 +378,17 @@ export class LineSegment extends Line {
         return new Point(this.ctx, (this.base.x + this.p2.x) / 2, (this.base.y + this.p2.y) / 2)
     }
     public override touches(p: Point): boolean {
-        return super.touches(p) && p.isInBox(this.base, this.p2)       
+        return super.touches(p) && p.isIn(this.boxAround())       
+//      return super.touches(p) && p.isInBox(this.base, this.p2)       
+    }
+    public boxAround(): Box {
+        const xMin = Math.min(this.base.x, this.p2.x)
+        const xMax = Math.max(this.base.x, this.p2.x)
+        const yMin = Math.min(this.base.y, this.p2.y)
+        const yMax = Math.max(this.base.y, this.p2.y)
+        const lowerLeft  = new Point(this.ctx, xMin, yMin)
+        const upperRight = new Point(this.ctx, xMax, yMax)
+        return new Box(this.ctx, `Box of ${this.id}`, lowerLeft, upperRight)
     }
     public override intersects(l: Line): Intersection {
         const lineIntersection = super.intersects(l)

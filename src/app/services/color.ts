@@ -27,6 +27,7 @@ export class RgbColor {
     }
 }
 
+export const cBlack        = new RgbColor(0, 0, 0)           
 export const cDefaultColor = new RgbColor(127, 127, 127)  // 0, 0, 0
 
 export class ColorSchemes {

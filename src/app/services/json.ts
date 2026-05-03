@@ -2,7 +2,7 @@
 //     JSON Configuration   
 // --------------------------------------------------------------------------------------
 import { ActorGroupMode } from "./actorGroup"
-import { Configuration, ConfigActorGroup, ConfigActor, CoordinateType } from "./api"
+import { Configuration, ConfigActorGroup, ConfigActor, ConfigBarrier, ConfigBarrierSet, CoordinateType, BarrierOrientation } from "./api"
 
 export type Creation_Mode = "automatic" | "explicit" | "obstacle"
 
@@ -21,19 +21,19 @@ export interface JsonActorGroup {
   id:                 string
   creation_mode:      Creation_Mode
   iteration_mode:     ActorGroupMode
-  coordinate_type:    CoordinateType,   // either % of iniial canvas or absolute, real coordinates 
+  coordinate_type:    CoordinateType,   // either % of initial canvas or absolute, real coordinates 
   topology?:          JsonExplicitTopology | JsonAutomaticTopology
   obstacle?:          JsonObstacle       
 }
 
 export interface JsonPoint { 
-  x:      number
-  y:      number 
+  x:                  number
+  y:                  number 
 }
 
 export interface JsonBox {
-  lower_left:  JsonPoint
-  upper_right: JsonPoint
+  lower_left:         JsonPoint
+  upper_right:        JsonPoint
 }
 
 export interface JsonAutomaticTopology {
@@ -43,10 +43,25 @@ export interface JsonAutomaticTopology {
   start_box:            JsonBox
 }
 
-export interface JsonConfiguration {
-  id: string
-  actor_groups: JsonActorGroup[]
+export interface JsonBarrier {
+  orientation:          BarrierOrientation
+  at:                   number
+  from:                 number  
+  to:                   number
 }
+
+export interface JsonBarrierSet {
+  coordinate_type:      CoordinateType,   // either % of initial canvas or absolute, real coordinates 
+  barriers:             JsonBarrier[]
+}
+
+export interface JsonConfiguration {
+  id:                   string
+  actor_groups:         JsonActorGroup[]
+  barrier_set?:         JsonBarrierSet
+}
+
+// --- creating JSON from configuration --------------------------------------------------------
 
 export function configActorAsJson(ca: ConfigActor): JsonActor {
     return {
@@ -69,11 +84,26 @@ function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
     }
 }
 
+export function configBarriersAsJson(cbs: ConfigBarrierSet): JsonBarrierSet {
+  return {
+    coordinate_type:  CoordinateType.real,
+    barriers:        cbs.barriers.map(cb => { return { 
+      orientation: cb.orientation,
+      at:          cb.at,
+      from:        cb.from,
+      to:          cb.to
+    }}) 
+
+  }
+}
+
 export function configAsJson(c: Configuration): JsonConfiguration {
   console.log("json.configAsJson(c)")
   console.log(c)
-  return {
+  const aux: JsonConfiguration = {
     id: c.id, 
-    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag))
+    actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag)),
   }
+  if (c.barrierSet) aux.barrier_set = configBarriersAsJson(c.barrierSet) 
+  return aux
 }

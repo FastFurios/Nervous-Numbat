@@ -16,7 +16,8 @@ import { configAsJson } from "./services/json"
 import { now, randomInRange } from "./services/helpers"
 
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
-import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, Configuration, cVirtalGridWidth, cVirtalGridHeight, CoordinateType } from "./services/api"
+import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, ConfigBarrier, ConfigBarrierSet, Configuration, cVirtalGridWidth, cVirtalGridHeight, CoordinateType } from "./services/api"
+import { BarrierSet } from './services/barrier'
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -106,7 +107,8 @@ export class App {
 
   public onSetupSystem(): void {
     this.sys.id = this.configurationId
-    this.sys.configActGrps = this.configuration()!.actorGroups
+    this.sys.configActGrps    = this.configuration()!.actorGroups
+    this.sys.configBarrierSet = this.configuration()!.barrierSet
     this.showCanvas = true
     this.actionsPossible.set(cActPosConfigIsSetUp)
   }
@@ -157,9 +159,16 @@ export class App {
 //  console.log("app.onConfigFileSelected(): configActGrps=")
 //  console.log(configActGrps)
     if (configActGrps.find(cag => cag == undefined)) {
-      alert("A JSON file actor_group is invalid.")
+        alert("A JSON file actor_group is invalid.")
     }  
-    return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined))
+    let configBarriers: ConfigBarrierSet | undefined = undefined
+    if (jsonConfig.barrier_set?.barriers) {
+        const configBarrierSetBarriers: ConfigBarrier[] = jsonConfig.barrier_set.barriers.map(jb => new ConfigBarrier(jb.orientation, jb.at, jb.from, jb.to))
+        configBarriers = new ConfigBarrierSet(jsonConfig.barrier_set.coordinate_type, configBarrierSetBarriers)
+    }
+    console.log("app.configurationFrom(): Barriers:")
+    console.log(configBarriers)
+    return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined), configBarriers)
   }
 
   private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroupDynamic | ConfigActorGroupStaticBox | undefined {
@@ -237,7 +246,7 @@ export class App {
     for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
       this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, sbs[i]))
     }
-    this.configuration.set(new Configuration("random", this.actorGroups))
+    this.configuration.set(new Configuration("random", this.actorGroups, undefined))
     this.configurationId = this.configuration()!.id
     this.actionsPossible.set(cActPosHasConfig)
   }

@@ -4,6 +4,8 @@
         {
             "id": "Group A",
             "creation_mode" : "explicit",
+            "coordinate_type": "relative",
+            "iteration_mode": "dynamic",
             "topology": [
                 { "id" : "Bird-00", "x": 30, "y":  50, "observee1" : "Bird-05", "observee2" : "Bird-13"},
                 { "id" : "Bird-01", "x": 70, "y":  40, "observee1" : "Bird-03", "observee2" : "Bird-02"},
@@ -25,6 +27,8 @@
         {
             "id": "Group B",
             "creation_mode" : "automatic",
+            "coordinate_type": "relative",
+            "iteration_mode": "dynamic",
             "topology": {
                 "number_actors": 15, 
                 "clustering": 0,
