@@ -2,7 +2,7 @@
 //     JSON Configuration   
 // --------------------------------------------------------------------------------------
 import { ActorGroupMode } from "./actorGroup"
-import { Configuration, ConfigActorGroup, ConfigActor, ConfigBarrier, ConfigBarrierSet, CoordinateType, BarrierOrientation } from "./api"
+import { Configuration, ConfigActorGroup, ConfigActor, ConfigBarrier, CoordinateType, BarrierOrientation } from "./api"
 
 export type Creation_Mode = "automatic" | "explicit" | "obstacle"
 
@@ -44,10 +44,8 @@ export interface JsonAutomaticTopology {
 }
 
 export interface JsonBarrier {
-  orientation:          BarrierOrientation
-  at:                   number
-  from:                 number  
-  to:                   number
+  from:                 JsonPoint  
+  to:                   JsonPoint
 }
 
 export interface JsonBarrierSet {
@@ -84,16 +82,10 @@ function configActorGroupAsJson(cag: ConfigActorGroup): JsonActorGroup {
     }
 }
 
-export function configBarriersAsJson(cbs: ConfigBarrierSet): JsonBarrierSet {
+export function configBarriersAsJson(cbs: ConfigBarrier[]): JsonBarrierSet {
   return {
     coordinate_type:  CoordinateType.real,
-    barriers:        cbs.barriers.map(cb => { return { 
-      orientation: cb.orientation,
-      at:          cb.at,
-      from:        cb.from,
-      to:          cb.to
-    }}) 
-
+    barriers:        cbs.map(cb => { return {from: cb.from, to: cb.to}}) 
   }
 }
 
@@ -104,6 +96,6 @@ export function configAsJson(c: Configuration): JsonConfiguration {
     id: c.id, 
     actor_groups: c.actorGroups.map(ag => configActorGroupAsJson(ag)),
   }
-  if (c.barrierSet) aux.barrier_set = configBarriersAsJson(c.barrierSet) 
+  if (c.barriers) aux.barrier_set = configBarriersAsJson(c.barriers) 
   return aux
 }

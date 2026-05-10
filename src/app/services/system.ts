@@ -6,8 +6,8 @@ import { LineSegment, Point } from "./geometry"
 import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
-import { BarrierSet } from "./barrier"
-import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, BarrierOrientation, ConfigBarrierSet, cVirtalGridHeight, cVirtalGridWidth, CoordinateType } from "./api"
+import { Barrier } from "./barrier"
+import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 
 
 
@@ -30,8 +30,8 @@ export class System {
     public  id:                     string | undefined                      = undefined
     public  configActGrps:          ConfigActorGroup[]                      = []
     public  actGrps:                ActorGroup[]                            = []
-    public  configBarrierSet?:      ConfigBarrierSet                        
-    public  barrierSet?:            BarrierSet
+    public  configBarriers?:        ConfigBarrier[]                         = []
+    public  barriers:               Barrier[]                               = []
     public  maxIterations?:         number
     public  intervalMillisecs?:     number
     public  time$?:                 Observable<void>
@@ -48,10 +48,10 @@ export class System {
 //      create the system and setting parameters
 // ---------------------------------------------------------------------------------------
 
-    private mappedConfigPointOntoCanvas(ctx: CanvasRenderingContext2D, cp: ConfigPoint, coordType: CoordinateType): Point {
+    private mappedConfigPointOntoCanvas(ctx: CanvasRenderingContext2D, cp: ConfigPoint): Point {
         if (!ctx) throw Error("System.fitInto(): missing canvas context.")
-        if (coordType == CoordinateType.relative)    
-            return new Point(ctx, ctx.canvas.width * cp.x / cVirtalGridWidth, ctx.canvas.height * cp.y / cVirtalGridHeight) 
+        if (cp.coordType == CoordinateType.relative)    
+            return new Point(ctx, ctx.canvas.width * cp.x / cVirtualGridWidth, ctx.canvas.height * cp.y / cVirtualGridHeight) 
         return new Point(ctx, cp.x, cp.y) 
 
     }
@@ -59,10 +59,19 @@ export class System {
     public set configuration(configuration: Configuration) {
         this.id               = configuration.id
         this.configActGrps    = configuration.actorGroups
-        this.configBarrierSet = configuration.barrierSet
+        this.configBarriers   = configuration.barriers
+    }
+
+    private addCanvasBorders(ctx: CanvasRenderingContext2D): void {
+        // set the canvas borders
+        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   10                  ), new Point(ctx, ctx.canvas.width-10, 10                  ))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   ctx.canvas.height-10), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   10                  ), new Point(ctx, 10,                  ctx.canvas.height-10))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10,  10                  ), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
+        console.log("System.initialize(): ...")
         if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
         if (!systemExecParms)              throw Error("System.initialize(): missing systemExecParms.")
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
@@ -71,7 +80,7 @@ export class System {
 
         this.actGrps = []
         for (let cag of this.configActGrps) {
-            const actors: Actor[] = cag.actors.map(ca => new Actor(ctx!, ca.id, this.mappedConfigPointOntoCanvas(ctx, ca.p!, cag.coordType), systemExecParms!))
+            const actors: Actor[] = cag.actors.map(ca => new Actor(ctx!, ca.id, this.mappedConfigPointOntoCanvas(ctx, ca.p!), systemExecParms!))
             for (let ca of cag.actors) {
                 const actor: Actor | undefined = actors.find(a => a.id == ca.id)
                 if (!actor) throw Error(`system.initialize(): could not find ${ca.id} in actors`)
@@ -86,27 +95,14 @@ export class System {
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
         }
         
-        if (!this.configBarrierSet?.barriers || !this.configBarrierSet?.coordType) return
-        this.barrierSet = new BarrierSet(ctx, this.configBarrierSet.coordType, [])
-        for (let cb of this.configBarrierSet.barriers) {
-            let base, p2: ConfigPoint 
-            if (cb.orientation == BarrierOrientation.horizontal) { 
-                base    = new ConfigPoint(cb.from, cb.at, this.configBarrierSet.coordType)
-                p2      = new ConfigPoint(cb.to,   cb.at, this.configBarrierSet.coordType)
-            }
-            else {
-                base    = new ConfigPoint(cb.at, cb.from, this.configBarrierSet.coordType)
-                p2      = new ConfigPoint(cb.at, cb.to,   this.configBarrierSet.coordType)
-            } 
-            this.barrierSet.barriers.push(new LineSegment(
-                ctx, 
-                this.mappedConfigPointOntoCanvas(ctx, base, this.configBarrierSet.coordType),
-                this.mappedConfigPointOntoCanvas(ctx, p2,   this.configBarrierSet.coordType)
-            ))
-        }
-         
-        console.log("System.initialize(): Barriers:")
-        console.log(this.barrierSet)
+        console.log("System.initialize(): setting canvas boundaries barriers...")
+        this.addCanvasBorders(ctx)
+        console.log("System.initialize(): setting in-field barriers...")
+
+        // add any in-field barriers
+        this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
+        console.log("System.initialize(): this.barriers:")
+        console.log(this.barriers)
     }
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations          = sep.run.maxIterations
@@ -133,7 +129,7 @@ export class System {
                 this.timeSubscription?.unsubscribe()
                 this.time$ = undefined
             }
-            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag)))
+            this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.barriers))
             this.actGrps.forEach(ag => ag.moveActors())
         })
         return time$
@@ -156,6 +152,8 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     public exportedAsConfiguration(): Configuration {
-        return new Configuration(this.id!, this.actGrps.map(ag => ConfigActorGroupDynamic.newFromSystem(ag)), ConfigBarrierSet.newFromSystem(this.barrierSet))
+        return new Configuration(this.id!, 
+                                 this.actGrps.map(ag => ConfigActorGroupDynamic.newFromSystem(ag)), 
+                                 this.barriers.map(b => new ConfigBarrier(new ConfigPoint(b.base.x, b.base.y, CoordinateType.real), new ConfigPoint(b.p2.x, b.p2.y, CoordinateType.real))))
     }
 }

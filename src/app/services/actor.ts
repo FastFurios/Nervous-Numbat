@@ -6,6 +6,7 @@ import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection, Mapp
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
+import { Barrier } from "./barrier"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
 
@@ -50,7 +51,7 @@ export class Actor implements CanvasObject {
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
         return new LineSegment(this.ctx, this.observee1!.p, this.observee2!.p)
     }
-    private newPositionTowardsVertex(otherActGrps: ActorGroup[]): Point {
+    private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
         let targetVertex: Point
         if (this.observee1!.p.equalsTo(this.observee2!.p))
             targetVertex = this.observee1!.p
@@ -65,7 +66,7 @@ export class Actor implements CanvasObject {
         }
         const vectorToVertex   = new Vector(targetVertex.x - this.p.x, targetVertex.y - this.p.y)
         const scaleFactor      = vectorToVertex.length <= this.sysExecParms.run.maxMoveDistance ? 1 : this.sysExecParms.run.maxMoveDistance / vectorToVertex.length  
-        const targetP          = this.p.add(vectorToVertex.scale(scaleFactor))
+        const targetP          = this.p.add(vectorToVertex.scale(scaleFactor), barriers)
         const wayToTargetP     = new LineSegment(this.ctx, this.p, targetP)
         const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
         if (wayIntersectsObserveesEdge.type != "none") { // my move crosses the observees line
@@ -73,12 +74,12 @@ export class Actor implements CanvasObject {
         }
         return targetP
     }
-    public newPosition(otherActGrps: ActorGroup[]): Point {
+    public newPosition(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
         if (this.sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(this.sysExecParms.strategy.poorTriangleQualityThreshold)) {
             this.mode = Mode.aimForFartherVertex 
             this.triangleQualityLog = new Log()
          } 
-        return this.newPositionTowardsVertex(otherActGrps)
+        return this.newPositionTowardsVertex(otherActGrps, barriers)
     }
     public setPosition(p: Point): void {
         this.triangleQualityLog.push(this.triangleQuality)

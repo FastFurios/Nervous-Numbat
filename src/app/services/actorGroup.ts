@@ -5,6 +5,7 @@
 import { CanvasObject, Point, Box, MapperRealToCanvas } from "./geometry"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor } from "./actor"
+import { Barrier } from "./barrier"
 import { Log } from "./log"
 import { SystemExecParms } from "../main-canvas/main-canvas"
 
@@ -99,12 +100,11 @@ export class ActorGroup implements CanvasObject {
         this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
         this.minTriangleQuality = sep.run.minTriangleQuality
         this.actors.forEach(a => a.updateParameters(sep))
-//      this.visualize(m2c)
     } 
     public addActor(a: Actor): void {
         this.actors.push(a)
     }
-    public calculateNewActorPositions(otherActGrps: ActorGroup[]): void {
+    public calculateNewActorPositions(otherActGrps: ActorGroup[], barriers: Barrier[]): void {
         if (this.mode != ActorGroupMode.dynamic) return
         const qlty = this.avgTriangleQuality  
         if (qlty > this.minTriangleQuality) {
@@ -118,13 +118,12 @@ export class ActorGroup implements CanvasObject {
 */
         this.calculatedNewPositions = [] 
         for (let a of this.actors)
-            this.calculatedNewPositions.push(a.newPosition(otherActGrps))
+            this.calculatedNewPositions.push(a.newPosition(otherActGrps, barriers))
     }
-    public moveActors(/*m2c: MapperRealToCanvas*/): void {
+    public moveActors(): void {
         if (this.mode != ActorGroupMode.dynamic) return
         for (let i = 0; i < this.actors.length; i++) {
             this.actors[i].setPosition(this.calculatedNewPositions[i])
         }
-//      this.visualize(m2c)
     }
 }

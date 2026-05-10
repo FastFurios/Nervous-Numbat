@@ -28,8 +28,8 @@
     "barrier_set": {
         "coordinate_type": "relative",
         "barriers": [
-            { "orientation": "vertical",   "at": 20, "from": 30, "to": 100 },
-            { "orientation": "horizontal", "at": 60, "from": 50, "to": 100 }
+            { "from": { "x": 20, "y": 30}, "to": { "x":  20, "y": 100}},
+            { "from": { "x": 50, "y": 60}, "to": { "x": 100, "y":  60}}
         ]
     }
 }

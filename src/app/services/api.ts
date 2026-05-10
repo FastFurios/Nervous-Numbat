@@ -2,15 +2,13 @@
 //      SYSTEM SETUP API
 // ---------------------------------------------------------------------------------------
 
-import { Point, Box } from "./geometry"
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
-import { BarrierSet } from "./barrier"
-import { randomInRange, isBetween, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
+import { randomInRange, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
 import { JsonPoint } from "./json"
 
-export const cVirtalGridWidth  = 100
-export const cVirtalGridHeight = 100
+export const cVirtualGridWidth  = 100
+export const cVirtualGridHeight = 100
 
 export enum CoordinateType {
   relative = "relative",
@@ -65,7 +63,7 @@ export class ConfigActor {
   }
   static newRandomizedActor(id: string, startBox?: ConfigBox): ConfigActor {
     if (!startBox) 
-      startBox = new ConfigBox(new ConfigPoint(0, 0, CoordinateType.relative), new ConfigPoint(cVirtalGridWidth, cVirtalGridHeight, CoordinateType.relative))
+      startBox = new ConfigBox(new ConfigPoint(0, 0, CoordinateType.relative), new ConfigPoint(cVirtualGridWidth, cVirtualGridHeight, CoordinateType.relative))
     const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
     const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
     return new ConfigActor(id, x, y, CoordinateType.relative)
@@ -100,11 +98,6 @@ export abstract class ConfigActorGroup {
 
 // --- CONFIG ACTOR GROUP DYNAMIC ----------------------------------------------------------------------
 export class ConfigActorGroupDynamic extends ConfigActorGroup {
-/*
-  static new(pUpperRight: Point, ag: ActorGroup, coordType: CoordinateType): ConfigActorGroupDynamic {
-    return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.newFromSystem(a)), ag.mode, coordType)
-  }
-*/
   static newFromSystem(ag: ActorGroup): ConfigActorGroupDynamic {
     return new ConfigActorGroupDynamic(ag.id, ag.actors.map(a => ConfigActor.newFromSystem(a)), ag.mode, CoordinateType.real)
   }
@@ -156,24 +149,12 @@ export class ConfigActorGroupStaticBox extends ConfigActorGroup  {
     }
 }
 
-// --- CONFIG BARRIERS ----------------------------------------------------------------------
+// --- CONFIG BARRIER ----------------------------------------------------------------------
 export class ConfigBarrier {
-    constructor(public orientation: BarrierOrientation, public at: number, public from: number, public to: number) { }
+    constructor(public from: ConfigPoint, public to: ConfigPoint) { }
 }
 
-export class ConfigBarrierSet {
-    static newFromSystem(bs: BarrierSet | undefined): ConfigBarrierSet | undefined {
-      if (!bs) return undefined
-      const horizontalBarriers = bs.barriers.filter(b => b.base.y == b.p2.y)
-      const verticalBarriers   = bs.barriers.filter(b => b.base.x == b.p2.x)
-      const horizontalConfigBarriers = horizontalBarriers.map(hb => new ConfigBarrier(BarrierOrientation.horizontal, hb.base.y, hb.base.x, hb.p2.x))  
-      const verticalConfigBarriers   = verticalBarriers.map(hb => new ConfigBarrier(BarrierOrientation.vertical, hb.base.x, hb.base.y, hb.p2.y))  
-      return new ConfigBarrierSet(CoordinateType.real, horizontalConfigBarriers.concat(verticalConfigBarriers))
-    }
-
-    constructor(public coordType: CoordinateType, public barriers: ConfigBarrier[]) { }
-}
 // --- CONFIGURATION ----------------------------------------------------------------------
 export class Configuration {
-    constructor(public id: string, public actorGroups: ConfigActorGroup[], public barrierSet?: ConfigBarrierSet) { }
+    constructor(public id: string, public actorGroups: ConfigActorGroup[], public barriers?: ConfigBarrier[]) { }
 }

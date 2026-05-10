@@ -9,6 +9,7 @@ import { cDefaultColor, RgbColor } from "./color"
 import { isBetween, powerFunctionFactory } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
+import { Barrier } from "./barrier"
 
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
@@ -88,11 +89,11 @@ export class Point implements CanvasObject, Boxable {
         const aux = new Point(this.ctx, xNet, yNet)
         return aux 
     }
-    public add(vec: Vector): Point {  // alias
+    public add(vec: Vector, bs: Barrier[]): Point {  // alias
         switch (Point.boundaryMode) {
             case BoundaryMode.inelastic: return this.addConfinedUnelastic(vec)
-            case BoundaryMode.boundless: return this.addFree(vec)
-            default: return this.addConfinedElastic(vec)
+            case BoundaryMode.rebound: return this.addConfinedElastic(vec)
+            default: return this.addFree(vec)
         }
     }
     public vectorTo(p: Point): Vector {
@@ -270,6 +271,18 @@ export class UnitVector extends Vector {
     override get inverted(): UnitVector {
         return UnitVector.newFromVector(new Vector(-this.dx, -this.dy).inverted)
     }
+    private deflectedAtVerticalBarrier(): UnitVector {
+        return new UnitVector(-this.dx, this.dy)
+    }
+    private deflectedAtHorizontalBarrier(): UnitVector {
+        return new UnitVector(this.dx, -this.dy)
+    }
+    public deflectedAtHorizOrVertiBarrier(ls: LineSegment): UnitVector | undefined {
+        if (ls.isVertical)   return this.deflectedAtVerticalBarrier()
+        if (ls.isHorizontal) return this.deflectedAtHorizontalBarrier()
+        console.log(`ERROR: geometry.deflectedAtHorizOrVertiBarrier(ls: lineSegment): neither horizontal nor vertical!`)
+        return undefined    
+    }
     override get perpendicular(): UnitVector {
         return UnitVector.newFromVector(new Vector(this.dx, this.dy).perpendicular)
     }
@@ -405,11 +418,11 @@ export class LineSegment extends Line implements Boxable {
     get equilateralVertices(): [Point, Point] {
         const altitude = Math.sqrt(3)/2 * this.length
         if (this.isVertical) 
-            return [this.middle.add(new Vector(altitude, 0)), this.middle.add(new Vector(-altitude, 0))]  
+            return [this.middle.addFree(new Vector(altitude, 0)), this.middle.addFree(new Vector(-altitude, 0))]  
         if (this.isHorizontal)
-            return [this.middle.add(new Vector(0, altitude)), this.middle.add(new Vector(0, -altitude))]  
-        const v0 = this.middle.add(this.perpendicular.scale( Math.max(altitude, cMinTriangleAltitude)))
-        const v1 = this.middle.add(this.perpendicular.scale(-Math.max(altitude, cMinTriangleAltitude)))
+            return [this.middle.addFree(new Vector(0, altitude)), this.middle.addFree(new Vector(0, -altitude))]  
+        const v0: Point = this.middle.addFree(this.perpendicular.scale( Math.max(altitude, cMinTriangleAltitude)))
+        const v1: Point = this.middle.addFree(this.perpendicular.scale(-Math.max(altitude, cMinTriangleAltitude)))
         return [v0, v1]
     }
 

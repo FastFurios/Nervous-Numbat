@@ -27,7 +27,7 @@
             "creation_mode" : "automatic",
             "topology": {
                 "number_actors": 15, 
-                "clustering": -0.8,
+                "clustering": 0,
                 "start_box": {
                     "lower_left":  { "x": 60, "y": 60},
                     "upper_right": { "x": 90, "y": 90}
