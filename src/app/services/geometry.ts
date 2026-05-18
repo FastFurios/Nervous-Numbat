@@ -6,7 +6,7 @@
 // $ npm install martinez-polygon-clipping (siehe ChatGPT für "Polygon Union")
 
 import { cDefaultColor, RgbColor } from "./color"
-import { isBetween, powerFunctionFactory } from "./helpers"
+import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
 import { Barrier } from "./barrier"
@@ -54,6 +54,20 @@ export enum BoundaryMode {
   boundless = "boundless"
 } 
 
+function xMin(p1: Point, p2: Point): number { return p1.x < p2.x ? p1.x : p2.x }
+function xMax(p1: Point, p2: Point): number { return p1.x > p2.x ? p1.x : p2.x }
+function yMin(p1: Point, p2: Point): number { return p1.y < p2.y ? p1.y : p2.y }
+function yMax(p1: Point, p2: Point): number { return p1.y > p2.y ? p1.y : p2.y }
+
+type Collision = {
+    barrier:        Barrier,
+    intersecType:   IntersectionType
+    point?:         Point,
+    distance?:      number
+}
+
+const cMinRebound = 1
+
 // --------------------------------------------------------------------------------------
 //     POINT  
 // --------------------------------------------------------------------------------------
@@ -61,38 +75,95 @@ export class Point implements CanvasObject, Boxable {
     static boundaryMode: BoundaryMode = BoundaryMode.rebound
 
     constructor (public ctx: CanvasRenderingContext2D, public x: number, public y: number, public id: string = "") {
-//      console.log(`Point(${this.x.toFixed(0)} / ${this.y.toFixed(0)}).constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
+//      console.log(`Point(${x.toFixed(0)} / ${this.y.toFixed(0)}).constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
+    }
+
+    private barrierCollision(b: Barrier, pGross: Point): Collision {
+        const iSec: Intersection = b.intersectsLineSegment(new LineSegment(this.ctx, this, pGross))
+        const aux =  {
+            barrier:        b,
+            intersecType:   iSec.type,
+            point:          iSec.p,
+            distance:       iSec.p ? this.distanceTo(iSec.p) : undefined
+        }
+//    console.log(`Geometry.Point.barrierCollision(): returning=`)
+//    console.log(aux)
+        return aux
+    }
+
+    private nearestCollisionPoint(bs: Barrier[], pGross: Point): Collision | undefined {
+        // barriers in the neigborhood: 
+        const nearbyBarriers: Barrier[] = bs.filter(
+            (b => !(
+                   xMax(b.base, b.p2) < xMin(this, pGross)
+                || xMin(b.base, b.p2) > xMax(this, pGross)
+                || yMax(b.base, b.p2) < yMin(this, pGross)
+                || yMin(b.base, b.p2) > yMax(this, pGross)
+            )))  // all barriers that are entirely beyond the box area of this ans pGross
+//        console.log(`Geometry.Point.nearestCollisionPoint(): nearbyBarriers=`)
+//        console.log(nearbyBarriers)
+        // check nearby barriers and see if they are in our way:
+        const barriersCollisions: Collision[] = nearbyBarriers
+            .map(b => this.barrierCollision(b, pGross))
+            .filter((bc: Collision) => bc.intersecType != "none")
+        if (barriersCollisions.length < 1) { 
+//            console.log(`Geometry.Point.nearestCollisionPoint(): no collision`)
+            return undefined
+        }
+//        console.log(`Geometry.Point.nearestCollisionPoint(): barriersCollisions=`)
+//        console.log(barriersCollisions)
+        // we have at least one barrier collision. Find the closest one. That's the point we are going to be deflected from.    
+        const nearestBarrierCollision = barriersCollisions.reduce((bc1: Collision, bc2: Collision) => bc1.distance! < bc2.distance! ? bc1 : bc2)
+        // now we know from which barrier at what point we are going to deflect    
+//        console.log(`Geometry.Point.nearestCollisionPoint(): nearestBarrierCollision=`)
+//        console.log(nearestBarrierCollision)
+
+//      nearestBarrierCollision.point!.visualize((p: Point) => p, new RgbColor(255, 0, 0), Halo.on)        
+        return nearestBarrierCollision    
     }
 
     public addFree(vec: Vector): Point {
         return new Point(this.ctx, this.x + vec.dx, this.y + vec.dy)
     }
-    private addConfinedElastic(vec: Vector): Point {  // result is within the canvas boundaries
-        const pGross = this.addFree(vec)
-        const xNet =    pGross.x < 0
-                            ? - pGross.x
-                            : pGross.x < this.ctx.canvas.width 
-                                ? pGross.x
-                                : 2 * this.ctx.canvas.width - pGross.x
-        const yNet =    pGross.y < 0
-                            ? - pGross.y
-                            : pGross.y < this.ctx.canvas.height 
-                                ? pGross.y
-                                : 2 * this.ctx.canvas.height - pGross.y
-        const aux = new Point(this.ctx, xNet, yNet)
-        return aux 
+
+    private addBarrierElastic(vec: Vector, bs: Barrier[]): Point {
+//        console.log(`## Geometry.Point.addBarrierElastic() #############`)      
+        const pGross = this.addFree(vec)  // if we had no barriers in our way
+        const nearestCollision = this.nearestCollisionPoint(bs, pGross)
+        if (!nearestCollision || nearestCollision.intersecType == "none") { 
+//          console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision?.intersecType == "none"`)
+            return pGross
+        }
+
+        const reboundLength = vec.length - nearestCollision!.distance! // this is the length of the deflected part of the vector vec    
+        if (nearestCollision!.barrier.isVertical)
+             return nearestCollision!.point!.addBarrierElastic(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(reboundLength, cMinRebound)), bs) // rebound only once. If rebound vector hits another barrier, just stop there unelastically.
+        if (nearestCollision!.barrier.isHorizontal)
+             return nearestCollision!.point!.addBarrierElastic(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(reboundLength, cMinRebound)), bs) // rebound only once. If rebound vector hits another barrier, just stop there unelastically.
+        throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
     }
-    private addConfinedUnelastic(vec: Vector): Point {  // result is within the canvas boundaries
-        const pGross = this.addFree(vec)
-        const xNet   = pGross.x < 0 ? 0 : pGross.x > this.ctx.canvas.width  ? this.ctx.canvas.width  : pGross.x
-        const yNet   = pGross.y < 0 ? 0 : pGross.y > this.ctx.canvas.height ? this.ctx.canvas.height : pGross.y
-        const aux = new Point(this.ctx, xNet, yNet)
-        return aux 
+
+    private addBarrierUnelastic(vec: Vector, bs: Barrier[]): Point {  // result is within the canvas boundaries
+//        console.log(`## Geometry.Point.addBarrierUnelastic() #############`)
+        const pGross = this.addFree(vec)  // if we had no barriers in our way
+        const nearestCollision = this.nearestCollisionPoint(bs, pGross)
+        if (!nearestCollision || nearestCollision.intersecType == "none") { 
+//          console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision?.intersecType == "none"`)
+            return pGross
+        }
+  //    console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision=`)
+  //    console.log(nearestCollision)
+
+        if (nearestCollision!.barrier.isVertical)
+             return nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, 0), cMinRebound), /*bs*/)
+        if (nearestCollision!.barrier.isHorizontal)
+             return nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(0, -vec.dy), cMinRebound), /*bs*/)
+        throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
     }
     public add(vec: Vector, bs: Barrier[]): Point {  // alias
         switch (Point.boundaryMode) {
-            case BoundaryMode.inelastic: return this.addConfinedUnelastic(vec)
-            case BoundaryMode.rebound: return this.addConfinedElastic(vec)
+            case BoundaryMode.inelastic: return this.addBarrierUnelastic(vec, bs)
+            case BoundaryMode.rebound: return this.addBarrierElastic(vec, bs)
             default: return this.addFree(vec)
         }
     }
@@ -229,6 +300,9 @@ export class Vector {
     static newVectorfromUnitVectorAndDistance(uv: UnitVector, distance: number): Vector {
         return new Vector(uv.dx * distance, uv.dy * distance)
     }
+    static newVectorfrom2Points(from: Point, to: Point): Vector {
+        return new Vector(to.x - from.x, to.y - from.y)
+    }
     static newRandomVector(length: number): Vector {
         const dx = 2 * Math.random() - 1
         const dy = 2 * Math.random() - 1
@@ -258,6 +332,7 @@ export class Vector {
 // --------------------------------------------------------------------------------------
 export class UnitVector extends Vector {
     static newFromVector(v: Vector): UnitVector {
+//      console.log(`UnitVector.newFromVector(vec=${v}): return ${new UnitVector(v.dx, v.dy)}`)
         return new UnitVector(v.dx, v.dy)
     }
     constructor(dx: number, dy: number) {
@@ -268,8 +343,10 @@ export class UnitVector extends Vector {
 //      return Math.sqrt(this.dx**2 + this.dy**2) // 1
         return 1
     }
+
     override get inverted(): UnitVector {
-        return UnitVector.newFromVector(new Vector(-this.dx, -this.dy).inverted)
+//      return UnitVector.newFromVector(new Vector(-this.dx, -this.dy).inverted)
+        return UnitVector.newFromVector(super.inverted)
     }
     private deflectedAtVerticalBarrier(): UnitVector {
         return new UnitVector(-this.dx, this.dy)
@@ -324,7 +401,10 @@ export class Line implements CanvasObject {
         return this.uv.isEqualInOneOfBothDirection(l.uv)
     }
     public touches(p: Point): boolean {
-        return UnitVector.newFromVector(p.vectorTo(this.base)).isEqualInOneOfBothDirection(this.uv)
+//      console.log(`Geometry.Line.touches(): this line = ${this}, p = ${p}`)
+        const aux = UnitVector.newFromVector(p.vectorTo(this.base)).isEqualInOneOfBothDirection(this.uv)
+//      console.log(`Geometry.Line.touches(): returning aux = ${aux}`)
+        return aux 
     }
     get isVertical(): boolean {
         return Math.abs(this.uv.dx) < cTolerance
@@ -391,6 +471,10 @@ export class LineSegment extends Line implements Boxable {
         return new Point(this.ctx, (this.base.x + this.p2.x) / 2, (this.base.y + this.p2.y) / 2)
     }
     public override touches(p: Point): boolean {
+//      console.log(`Line Segment: ${this}: touches(p=${p})`)
+//      console.log(`\tsuper.touches(p): ${super.touches(p)} `)
+//      console.log(`\tthis.boxAround(): ${this.boxAround()} `)
+//      console.log(`\tp.isIn(this.boxAround(): ${p.isIn(this.boxAround())} `)
         return super.touches(p) && p.isIn(this.boxAround())       
 //      return super.touches(p) && p.isInBox(this.base, this.p2)       
     }
@@ -403,18 +487,58 @@ export class LineSegment extends Line implements Boxable {
         const upperRight = new Point(this.ctx, xMax, yMax)
         return new Box(this.ctx, `Box of ${this.id}`, lowerLeft, upperRight)
     }
+/*    
+    private touches(p: Point): boolean {
+        return (UnitVector.newFromVector(p.vectorTo(this.base).inverted).isEqual(
+                UnitVector.newFromVector(p.vectorTo(this.p2))))
+    }
+*/    
     public override intersects(l: Line): Intersection {
         const lineIntersection = super.intersects(l)
+//      console.log(`Geometry.LineSegment.intersects(): lineIntersection=`)
+//      console.log(lineIntersection)
+        if (lineIntersection.type == "none") {
+            return  { type: "none" }
+        }
+        if (lineIntersection.type == "point")
+            if (this.touches(lineIntersection.p!)) {
+//              console.log(`Geometry.LineSegment.intersects(): this.touches(lineIntersection= ${lineIntersection}`)
+                return lineIntersection // the line cuts within the boundaries of this line segment 
+            }
+            else {
+/*
+                console.log(`Geometry.LineSegment.intersects(): this Line Segment does not touch Point intersection point p`)
+                console.log(`this line segment=`)
+                console.log(this)
+                console.log(`line intersection point p=`)
+                console.log(lineIntersection.p)
+*/
+                return { type: "none" } // the line misses the line segment
+            }
+        return { type: "cover", p: this.base, p2: this.p2} // the line segment resides on the line 
+    }
+
+    public intersectsLineSegment(ls: LineSegment): Intersection {
+/*
+        console.log(`Geometry.LineSegment.intersectsLineSegment(): barrier=`)
+        console.log(this)
+        console.log(`Geometry.LineSegment.intersectsLineSegment(): vector as Line Segment=`)
+        console.log(ls)
+*/
+        const lineIntersection = this.intersects(ls) // see if the line on which ls resides cuts this line segment 
+//      console.log(`Geometry.LineSegment.intersectsLineSegment(): lineIntersection=`)
+//      console.log(lineIntersection)
         if (lineIntersection.type == "none") 
             return  { type: "none" }
         if (lineIntersection.type == "point")
-            if (UnitVector.newFromVector(lineIntersection.p!.vectorTo(this.base).inverted).isEqual(
-                UnitVector.newFromVector(lineIntersection.p!.vectorTo(this.p2))))
-                return lineIntersection // the line cut within the boundaries of the line segment 
+            if (ls.touches(lineIntersection.p!))
+                return lineIntersection // the line ls cuts within the boundaries of this line segment 
             else
-                return { type: "none" } // the line misses the line segment
-        return { type: "cover", p: this.base, p2: this.p2} // the line segment resides on the line 
+                return { type: "none" } // the line misses this line segment
+        // intersection covers: ignore this super rare case     
+        return { type: "none" }
     }
+    
     get equilateralVertices(): [Point, Point] {
         const altitude = Math.sqrt(3)/2 * this.length
         if (this.isVertical) 

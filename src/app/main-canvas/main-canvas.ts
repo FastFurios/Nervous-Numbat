@@ -197,6 +197,9 @@ export class MainCanvas implements OnInit, AfterViewInit {
     this.visualizeCanvasInReal()
     this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
     this.sys.barriers.map(b => b.visualize(this.mbrc!.realToCanvas))
+
+    this.sys.testFromP?.visualize(this.mbrc!.realToCanvas, new RgbColor(0, 255, 0))
+    this.sys.testToP?.visualize(this.mbrc!.realToCanvas, new RgbColor(255, 0, 0))
   }
 
   public  visualizeCanvasInReal(): void {
@@ -249,7 +252,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
     this.visualize()
   }
 
-  /** home button clicked */
+  /** focus in first actor group button clicked */
   public onFocusOnFirstActGrp() {
     this.centerOfView = this.sys.actGrps[0].centerPoint()
     this.setMapperBtwRealAndCanvas(this.ctx!)

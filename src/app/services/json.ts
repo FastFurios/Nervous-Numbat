@@ -16,6 +16,7 @@ export interface JsonActor {
 
 export type JsonObstacle         = JsonBox
 export type JsonExplicitTopology = JsonActor[]
+export type JsonCoordType        = "real" | "relative"
 
 export interface JsonActorGroup {
   id:                 string
@@ -29,6 +30,7 @@ export interface JsonActorGroup {
 export interface JsonPoint { 
   x:                  number
   y:                  number 
+  coordType:          JsonCoordType
 }
 
 export interface JsonBox {

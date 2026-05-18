@@ -174,8 +174,8 @@ export class App {
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
         this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
         const startBox = new ConfigBox(
-            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.lower_left, jag.coordinate_type), 
-            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.upper_right, jag.coordinate_type))  
+            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.lower_left), 
+            ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.upper_right))  
         return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, 
                                                            this.systemStructParms.numActorsPerActGrp, 
                                                            this.systemStructParms.clustering, 

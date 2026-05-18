@@ -5,7 +5,7 @@
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
 import { randomInRange, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
-import { JsonPoint } from "./json"
+import { JsonPoint, JsonCoordType } from "./json"
 
 export const cVirtualGridWidth  = 100
 export const cVirtualGridHeight = 100
@@ -31,11 +31,13 @@ export class ConfigPoint { // virtual grid
       return new ConfigPoint(p.x, p.y)
   } 
 */
-  static newFromJson(jp: JsonPoint, coordType: CoordinateType): ConfigPoint {
-    return new ConfigPoint(jp.x, jp.y, coordType)
+  static newFromJson(jp: JsonPoint): ConfigPoint {
+    return new ConfigPoint(jp.x, jp.y, jp.coordType)
   } 
 
-  constructor (public x: number, public y: number, public coordType: CoordinateType) {
+  public coordType: CoordinateType
+  constructor (public x: number, public y: number, coordType: JsonCoordType) {
+    this.coordType = coordType == "real" ? CoordinateType.real : CoordinateType.relative 
   }
   public toString(): string {
     return `[${this.x}/${this.y}]`

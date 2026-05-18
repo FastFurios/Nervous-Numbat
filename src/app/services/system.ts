@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, from, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
-import { LineSegment, Point } from "./geometry"
-import { ColorSchemes } from "./color"
+import { BoundaryMode, LineSegment, Point, Vector } from "./geometry"
+import { ColorSchemes, RgbColor } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
 import { Barrier } from "./barrier"
@@ -41,7 +41,12 @@ export class System {
     private showActorJourney:       boolean                                 = false
     public  colorSchemes                                                    = new ColorSchemes(1)  // 1 as default
                                  
+    public testFromP?: Point
+    public testToP?  : Point
+
+
     
+
     constructor() { }
 
 // ---------------------------------------------------------------------------------------
@@ -49,7 +54,7 @@ export class System {
 // ---------------------------------------------------------------------------------------
 
     private mappedConfigPointOntoCanvas(ctx: CanvasRenderingContext2D, cp: ConfigPoint): Point {
-        if (!ctx) throw Error("System.fitInto(): missing canvas context.")
+        if (!ctx) throw Error("System.mappedConfigPointOntoCanvas(): missing canvas context.")
         if (cp.coordType == CoordinateType.relative)    
             return new Point(ctx, ctx.canvas.width * cp.x / cVirtualGridWidth, ctx.canvas.height * cp.y / cVirtualGridHeight) 
         return new Point(ctx, cp.x, cp.y) 
@@ -64,19 +69,20 @@ export class System {
 
     private addCanvasBorders(ctx: CanvasRenderingContext2D): void {
         // set the canvas borders
-        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   10                  ), new Point(ctx, ctx.canvas.width-10, 10                  ))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   ctx.canvas.height-10), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
-        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                   10                  ), new Point(ctx, 10,                  ctx.canvas.height-10))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10,  10                  ), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, -10,                -10                ), new Point(ctx, ctx.canvas.width+10, -10                ))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width+10, -10                ), new Point(ctx, ctx.canvas.width+10, ctx.canvas.height+10)))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width+10, ctx.canvas.height+10), new Point(ctx, -10,                ctx.canvas.height+10))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, -10,                ctx.canvas.height+10), new Point(ctx, -10,                -10                )))
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
         console.log("System.initialize(): ...")
-        if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
+//      if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
         if (!systemExecParms)              throw Error("System.initialize(): missing systemExecParms.")
         if (!ctx)                          throw Error("System.initialize(): missing canvas context.")
 
         this.stopIterating()
+        this.barriers = []
 
         this.actGrps = []
         for (let cag of this.configActGrps) {
@@ -95,14 +101,24 @@ export class System {
             this.actGrps.forEach(ag => ag.applyColorScheme(this.colorSchemes.nextColorScheme()))
         }
         
-        console.log("System.initialize(): setting canvas boundaries barriers...")
+//      console.log("System.initialize(): setting canvas boundaries barriers...")
         this.addCanvasBorders(ctx)
         console.log("System.initialize(): setting in-field barriers...")
 
         // add any in-field barriers
-        this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
-        console.log("System.initialize(): this.barriers:")
+
+        console.log("System.initialize(): this.configBarriers:")
         console.log(this.barriers)
+        this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
+//      console.log("System.initialize(): this.barriers:")
+//      console.log(this.barriers)
+/*
+            this.testFromP = new Point(ctx, 350, 500)
+            const vec = new Vector(1705, 3705)
+            Point.boundaryMode = BoundaryMode.inelastic
+            this.testToP = this.testFromP.add(vec, this.barriers)
+*/
+
     }
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations          = sep.run.maxIterations
