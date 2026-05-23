@@ -69,10 +69,10 @@ export class System {
 
     private addCanvasBorders(ctx: CanvasRenderingContext2D): void {
         // set the canvas borders
-        this.barriers.push(new Barrier(ctx, new Point(ctx, -10,                -10                ), new Point(ctx, ctx.canvas.width+10, -10                ))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width+10, -10                ), new Point(ctx, ctx.canvas.width+10, ctx.canvas.height+10)))
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width+10, ctx.canvas.height+10), new Point(ctx, -10,                ctx.canvas.height+10))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, -10,                ctx.canvas.height+10), new Point(ctx, -10,                -10                )))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                +10                ), new Point(ctx, ctx.canvas.width-10, +10                ))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10, +10                ), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10), new Point(ctx, +10,                ctx.canvas.height-10))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, +10,                ctx.canvas.height-10), new Point(ctx, +10,                +10                )))
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -110,6 +110,9 @@ export class System {
         console.log("System.initialize(): this.configBarriers:")
         console.log(this.barriers)
         this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
+        
+
+
 //      console.log("System.initialize(): this.barriers:")
 //      console.log(this.barriers)
 /*
