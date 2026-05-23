@@ -12,7 +12,7 @@ import { SystemExecParms } from "../main-canvas/main-canvas"
 
 
 export const cOpacity = 0.1
-export const cActorDotRadius = 1
+export const cActorDotRadius = 2
 //const cContextMargin = 0.4
 
 export enum Halo {

@@ -1,0 +1,310 @@
+{
+	"id": "Barrier Competition",
+    "actor_groups": [
+		{
+            "id": "Normal A",
+            "creation_mode" : "automatic",
+            "topology": {
+                "number_actors": 40, 
+                "clustering": 0,
+                "start_box": {
+                    "lower_left":  { "x": 5, "y": 5},
+                    "upper_right": { "x": 20, "y": 30}
+                }
+            }
+        },
+		{
+            "id": "Cluster B",
+            "creation_mode" : "automatic",
+            "topology": {
+                "number_actors": 40, 
+                "clustering": 1.0,
+                "start_box": {
+                    "lower_left":  { "x": 95, "y": 5},
+                    "upper_right": { "x": 80, "y": 30}
+                }
+            }
+        }
+    ],
+	"barrier_set": {
+		"barriers": [
+			{
+				"from": {
+					"x": 25,
+					"y": 0,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 25,
+					"y": 30,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 25,
+					"y": 30,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 30,
+					"y": 30,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 30,
+					"y": 30,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 30,
+					"y": 40,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 30,
+					"y": 40,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 25,
+					"y": 40,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 25,
+					"y": 40,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 25,
+					"y": 54,
+					"coordType": "relative"
+				}
+			},
+            {
+				"from": {
+					"x": 25,
+					"y": 54,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 40,
+					"y": 54,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 40,
+					"y": 54,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 40,
+					"y": 0,
+					"coordType": "relative"
+				}
+			},
+
+
+			{
+				"from": {
+					"x": 25,
+					"y": 56,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 25,
+					"y": 70,
+					"coordType": "relative"
+				}
+			},
+            {
+				"from": {
+					"x": 25,
+					"y": 70,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 40,
+					"y": 70,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 40,
+					"y": 70,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 40,
+					"y": 56,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 40,
+					"y": 56,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 25,
+					"y": 56,
+					"coordType": "relative"
+				}
+			},
+
+
+
+
+
+
+
+			{
+				"from": {
+					"x": 75,
+					"y": 0,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 75,
+					"y": 30,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 75,
+					"y": 30,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 70,
+					"y": 30,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 70,
+					"y": 30,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 70,
+					"y": 40,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 70,
+					"y": 40,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 75,
+					"y": 40,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 75,
+					"y": 40,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 75,
+					"y": 54,
+					"coordType": "relative"
+				}
+			},
+            {
+				"from": {
+					"x": 75,
+					"y": 54,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 60,
+					"y": 54,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 60,
+					"y": 54,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 60,
+					"y": 0,
+					"coordType": "relative"
+				}
+			},
+
+
+			{
+				"from": {
+					"x": 75,
+					"y": 56,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 75,
+					"y": 70,
+					"coordType": "relative"
+				}
+			},
+            {
+				"from": {
+					"x": 75,
+					"y": 70,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 60,
+					"y": 70,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 60,
+					"y": 70,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 60,
+					"y": 56,
+					"coordType": "relative"
+				}
+			},
+			{
+				"from": {
+					"x": 60,
+					"y": 56,
+					"coordType": "relative"
+				},
+				"to": {
+					"x": 75,
+					"y": 56,
+					"coordType": "relative"
+				}
+			}
+
+
+		]
+    }	
+}

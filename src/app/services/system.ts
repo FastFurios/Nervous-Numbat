@@ -2,14 +2,15 @@ import { Injectable } from '@angular/core'
 import { Observable, Subscription, from, interval } from 'rxjs'
 
 import { SystemExecParms } from "../main-canvas/main-canvas"
-import { BoundaryMode, LineSegment, Point, Vector } from "./geometry"
-import { ColorSchemes, RgbColor } from "./color"
+import { Point } from "./geometry"
+import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
 import { ActorGroup } from "./actorGroup"
 import { Barrier } from "./barrier"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 
 
+const cCanvasBorderMargin = 10 
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
 
@@ -41,12 +42,6 @@ export class System {
     private showActorJourney:       boolean                                 = false
     public  colorSchemes                                                    = new ColorSchemes(1)  // 1 as default
                                  
-    public testFromP?: Point
-    public testToP?  : Point
-
-
-    
-
     constructor() { }
 
 // ---------------------------------------------------------------------------------------
@@ -69,10 +64,10 @@ export class System {
 
     private addCanvasBorders(ctx: CanvasRenderingContext2D): void {
         // set the canvas borders
-        this.barriers.push(new Barrier(ctx, new Point(ctx, 10,                +10                ), new Point(ctx, ctx.canvas.width-10, +10                ))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10, +10                ), new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10)))
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-10, ctx.canvas.height-10), new Point(ctx, +10,                ctx.canvas.height-10))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, +10,                ctx.canvas.height-10), new Point(ctx, +10,                +10                )))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, cCanvasBorderMargin,                  cCanvasBorderMargin                  ), new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ), new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin)))
+        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin), new Point(ctx, cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin))),
+        this.barriers.push(new Barrier(ctx, new Point(ctx, cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin), new Point(ctx, cCanvasBorderMargin,                  cCanvasBorderMargin                  )))
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -110,19 +105,10 @@ export class System {
         console.log("System.initialize(): this.configBarriers:")
         console.log(this.barriers)
         this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
-        
-
-
 //      console.log("System.initialize(): this.barriers:")
 //      console.log(this.barriers)
-/*
-            this.testFromP = new Point(ctx, 350, 500)
-            const vec = new Vector(1705, 3705)
-            Point.boundaryMode = BoundaryMode.inelastic
-            this.testToP = this.testFromP.add(vec, this.barriers)
-*/
-
     }
+
     public updateExecParms(sep: SystemExecParms): void {
         this.maxIterations          = sep.run.maxIterations
         this.intervalMillisecs      = sep.run.intervalMillisecs

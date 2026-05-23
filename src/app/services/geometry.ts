@@ -14,7 +14,6 @@ import { Barrier } from "./barrier"
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
 
-
 type  Infinite           = undefined
 const infinite: Infinite = undefined
 
@@ -75,9 +74,7 @@ const cMinRebound       = 5
 export class Point implements CanvasObject, Boxable {
     static boundaryMode: BoundaryMode = BoundaryMode.rebound
 
-    constructor (public ctx: CanvasRenderingContext2D, public x: number, public y: number, public id: string = "") {
-//      console.log(`Point(${x.toFixed(0)} / ${this.y.toFixed(0)}).constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
-    }
+    constructor (public ctx: CanvasRenderingContext2D, public x: number, public y: number, public id: string = "") { }
 
     private barrierCollision(b: Barrier, pGross: Point): Collision {
         const iSec: Intersection = b.intersectsLineSegment(new LineSegment(this.ctx, this, pGross))
@@ -87,8 +84,8 @@ export class Point implements CanvasObject, Boxable {
             point:          iSec.p,
             distance:       iSec.p ? this.distanceTo(iSec.p) : undefined
         }
-//    console.log(`Geometry.Point.barrierCollision(): returning=`)
-//    console.log(aux)
+//      console.log(`Geometry.Point.barrierCollision(): returning=`)
+//      console.log(aux)
         return aux
     }
 
@@ -101,23 +98,23 @@ export class Point implements CanvasObject, Boxable {
                 || yMax(b.base, b.p2) < yMin(this, pGross)
                 || yMin(b.base, b.p2) > yMax(this, pGross)
             )))  // all barriers that are entirely beyond the box area of this ans pGross
-//        console.log(`Geometry.Point.nearestCollisionPoint(): nearbyBarriers=`)
-//        console.log(nearbyBarriers)
+//      console.log(`Geometry.Point.nearestCollisionPoint(): nearbyBarriers=`)
+//      console.log(nearbyBarriers)
         // check nearby barriers and see if they are in our way:
         const barriersCollisions: Collision[] = nearbyBarriers
             .map(b => this.barrierCollision(b, pGross))
             .filter((bc: Collision) => bc.intersecType != "none")
         if (barriersCollisions.length < 1) { 
-//            console.log(`Geometry.Point.nearestCollisionPoint(): no collision`)
+//          console.log(`Geometry.Point.nearestCollisionPoint(): no collision`)
             return undefined
         }
-//        console.log(`Geometry.Point.nearestCollisionPoint(): barriersCollisions=`)
-//        console.log(barriersCollisions)
+//      console.log(`Geometry.Point.nearestCollisionPoint(): barriersCollisions=`)
+//      console.log(barriersCollisions)
         // we have at least one barrier collision. Find the closest one. That's the point we are going to be deflected from.    
         const nearestBarrierCollision = barriersCollisions.reduce((bc1: Collision, bc2: Collision) => bc1.distance! < bc2.distance! ? bc1 : bc2)
         // now we know from which barrier at what point we are going to deflect    
-//        console.log(`Geometry.Point.nearestCollisionPoint(): nearestBarrierCollision=`)
-//        console.log(nearestBarrierCollision)
+//      console.log(`Geometry.Point.nearestCollisionPoint(): nearestBarrierCollision=`)
+//      console.log(nearestBarrierCollision)
 
 //      nearestBarrierCollision.point!.visualize((p: Point) => p, new RgbColor(255, 0, 0), Halo.on)        
         return nearestBarrierCollision    
@@ -128,7 +125,7 @@ export class Point implements CanvasObject, Boxable {
     }
 
        private addBarrierSensitive(vec: Vector, bs: Barrier[], boundaryMode: BoundaryMode): Point {  // result is within the canvas boundaries
-//        console.log(`## Geometry.Point.addBarrierUnelastic() #############`)
+//      console.log(`## Geometry.Point.addBarrierUnelastic() #############`)
         const pGross = this.addFree(vec)  // if we had no barriers in our way
         const nearestCollision = this.nearestCollisionPoint(bs, pGross) // where do we hit into the first barrier on our way?
         if (!nearestCollision || nearestCollision.intersecType == "none") { // our way is free
@@ -167,15 +164,6 @@ export class Point implements CanvasObject, Boxable {
     public boxAround(): Box {
         return new Box(this.ctx, `Box of ${this.id}`, new Point(this.ctx, this.x, this.y), new Point(this.ctx, this.x, this.y))
     }
-/*
-    public isInBox(p1: Point, p2: Point): boolean {  // ## public isIn(b: Box): boolean
-        const xMin = Math.min(p1.x, p2.x)
-        const xMax = Math.max(p1.x, p2.x)
-        const yMin = Math.min(p1.y, p2.y)
-        const yMax = Math.max(p1.y, p2.y)
-        return isBetween(this.x, xMin, xMax) && isBetween(this.y, yMin, yMax)
-    }
-*/
     public isIn(b: Box): boolean {
         return isBetween(this.x, b.lowerLeft.x, b.upperRight.x) && isBetween(this.y, b.lowerLeft.y, b.upperRight.y)
     }

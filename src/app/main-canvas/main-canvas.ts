@@ -113,10 +113,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
   public  zoom?:                        number  // zoom > 1: zoomed in ; z < 1: zommed out
   public  pickedActor:                  Actor | null | undefined                = undefined
 
-
-
-//public  selectedBoundaryMode:         BoundaryMode= BoundaryMode.rebound                   
-
   constructor(public sys: System) {
     this.sysExecParms = {
       run: {
@@ -176,6 +172,9 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   ngOnDestroy() {
       this.sys.stopIterating()
+      this.sys.actGrps  = []
+      this.sys.barriers = []
+      this.sys.time$    = undefined
   }
 
   private home():void {
@@ -197,9 +196,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
     this.visualizeCanvasInReal()
     this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
     this.sys.barriers.map(b => b.visualize(this.mbrc!.realToCanvas))
-
-    this.sys.testFromP?.visualize(this.mbrc!.realToCanvas, new RgbColor(0, 255, 0))
-    this.sys.testToP?.visualize(this.mbrc!.realToCanvas, new RgbColor(255, 0, 0))
   }
 
   public  visualizeCanvasInReal(): void {
@@ -266,6 +262,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
   /** update the system with the current execution parameters */
   public updateExecParms(): void {
     this.sys.actGrps.forEach(ag => ag.updateParameters(this.sysExecParms))
+    this.visualize()
   }
 
   /** handle toggled boundary mode */
@@ -337,6 +334,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
     public handleWheelMotion(ctx: CanvasRenderingContext2D, motion: WheelMotion): void {
         this.zoom! *= motion == WheelMotion.up ? 2 : 0.5
         this.setMapperBtwRealAndCanvas(ctx)
+        this.reset()
         this.visualize()
     }
 
