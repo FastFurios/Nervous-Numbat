@@ -10,7 +10,7 @@ import { Barrier } from "./barrier"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 
 
-const cCanvasBorderMargin = 10 
+const cCanvasBorderMargin = 30 
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
 
@@ -79,6 +79,8 @@ export class System {
         this.stopIterating()
         this.barriers = []
 
+        console.log(`system.initialize(): found ${this.configActGrps.length} actor groups in configuration`)
+
         this.actGrps = []
         for (let cag of this.configActGrps) {
             const actors: Actor[] = cag.actors.map(ca => new Actor(ctx!, ca.id, this.mappedConfigPointOntoCanvas(ctx, ca.p!), systemExecParms!))
@@ -98,12 +100,12 @@ export class System {
         
 //      console.log("System.initialize(): setting canvas boundaries barriers...")
         this.addCanvasBorders(ctx)
-        console.log("System.initialize(): setting in-field barriers...")
+//      console.log("System.initialize(): setting in-field barriers...")
 
         // add any in-field barriers
 
-        console.log("System.initialize(): this.configBarriers:")
-        console.log(this.barriers)
+//      console.log("System.initialize(): this.configBarriers:")
+//      console.log(this.barriers)
         this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
 //      console.log("System.initialize(): this.barriers:")
 //      console.log(this.barriers)
@@ -114,6 +116,7 @@ export class System {
         this.intervalMillisecs      = sep.run.intervalMillisecs
         Point.boundaryMode          = sep.run.boundaryMode      
         this.showActorJourney       = sep.display.showActorJourney
+        console.log(`system.updateExecParms(): Point.boundaryMode= ${Point.boundaryMode}`)
     }
 
 // ---------------------------------------------------------------------------------------

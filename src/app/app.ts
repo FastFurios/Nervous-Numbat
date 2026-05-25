@@ -17,6 +17,7 @@ import { now, randomInRange } from "./services/helpers"
 
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
 import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, ConfigBarrier, Configuration, cVirtualGridWidth, cVirtualGridHeight, CoordinateType } from "./services/api"
+import { Statistics } from "./statistics/statistics";
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -75,7 +76,7 @@ export const cGreyOut = "background-color: lightgrey; border-color: lightgrey;"
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainCanvas, FormsModule, CommonModule],
+  imports: [RouterOutlet, MainCanvas, Statistics, FormsModule, CommonModule, Statistics],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -153,7 +154,7 @@ export class App {
   }
   
   private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
-    console.log(`app.configurationFrom() entered. `)
+//  console.log(`app.configurationFrom() entered. `)
     const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
 //  console.log("app.onConfigFileSelected(): configActGrps=")
 //  console.log(configActGrps)
@@ -163,8 +164,8 @@ export class App {
     const maybeConfigBarriers: ConfigBarrier[] | undefined = jsonConfig.barrier_set?.barriers.map(jb => 
           new ConfigBarrier(new ConfigPoint(jb.from.x, jb.from.y, jsonConfig.barrier_set!.coordinate_type),
                             new ConfigPoint(jb.to.x,   jb.to.y,   jsonConfig.barrier_set!.coordinate_type)))
-    console.log("app.configurationFrom(): Barriers:")
-    console.log(maybeConfigBarriers)
+//  console.log("app.configurationFrom(): Barriers:")
+//  console.log(maybeConfigBarriers)
     return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined), maybeConfigBarriers)
   }
 
@@ -176,7 +177,7 @@ export class App {
         const startBox = new ConfigBox(
             ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.lower_left), 
             ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.upper_right))  
-        return ConfigActorGroupDynamic.newRandomizedActGrp(`Explorers${idx}`, 
+        return ConfigActorGroupDynamic.newRandomizedActGrp(jag.id, 
                                                            this.systemStructParms.numActorsPerActGrp, 
                                                            this.systemStructParms.clustering, 
                                                            ActorGroupMode.dynamic, 
@@ -241,7 +242,7 @@ export class App {
   public onConfigurationByRandom(): void {
     this.actorGroups = []
     for (let i = 0, sbs = this.startBoxesForNumGrps(this.systemStructParms.numActGrps); i < this.systemStructParms.numActGrps; i++) {
-      this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, sbs[i]))
+      this.actorGroups.push(ConfigActorGroupDynamic.newRandomizedActGrp(`Random-${i}`, this.systemStructParms.numActorsPerActGrp, this.systemStructParms.clustering, ActorGroupMode.dynamic, sbs[i]))
     }
     this.configuration.set(new Configuration("random", this.actorGroups, undefined))
     this.configurationId = this.configuration()!.id

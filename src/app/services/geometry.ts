@@ -17,6 +17,11 @@ export const cMinTriangleAltitude = 20
 type  Infinite           = undefined
 const infinite: Infinite = undefined
 
+export type FromToPoints = {
+    from: Point
+    to:   Point
+}
+
 export interface CanvasObject {
     ctx:                                                    CanvasRenderingContext2D
     visualize(m2c: MapperRealToCanvas, color?: RgbColor):   void
@@ -446,6 +451,17 @@ export class LineSegment extends Line implements Boxable {
     get middle(): Point {
         return new Point(this.ctx, (this.base.x + this.p2.x) / 2, (this.base.y + this.p2.y) / 2)
     }
+    private stretchToInteger(from: Point, to: Point): FromToPoints {
+    return {
+        from: new Point(this.ctx, 
+                        from.x < to.x ? Math.floor(from.x) : Math.ceil(from.x),
+                        from.y < to.y ? Math.floor(from.y) : Math.ceil(from.y)),
+        to:   new Point(this.ctx, 
+                        from.x < to.x ? Math.ceil(from.x)  : Math.floor(from.x),
+                        from.y < to.y ? Math.ceil(from.y)  : Math.floor(from.y))
+    }
+}
+
     public override touches(p: Point): boolean {
 //      console.log(`Line Segment: ${this}: touches(p=${p})`)
 //      console.log(`\tsuper.touches(p): ${super.touches(p)} `)

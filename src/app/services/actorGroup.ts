@@ -2,6 +2,7 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
+import { computed, signal, WritableSignal } from '@angular/core'
 import { CanvasObject, Point, Box, MapperRealToCanvas } from "./geometry"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor } from "./actor"
@@ -15,6 +16,14 @@ export enum ActorGroupMode {
     static  = "static"
 }
 
+type ActGrpStats = {
+    expanse:            number
+    avgTriangleQuality: number
+    performance:        number 
+}
+
+
+
 // ****************************************************************************************
 //      abstract ACTOR GROUP
 // ****************************************************************************************
@@ -26,11 +35,17 @@ export class ActorGroup implements CanvasObject {
     public  minTriangleQuality: number = 1
     public  log = new Log(1000)
     private calculatedNewPositions: Point[] = []
+    public  actGrpStats: WritableSignal<ActGrpStats> = signal({
+        expanse:            0,
+        avgTriangleQuality: 0,
+        performance:        0 
+    })
     
     constructor(public ctx: CanvasRenderingContext2D, public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
         this.showActorJourney = false
         this.showOneActorOnlyWithTheGivenAgIndex = -1
         this.showActorGroupIdAndQuality = false
+        this.updateActGrpStats()
     }
     public covers(p: Point): boolean {
         return this.actors.map(a => a.covers(p)).reduce((d, e) => d || e, false)
@@ -51,6 +66,14 @@ export class ActorGroup implements CanvasObject {
         if (!this.showActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality(m2c)
     }
+    public updateActGrpStats(): void {
+        const _expanse = this.expanse(this.centerPoint())
+        this.actGrpStats.set({
+            expanse:            _expanse,
+            avgTriangleQuality: this.avgTriangleQuality,
+            performance:        _expanse * this.avgTriangleQuality 
+        })
+    }
     private visualizeIdAndQuality(m2c: MapperRealToCanvas, remark: string = ""): void {
         const ctr = m2c(this.centerPoint())
         this.ctx.beginPath()
@@ -59,11 +82,13 @@ export class ActorGroup implements CanvasObject {
         this.ctx.fillStyle = new RgbColor(100, 100, 100).rgbString
         this.ctx.textAlign = "center"
         this.ctx.font = "12px Arial"
+/*
         const expanse = this.expanse(this.centerPoint())
         const avgTriangleQuality = this.avgTriangleQuality
         const performance = expanse * avgTriangleQuality 
+*/
 //      this.ctx.fillText(`${this.id} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
-        this.ctx.fillText(`${this.id} qlty=${(avgTriangleQuality * 100).toFixed(0)}% exp=${(this.expanse(this.centerPoint())).toFixed(0)}: perf=${(expanse * avgTriangleQuality).toFixed(0)} ${remark}`, ctr.x, ctr.y)
+        this.ctx.fillText(`${this.id} qlty=${(this.actGrpStats().avgTriangleQuality * 100).toFixed(0)}% exp=${this.actGrpStats().expanse.toFixed(0)}: perf=${this.actGrpStats().performance.toFixed(0)} ${remark}`, ctr.x, ctr.y)
     } 
     public nearbyActors(p: Point, margin: number): Actor[] {
         return this.actors.filter(a => p.nearby(a.p, margin))
@@ -125,5 +150,6 @@ export class ActorGroup implements CanvasObject {
         for (let i = 0; i < this.actors.length; i++) {
             this.actors[i].setPosition(this.calculatedNewPositions[i])
         }
+        this.updateActGrpStats()
     }
 }

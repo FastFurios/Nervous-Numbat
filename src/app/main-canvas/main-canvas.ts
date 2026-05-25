@@ -120,7 +120,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
         maxIterations:                          1000000,
         maxMoveDistance:                        4,
         minTriangleQuality:                     1,
-        boundaryMode:                           BoundaryMode.rebound
+        boundaryMode:                           BoundaryMode.inelastic
       },
       display: {
         showActorId:                            false,
@@ -140,7 +140,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    this.sysExecParms.run.boundaryMode = BoundaryMode.rebound
+    this.sysExecParms.run.boundaryMode = this.sysExecParms.run.boundaryMode
     this.sys.updateExecParms(this.sysExecParms)
     this.time.set(0)
     this.timeSubscription?.unsubscribe()

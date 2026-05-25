@@ -2,22 +2,36 @@
 //      BARRIER
 // ****************************************************************************************
 
-import { CanvasObject, Point, Box, MapperRealToCanvas } from "./geometry"
-import { RgbColor, ColorScheme, cDefaultColor, cBlack } from "./color"
-import { Actor } from "./actor"
-import { Log } from "./log"
+import { Point, MapperRealToCanvas } from "./geometry"
+import { RgbColor } from "./color"
 import { LineSegment } from "./geometry"
-
 import { BarrierOrientation } from "./api"
+import { toArray } from "rxjs"
 
+type FromToPoints = {
+    from: Point
+    to:   Point
+}
 
 // ****************************************************************************************
 //      BARRIER
 // ****************************************************************************************
 
 export class Barrier extends LineSegment {
-    constructor(ctx: CanvasRenderingContext2D, from: Point, to: Point) { 
-        super(ctx, from, to)
+    constructor(ctx: CanvasRenderingContext2D, from: Point, to: Point) {
+        // setting up the LineSegment with end points stretched to the next integer coordinte to ensure full overlap of adjacent barriers
+
+
+//        super(ctx, fromStretched, toStretched)
+        super(ctx, 
+              new Point(ctx, // from
+                        from.x == to.x ? from.x : Math.floor(Math.min(from.x, to.x)),   // x
+                        from.y == to.y ? from.y : Math.floor(Math.min(from.y, to.y))),  // y
+              new Point(ctx, // to
+                        from.x == to.x ? from.x : Math.ceil(Math.max(from.x, to.x)),   // x
+                        from.y == to.y ? from.y : Math.ceil(Math.max(from.y, to.y))),  // y
+        )
+//      console.log(`Barrier.constructor(): from= ${from}, to= ${to} => from= ${fromStretched}, to= ${toStretched}`)
     }
 
     public override visualize(m2c: MapperRealToCanvas): void {
@@ -30,13 +44,3 @@ export class Barrier extends LineSegment {
         throw Error("Barrier.orientation(): barrier neither vertical nor horizontal")
     }
 }
-
-/*
-export class BarrierSet {
-    constructor (public ctx: CanvasRenderingContext2D, public barriers: Barrier[]) { }
-
-    public visualize(m2c: MapperRealToCanvas): void {
-        this.barriers.forEach(b => b.visualize(m2c, cBlack))
-    }
-}  
-*/
