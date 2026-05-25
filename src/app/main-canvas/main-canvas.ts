@@ -7,7 +7,7 @@ import { System } from "../services/system"
 import { RgbColor } from "../services/color"
 import { BoundaryMode, Point, Box, canvasCenter, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas  } from "../services/geometry"
 import { Actor } from "../services/actor"
-import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin } from "./library/parameters"
+import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin } from "../services/parameters"
 
 import { Subscription } from 'rxjs'
 
