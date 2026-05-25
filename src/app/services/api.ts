@@ -4,7 +4,7 @@
 
 import { Actor } from "./actor"
 import { ActorGroup, ActorGroupMode } from "./actorGroup"
-import { randomInRange, powerFunctionFactory, powerCurveBloatedList } from "../main-canvas/library/helpers"
+import { randomInRange, powerFunctionFactory, powerCurveBloatedListOf } from "./helpers"
 import { JsonPoint, JsonCoordType } from "./json"
 
 export const cVirtualGridWidth  = 100
@@ -106,7 +106,7 @@ export class ConfigActorGroupDynamic extends ConfigActorGroup {
   static newRandomizedActGrp(id: string, numActors: number, clustering: number = 0, mode: ActorGroupMode, startBox?: ConfigBox): ConfigActorGroupDynamic {
     const cag = new ConfigActorGroupDynamic(id, [], mode, CoordinateType.relative, startBox)
     cag.randomizeActors(numActors, startBox)
-    cag.assign2RandomObservees(powerCurveBloatedList(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
+    cag.assign2RandomObservees(powerCurveBloatedListOf(cag.actors, powerFunctionFactory(-clustering, cag.actors.length)))
     return cag
   }
  

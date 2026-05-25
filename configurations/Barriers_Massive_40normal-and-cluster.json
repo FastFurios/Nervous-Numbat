@@ -5,7 +5,7 @@
             "id": "Normal A",
             "creation_mode" : "automatic",
             "topology": {
-                "number_actors": 40, 
+                "number_actors": 50, 
                 "clustering": 0,
                 "start_box": {
                     "lower_left":  { "x": 5, "y": 5},
@@ -17,8 +17,8 @@
             "id": "Cluster B",
             "creation_mode" : "automatic",
             "topology": {
-                "number_actors": 40, 
-                "clustering": 1.0,
+                "number_actors": 50, 
+                "clustering": 0.5,
                 "start_box": {
                     "lower_left":  { "x": 95, "y": 5},
                     "upper_right": { "x": 80, "y": 30}

@@ -8,7 +8,7 @@
     @for (ag of sys.actGrps; track ag.id) {
         <tr>
             <td>{{ag.id}}</td>
-            <td class="right">{{(ag.actGrpStats().avgTriangleQuality * 100).toFixed(0)}}</td>
+            <td class="right">{{(ag.actGrpStats().avgTriangleQuality * 100).toFixed(0)}}%</td>
             <td class="right">{{ag.actGrpStats().performance.toFixed(0)}}</td>
         </tr>
     }

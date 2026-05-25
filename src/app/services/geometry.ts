@@ -70,7 +70,7 @@ type Collision = {
     distance?:      number
 }
 
-const cMinBarrierOffset = 1
+const cMinBarrierOffset = 2
 const cMinRebound       = 5
 
 // --------------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ export class Point implements CanvasObject, Boxable {
 //      console.log(`## Geometry.Point.addBarrierUnelastic() #############`)
         const pGross = this.addFree(vec)  // if we had no barriers in our way
         const nearestCollision = this.nearestCollisionPoint(bs, pGross) // where do we hit into the first barrier on our way?
-        if (!nearestCollision || nearestCollision.intersecType == "none") { // our way is free
+        if (!nearestCollision) { // our way is free
 //          console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision?.intersecType == "none"`)
             return pGross
         }
@@ -144,11 +144,11 @@ export class Point implements CanvasObject, Boxable {
         if (nearestCollision!.barrier.isVertical)
              return boundaryMode == BoundaryMode.inelastic 
                 ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, 0), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby 
-                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, boundaryMode)
+                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)
         if (nearestCollision!.barrier.isHorizontal)
              return boundaryMode == BoundaryMode.inelastic 
                 ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(0, -vec.dy), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby
-                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, boundaryMode)        
+                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)        
         throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
     }
     
