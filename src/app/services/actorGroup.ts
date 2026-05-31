@@ -2,8 +2,8 @@
 //      ACTOR GROUP
 // ****************************************************************************************
 
-import { computed, signal, WritableSignal } from '@angular/core'
-import { CanvasObject, Point, Box, MapperRealToCanvas } from "./geometry"
+import { signal, WritableSignal } from '@angular/core'
+import { CanvasObject, Coordinate, Point, Box, MapperRealToCanvas } from "./geometry"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor } from "./actor"
 import { Barrier } from "./barrier"
@@ -41,7 +41,7 @@ export class ActorGroup implements CanvasObject {
         performance:        0 
     })
     
-    constructor(public ctx: CanvasRenderingContext2D, public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
+    constructor(/*public*/ ctx: CanvasRenderingContext2D, public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
         this.showActorJourney = false
         this.showOneActorOnlyWithTheGivenAgIndex = -1
         this.showActorGroupIdAndQuality = false
@@ -54,17 +54,17 @@ export class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    public visualize(m2c: MapperRealToCanvas) {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas) {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
         
         if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
-            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(m2c)
+            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(ctx, m2c)
             return
         }
-        this.actors.forEach(a => a.visualize(m2c))
+        this.actors.forEach(a => a.visualize(ctx, m2c))
         if (!this.showActorGroupIdAndQuality) return 
-        this.visualizeIdAndQuality(m2c)
+        this.visualizeIdAndQuality(ctx, m2c)
     }
     public updateActGrpStats(): void {
         const _expanse = this.expanse(this.centerPoint())
@@ -74,39 +74,38 @@ export class ActorGroup implements CanvasObject {
             performance:        _expanse * this.avgTriangleQuality 
         })
     }
-    private visualizeIdAndQuality(m2c: MapperRealToCanvas, remark: string = ""): void {
-        const ctr = m2c(this.centerPoint())
-        this.ctx.beginPath()
-        this.ctx.moveTo(ctr.x, ctr.y)
-        this.ctx.closePath() 
-        this.ctx.fillStyle = new RgbColor(100, 100, 100).rgbString
-        this.ctx.textAlign = "center"
-        this.ctx.font = "12px Arial"
+    private visualizeIdAndQuality(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, remark: string = ""): void {
+        const ctr = m2c(this.centerPoint().toPoint(ctx))
+        /*this.*/ctx.beginPath()
+        /*this.*/ctx.moveTo(ctr.x, ctr.y)
+        /*this.*/ctx.closePath() 
+        /*this.*/ctx.fillStyle = new RgbColor(100, 100, 100).rgbString
+        /*this.*/ctx.textAlign = "center"
+        /*this.*/ctx.font = "12px Arial"
 /*
         const expanse = this.expanse(this.centerPoint())
         const avgTriangleQuality = this.avgTriangleQuality
         const performance = expanse * avgTriangleQuality 
 */
 //      this.ctx.fillText(`${this.id} ${(avgTriangleQuality * 100).toFixed(0)}% ${(this.expanse(this.centerPoint())).toFixed(0)}: [${(expanse * avgTriangleQuality).toFixed(0)}] ${remark}`, ctr.x, ctr.y)
-        this.ctx.fillText(`${this.id} qlty=${(this.actGrpStats().avgTriangleQuality * 100).toFixed(0)}% exp=${this.actGrpStats().expanse.toFixed(0)}: perf=${this.actGrpStats().performance.toFixed(0)} ${remark}`, ctr.x, ctr.y)
+        /*this.*/ctx.fillText(`${this.id} qlty=${(this.actGrpStats().avgTriangleQuality * 100).toFixed(0)}% exp=${this.actGrpStats().expanse.toFixed(0)}: perf=${this.actGrpStats().performance.toFixed(0)} ${remark}`, ctr.x, ctr.y)
     } 
     public nearbyActors(p: Point, margin: number): Actor[] {
         return this.actors.filter(a => p.nearby(a.p, margin))
     }
     public centerPoint(): Point {
-        return new Point(this.ctx, 
-                         this.actors.map(a => a.p.x).reduce((acc, curr) => acc + curr, 0) / this.actors.length,
-                         this.actors.map(a => a.p.y).reduce((acc, curr) => acc + curr, 0) / this.actors.length)
+        return new Point(this.actors.map(a => a.p.x).reduce((acc, curr) => acc + curr, 0) / this.actors.length,
+                              this.actors.map(a => a.p.y).reduce((acc, curr) => acc + curr, 0) / this.actors.length)
     }
-    public expanse(p: Point): number {
-        return this.actors.map(a => a.p.distanceTo(p)).reduce((acc, curr) => acc + curr, 0) / this.actors.length
+    public expanse(c: Coordinate): number {
+        return this.actors.map(a => a.p.distanceTo(c)).reduce((acc, curr) => acc + curr, 0) / this.actors.length
     } 
-    public boxAround(): Box {
+    public boxAround(ctx: CanvasRenderingContext2D): Box {
         const leftMost  = this.actors.map(a => a.p.x).reduce((min, x) => x < min ? x : min)
         const rightMost = this.actors.map(a => a.p.x).reduce((max, x) => x > max ? x : max)
         const bottom    = this.actors.map(a => a.p.y).reduce((min, y) => y < min ? y : min)
         const top       = this.actors.map(a => a.p.y).reduce((max, y) => y > max ? y : max)
-        const boxAround = new Box(this.ctx, "", new Point(this.ctx, leftMost, bottom), new Point(this.ctx, rightMost, top), cDefaultColor) 
+        const boxAround = new Box("", new Point(/*this.ctx, */leftMost, bottom), new Point(/*this.ctx, */rightMost, top), cDefaultColor) 
         return boxAround
     }
     public get avgTriangleQuality(): number {

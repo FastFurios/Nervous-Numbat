@@ -51,8 +51,8 @@ export class System {
     private mappedConfigPointOntoCanvas(ctx: CanvasRenderingContext2D, cp: ConfigPoint): Point {
         if (!ctx) throw Error("System.mappedConfigPointOntoCanvas(): missing canvas context.")
         if (cp.coordType == CoordinateType.relative)    
-            return new Point(ctx, ctx.canvas.width * cp.x / cVirtualGridWidth, ctx.canvas.height * cp.y / cVirtualGridHeight) 
-        return new Point(ctx, cp.x, cp.y) 
+            return new Point(ctx.canvas.width * cp.x / cVirtualGridWidth, ctx.canvas.height * cp.y / cVirtualGridHeight) 
+        return new Point(cp.x, cp.y) 
 
     }
 
@@ -64,10 +64,10 @@ export class System {
 
     private addCanvasBorders(ctx: CanvasRenderingContext2D): void {
         // set the canvas borders
-        this.barriers.push(new Barrier(ctx, new Point(ctx, cCanvasBorderMargin,                  cCanvasBorderMargin                  ), new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ), new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin)))
-        this.barriers.push(new Barrier(ctx, new Point(ctx, ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin), new Point(ctx, cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin))),
-        this.barriers.push(new Barrier(ctx, new Point(ctx, cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin), new Point(ctx, cCanvasBorderMargin,                  cCanvasBorderMargin                  )))
+        this.barriers.push(new Barrier(new Point(cCanvasBorderMargin,                  cCanvasBorderMargin                  ), new Point(ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ))),
+        this.barriers.push(new Barrier(new Point(ctx.canvas.width-cCanvasBorderMargin, cCanvasBorderMargin                  ), new Point(ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin)))
+        this.barriers.push(new Barrier(new Point(ctx.canvas.width-cCanvasBorderMargin, ctx.canvas.height-cCanvasBorderMargin), new Point(cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin))),
+        this.barriers.push(new Barrier(new Point(cCanvasBorderMargin,                  ctx.canvas.height-cCanvasBorderMargin), new Point(cCanvasBorderMargin,                  cCanvasBorderMargin                  )))
     }
 
     public initialize(ctx: CanvasRenderingContext2D, systemExecParms: SystemExecParms): void {
@@ -106,7 +106,7 @@ export class System {
 
 //      console.log("System.initialize(): this.configBarriers:")
 //      console.log(this.barriers)
-        this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(ctx, this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
+        this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(this.mappedConfigPointOntoCanvas(ctx, cb.from), this.mappedConfigPointOntoCanvas(ctx, cb.to))))
 //      console.log("System.initialize(): this.barriers:")
 //      console.log(this.barriers)
     }

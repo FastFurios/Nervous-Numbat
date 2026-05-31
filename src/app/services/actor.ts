@@ -37,7 +37,7 @@ export class Actor implements CanvasObject {
     static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, sysExecParms: SystemExecParms, color: RgbColor = cDefaultColor): Actor {
         const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
         const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-        return new Actor(ctx, id, new Point(ctx, x, y), sysExecParms, color)
+        return new Actor(ctx, id, new Point(x, y), sysExecParms, color)
     }
 
     constructor(public ctx: CanvasRenderingContext2D, public id: string, p: Point, public sysExecParms: SystemExecParms, public color: RgbColor = cDefaultColor) {
@@ -49,7 +49,7 @@ export class Actor implements CanvasObject {
     }
     private get observeesEdge(): LineSegment {
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
-        return new LineSegment(this.ctx, this.observee1!.p, this.observee2!.p)
+        return new LineSegment(this.observee1!.p, this.observee2!.p)
     }
     private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
         let targetVertex: Point
@@ -67,7 +67,7 @@ export class Actor implements CanvasObject {
         const vectorToVertex   = new Vector(targetVertex.x - this.p.x, targetVertex.y - this.p.y)
         const scaleFactor      = vectorToVertex.length <= this.sysExecParms.run.maxMoveDistance ? 1 : this.sysExecParms.run.maxMoveDistance / vectorToVertex.length  
         const targetP          = this.p.add(vectorToVertex.scale(scaleFactor), barriers)
-        const wayToTargetP     = new LineSegment(this.ctx, this.p, targetP)
+        const wayToTargetP     = new LineSegment(this.p, targetP)
         const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
         if (wayIntersectsObserveesEdge.type != "none") { // my move crosses the observees line
             this.mode = Mode.stickToCloserVertex
@@ -132,13 +132,13 @@ export class Actor implements CanvasObject {
     }
     get triangleEdges(): [LineSegment, LineSegment, LineSegment]{
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
-        return [new LineSegment(this.ctx, this.p,            this.observee1!.p),
-                new LineSegment(this.ctx, this.observee1!.p, this.observee2!.p),
-                new LineSegment(this.ctx, this.observee2!.p, this.p)]
+        return [new LineSegment(this.p,            this.observee1!.p),
+                new LineSegment(this.observee1!.p, this.observee2!.p),
+                new LineSegment(this.observee2!.p, this.p)]
     }
     public covers(p: Point): boolean {
         if (!this.observee1 || !this.observee2) return false
-        const verticalThruP = Line.fromPointAndVector(this.ctx, new Point(this.ctx, p.x, 0), new Vector(0, 1))
+        const verticalThruP = Line.fromPointAndVector(new Point(p.x, 0), new Vector(0, 1))
         const edgeIntersecs: Intersection[] = []
         for (let e of this.triangleEdges) {
             const is: Intersection = e.intersects(verticalThruP)
@@ -151,9 +151,9 @@ export class Actor implements CanvasObject {
     }
     get triangleQuality(): number {
         if (!this.observee1 || !this.observee2) return 0
-        const lenAtoB = new LineSegment(this.ctx, this.p,           this.observee1.p).length
-        const lenBtoC = new LineSegment(this.ctx, this.observee1.p, this.observee2.p).length
-        const lenCtoA = new LineSegment(this.ctx, this.observee2.p, this.p).length
+        const lenAtoB = new LineSegment(this.p,           this.observee1.p).length
+        const lenBtoC = new LineSegment(this.observee1.p, this.observee2.p).length
+        const lenCtoA = new LineSegment(this.observee2.p, this.p).length
         const sumLen = lenAtoB + lenBtoC + lenCtoA
         if (sumLen == 0) return 0 // no real triangle any longer as it is a point; we deem this bad, s it gets a 0
         const avgEdgeLen = sumLen / 3
@@ -168,14 +168,14 @@ export class Actor implements CanvasObject {
         this.sysExecParms = sep
     }
 
-    public visualize(m2c: MapperRealToCanvas): void {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas): void {
 //      console.log(`Actor${this.id}.visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         let actorLabel: string = ""
         if (this.sysExecParms.display.showActorId)              actorLabel  = `${this.id}`
         if (this.sysExecParms.display.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
         if (this.sysExecParms.display.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
 
-        this.p.visualize(m2c, this.color, this.halo, actorLabel)
+        this.p.visualize(ctx, m2c, this.color, this.halo, actorLabel)
 //      console.log(`Actor${this.id}.visualize(): this.sysExecParms.display.showTriangle= ${this.sysExecParms.display.showTriangle}`)
         if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(m2c)
     }

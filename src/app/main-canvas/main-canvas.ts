@@ -194,15 +194,15 @@ export class MainCanvas implements OnInit, AfterViewInit {
   public visualize(): void {
     if (!this.sysExecParms.display.showActorJourney) this.clearCanvas()
     this.visualizeCanvasInReal()
-    this.sys.actGrps.forEach(ag => ag.visualize(this.mbrc!.realToCanvas))
-    this.sys.barriers.map(b => b.visualize(this.mbrc!.realToCanvas))
+    this.sys.actGrps.forEach(ag => ag.visualize(this.ctx!, this.mbrc!.realToCanvas))
+    this.sys.barriers.map(b => b.visualize(this.ctx!, this.mbrc!.realToCanvas))
   }
 
   public  visualizeCanvasInReal(): void {
-      const canvasLowerLeft  = new Point(this.ctx!, 0, 0, "Canvas-lower-left")
-      const canvasUpperRight = new Point(this.ctx!, this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
-      const canvasBox = new Box(this.ctx!, "canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
-      canvasBox.visualize(this.mbrc!.realToCanvas)
+      const canvasLowerLeft  = new Point(0, 0, "Canvas-lower-left")
+      const canvasUpperRight = new Point(this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+      const canvasBox = new Box("canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
+      canvasBox.visualize(this.ctx!, this.mbrc!.realToCanvas)
   }
 
   public numActorsOfActGrp(agIdx: number): number | undefined {
@@ -277,7 +277,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
   public ctxHandleMouseDown(event: MouseEvent): void {
       event.preventDefault()
-      const clickedPointInReal = this.mbrc!.canvasToReal(new Point(this.ctx!, event.offsetX, event.offsetY, "clicked"))
+      const clickedPointInReal = this.mbrc!.canvasToReal(new Point(event.offsetX, event.offsetY, "clicked"))
       if (this.actorSelected(this.ctx!, clickedPointInReal)) {
           this.canvas!.onmousemove = this.ctxHandleMouseMove.bind(this)
           this.canvas!.onmouseup   = this.ctxHandleMouseUp.bind(this)
@@ -317,7 +317,7 @@ export class MainCanvas implements OnInit, AfterViewInit {
 
     public handleActorMove(ctx: CanvasRenderingContext2D, x: number, y: number): void {
         if (!this.pickedActor) return
-        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(ctx!, x, y)))
+        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(x, y)))
         this.visualize()
     }
 
