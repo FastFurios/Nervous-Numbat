@@ -3,12 +3,12 @@
 // ****************************************************************************************
 
 import { signal, WritableSignal } from '@angular/core'
-import { CanvasObject, Coordinate, Point, Box, MapperRealToCanvas } from "./geometry"
+import { CanvasObjectDisplayParms, Coordinate, Point, Box, MapperRealToCanvas } from "./geometry"
 import { RgbColor, ColorScheme, cDefaultColor } from "./color"
 import { Actor } from "./actor"
 import { Barrier } from "./barrier"
 import { Log } from "./log"
-import { SystemExecParms } from "../main-canvas/main-canvas"
+import { SystemRunParms, SystemDisplayParms } from '../control-panel/control-panel'
 
 
 export enum ActorGroupMode {
@@ -28,7 +28,7 @@ type ActGrpStats = {
 //      abstract ACTOR GROUP
 // ****************************************************************************************
 
-export class ActorGroup implements CanvasObject {
+export class ActorGroup implements CanvasObjectDisplayParms {
     private showActorJourney: boolean 
     private showOneActorOnlyWithTheGivenAgIndex: number
     private showActorGroupIdAndQuality: boolean
@@ -41,7 +41,7 @@ export class ActorGroup implements CanvasObject {
         performance:        0 
     })
     
-    constructor(/*public*/ ctx: CanvasRenderingContext2D, public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
+    constructor(public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
         this.showActorJourney = false
         this.showOneActorOnlyWithTheGivenAgIndex = -1
         this.showActorGroupIdAndQuality = false
@@ -54,15 +54,15 @@ export class ActorGroup implements CanvasObject {
         this.colorScheme = colorScheme
         this.actors.forEach(a => a.color = RgbColor.newRandomColor(colorScheme))
     } 
-    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas) {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, sdp: SystemDisplayParms) {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
         
         if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
-            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(ctx, m2c)
+            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(ctx, m2c, sdp)
             return
         }
-        this.actors.forEach(a => a.visualize(ctx, m2c))
+        this.actors.forEach(a => a.visualize(ctx, m2c, sdp))
         if (!this.showActorGroupIdAndQuality) return 
         this.visualizeIdAndQuality(ctx, m2c)
     }
@@ -117,13 +117,13 @@ export class ActorGroup implements CanvasObject {
     public toString(): string {
         return `Actor Group ${this.id}: #actors= ${this.actors.length}` 
     }
-    public updateParameters(sep: SystemExecParms) {
+    public updateRunParameters(srp: SystemRunParms) {
 //      console.log(`actorGroup.updateParameter(): propagating parameter updates...`)
-        this.showActorJourney = sep.display.showActorJourney
-        this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
-        this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
-        this.minTriangleQuality = sep.run.minTriangleQuality
-        this.actors.forEach(a => a.updateParameters(sep))
+//        this.showActorJourney = sdp.showActorJourney
+//        this.showOneActorOnlyWithTheGivenAgIndex = sep.display.showOneActorOnlyWithTheGivenAgIndex || 0
+//        this.showActorGroupIdAndQuality = sep.display.showActorGroupIdAndQuality 
+        this.minTriangleQuality = srp.minTriangleQuality
+        this.actors.forEach(a => a.updateRunParameters(srp))
     } 
     public addActor(a: Actor): void {
         this.actors.push(a)

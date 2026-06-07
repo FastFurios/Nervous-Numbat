@@ -1,143 +1,79 @@
+Clock: {{ clock() }}
 <div class="lineContainer">
     <div>
-        <canvas #myCanvas ></canvas>
+        <canvas #myCanvas></canvas>
     </div>
-    <div>
+    <div [style.min-width.px]="controlPanelWidth">
         <button type="button" class="submitButton" (click)="onHome()">
             Home
         </button>
         <button type="button" class="submitButton" (click)="onFocusOnFirstActGrp()">
             Focus 1st
         </button>
-        <div>
-            <button type="button" class="submitButton" [disabled]="!actionsPossible().run_resume" [style]="!actionsPossible().run_resume ? greyOut : undefined" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
-                {{ runResumeButtonLabel }}
-            </button>
-            <button type="button" class="submitButton" [disabled]="!actionsPossible().stop" [style]="!actionsPossible().stop ? greyOut : undefined" (click)="stopIterationsHandler()">
-                Stop
-            </button>
-            <button type="button" class="submitButton" [disabled]="!actionsPossible().reset" [style]="!actionsPossible().reset ? greyOut : undefined" (click)="resetSystemHandler()">
-                Reset
-            </button>
-        </div> 
-        <div>
-            #Iterations: {{ time() }} 
-        </div>
-        <div>
-            <input type="number" 
-                class="inputFormNumber" 
-                min=1
-                id="intervalMillisecs" 
-                [(ngModel)]="sysExecParms.run.intervalMillisecs" (ngModelChange)="updateExecParms()">
-            <label for="intervalMillisecs">Iteration intervals [ms]</label>
-        </div>
+
+        <div>Show:</div>
         <div class="lineContainerLeftStart">
-            <input type="number" 
-                class="inputFormNumber" 
-                min=1
-                id="maxIterations" 
-                [(ngModel)]="sysExecParms.run.maxIterations" (ngModelChange)="updateExecParms()">
-            <label for="intervalMillisecs">Stop after #iterations</label>
-        </div>
-        <div class="lineContainerLeftStart">
-            <input type="number" 
-                class="inputFormNumber" 
-                min=0
-                max=1
-                step=0.1
-                id="minTriangleQuality" 
-                [(ngModel)]="sysExecParms.run.minTriangleQuality" (ngModelChange)="updateExecParms()">
-            <label for="intervalMillisecs">Stop at max. quality</label>
-        </div>
-        <div class="lineContainerLeftStart">
-            <input type="number" 
-                class="inputFormNumber" 
-                min=1
-                id="maxMoveDistance" 
-                [(ngModel)]="sysExecParms.run.maxMoveDistance" (ngModelChange)="updateExecParms()">
-            <label for="intervalMillisecs">Max move distance</label>
+            <label class="switch">
+                <input type="checkbox" 
+                id="showTriangle"
+                [(ngModel)]="sysDisplayParms.showTriangle" (ngModelChange)="updateDisplayParms()">
+                <span class="slider round"></span>
+            </label>
+            Triangles 
         </div>
         <div class="lineContainerLeftStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorId"
-                [(ngModel)]="sysExecParms.display.showActorId" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showActorId" (ngModelChange)="updateDisplayParms()">
                 <span class="slider round"></span>
             </label>
-            Show actor ids 
+            Actor ids 
         </div>
         <div class="lineContainerLeftStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showTriangle"
-                [(ngModel)]="sysExecParms.display.showTriangle" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showActorTriangleQuality" (ngModelChange)="updateDisplayParms()">
                 <span class="slider round"></span>
             </label>
-            Show triangles 
-        </div>
-        <div class="lineContainerLeftStart">
-            <label class="switch">
-                <input type="checkbox" 
-                id="showTriangle"
-                [(ngModel)]="sysExecParms.display.showActorTriangleQuality" (ngModelChange)="updateExecParms()">
-                <span class="slider round"></span>
-            </label>
-            Show triangle quality 
+            Triangle quality 
         </div>
         <div class="lineContainerLeftStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorObservees" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showActorObservees" (ngModelChange)="updateDisplayParms()">
                 <span class="slider round"></span>
             </label>
-            Show observees 
+            Observees 
         </div>
         <div class="lineContainerLeftStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorGroupIdAndQuality" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showActorGroupIdAndQuality" (ngModelChange)="updateDisplayParms()">
                 <span class="slider round"></span>
             </label>
-            Show group id & performance 
+            Group info 
         </div>
         <div class="lineContainerLeftStart">
             <label class="switch">
                 <input type="checkbox" 
                 id="showActorObservees"
-                [(ngModel)]="sysExecParms.display.showActorJourney" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showActorJourney" (ngModelChange)="updateDisplayParms()">
                 <span class="slider round"></span>
             </label>
-            Show actors' journey 
+            Journeys 
         </div>
-        <div *ngIf="sysExecParms.display.showActorJourney" class="lineContainerLeftStart">
+        <div *ngIf="sysDisplayParms.showActorJourney" class="lineContainerLeftStart">
             <input type="number" 
                 class="inputFormNumber" 
                 min=-1
                 [max]="numActorsOfActGrp(0)! - 1" 
                 id="maxMoveDistance" 
-                [(ngModel)]="sysExecParms.display.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="updateExecParms()">
+                [(ngModel)]="sysDisplayParms.showOneActorOnlyWithTheGivenAgIndex" (ngModelChange)="updateDisplayParms()">
             <label for="showOneActorOnlyWithTheGivenAgIndex">Selected actor# (-1=all)</label>
-        </div>
-        <div class="lineContainerLeftStart">
-            <label class="switch">
-                <input type="checkbox" 
-                id="aimAtFartherVertexOnEnduredPoorQuality"
-                [(ngModel)]="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" (ngModelChange)="updateExecParms()">
-                <span class="slider round"></span>
-            </label>
-            Aim at alt. vertex on poor Q 
-        </div>
-        <div *ngIf="sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality" class="lineContainerLeftStart">
-            <input type="number" 
-                class="inputFormNumber" 
-                min=0
-                max=1
-                step="0.1" 
-                id="poorTriangleQualityThreshold" 
-                [(ngModel)]="sysExecParms.strategy.poorTriangleQualityThreshold" (ngModelChange)="updateExecParms()">
-            <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
         </div>
 <!--        
         <div class="lineContainerLeftStart">
@@ -150,21 +86,6 @@
             Focus & follow actor group 0 
         </div>
 -->
-        <div>Boundary:</div>
-        <form>
-            <label>
-                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.inelastic" (ngModelChange)="updateBoundaryMode($event)">
-                inelastic
-            </label><br>
-            <label>
-                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.rebound" (ngModelChange)="updateBoundaryMode($event)">
-                rebound
-            </label><br>
-            <label>
-                <input type="radio" name="mode" [(ngModel)]="sysExecParms.run.boundaryMode" [value]="BoundaryMode.boundless" (ngModelChange)="updateBoundaryMode($event)">
-                unlimited
-            </label>
-        </form>
     </div>
 </div>
   

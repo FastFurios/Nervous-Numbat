@@ -1,28 +1,28 @@
-import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, signal, WritableSignal } from '@angular/core'
-import { FormsModule } from '@angular/forms'
+import { Component, ViewChild, ElementRef, AfterViewInit, Signal, Input, Output, EventEmitter, effect } from '@angular/core'
+import { FormsModule  } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
-import { cGreyOut } from '../app'
 import { System } from "../services/system"
 import { RgbColor } from "../services/color"
-import { BoundaryMode, Point, Box, canvasCenter, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas  } from "../services/geometry"
+import { Point, Box, canvasCenter, MapperBtwRealAndCanvas, mapperBtwRealAndCanvas  } from "../services/geometry"
 import { Actor } from "../services/actor"
-import { cIntervalMillisecs, cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin } from "../services/parameters"
+import { cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin, cControlPanelWidth } from "../services/parameters"
+import { SystemDisplayParms, CanvasSize } from '../control-panel/control-panel'
 
-import { Subscription } from 'rxjs'
-
+/*
 // ---------------------------------------------------------------------------------------
 //      SYSTEM EXECUTION PARAMETERS
 // ---------------------------------------------------------------------------------------
 
-export type SystemExecParmsRun = {
+type SystemExecParmsRun = {
   intervalMillisecs:  number
   maxIterations:      number
   maxMoveDistance:    number
   minTriangleQuality: number
   boundaryMode:       BoundaryMode
 }
-export type SystemExecParmsDisplay = {
+
+type _SystemExecParmsDisplay = {
   showActorId:                          boolean
   showTriangle:                         boolean
   showActorTriangleQuality:             boolean
@@ -32,149 +32,125 @@ export type SystemExecParmsDisplay = {
   showOneActorOnlyWithTheGivenAgIndex:  number
 //focusAndFollowActGrp0:                boolean
 }
+
 export type SystemExecParmsStrategy = {
   poorTriangleQualityThreshold:           number
   aimAtFartherVertexOnEnduredPoorQuality: boolean
 }
+
 export interface SystemExecParms {
   run:      SystemExecParmsRun 
   display:  SystemExecParmsDisplay
   strategy: SystemExecParmsStrategy
  }
-
 export interface SystemUiReferences {
     time: number,
     ctx:  CanvasRenderingContext2D | null
 }
+*/
 
 type RunResumeButtonLabel = "Run" | "Resume"
 
-export enum WheelMotion {
+enum WheelMotion {
   up,
   down
 }
-
-// ---------------------------------------------------------------------------------------
-//      USER CONTROLS
-// ---------------------------------------------------------------------------------------
-
-/** list of possible user actions */
-type ActionsPossible = {
-    run_resume:         boolean,
-    stop:               boolean,
-    reset:              boolean,
-    download:           boolean
-}
-const cActPosStart: ActionsPossible = {
-    run_resume:         true,
-    stop:               false,
-    reset:              false,
-    download:           true
-} 
-
-const cActPosRunning: ActionsPossible = {
-    run_resume:         false,
-    stop:               true,
-    reset:              false,
-    download:           false
-} 
-
-const cActPosStopped: ActionsPossible = {
-    run_resume:         true,
-    stop:               false,
-    reset:              true,
-    download:           true
-} 
 
 // ****************************************************************************************
 //      MAIN CANVAS COMPONENT
 // ****************************************************************************************
 
 @Component({
-  selector:     'main-canvas',
+  standalone: true,
+  selector:     'app-main-canvas',
   imports:      [FormsModule, CommonModule],
   templateUrl:  './main-canvas.html',
-  styleUrl:     './main-canvas.css',
+  styleUrls:    ['./main-canvas.css']
 })
-export class MainCanvas implements OnInit, AfterViewInit {
+export class MainCanvas implements AfterViewInit {
   @ViewChild('myCanvas') canvasRef!:    ElementRef<HTMLCanvasElement>
-  public  BoundaryMode                                                        = BoundaryMode 
-  public  sysExecParms!:                SystemExecParms
+  @Input() public id:                   number                                = -1
+  @Input() public hasCanvas:            boolean                               = false
+  @Input() public isMainCanvas:         boolean                               = false
+  @Input() public clock!:               Signal<number>  
+  @Input() public widgetWidth!:     Signal<number>  
+  @Output() canvasSizeDetermined                                              = new EventEmitter<CanvasSize>();
+  
+//public  BoundaryMode                                                        = BoundaryMode 
+  public  sysDisplayParms!:             SystemDisplayParms
   public  runResumeButtonLabel:         RunResumeButtonLabel                  = "Run"
   private canvas!:                      HTMLCanvasElement | null
   private ctx?:                         CanvasRenderingContext2D | null
-  public  time                                                                = signal(0)
-  public  timeSubscription?:            Subscription
-  public  systemId:                     WritableSignal<string | undefined>    = signal(undefined)
-  public  actionsPossible                                                     = signal(cActPosStart)
-  public  greyOut                                                             = cGreyOut
-  public  mbrc?:                        MapperBtwRealAndCanvas
-  public  centerOfView?:                Point                                   
-  public  zoom?:                        number  // zoom > 1: zoomed in ; z < 1: zommed out
-  public  pickedActor:                  Actor | null | undefined                = undefined
+  private mbrc?:                        MapperBtwRealAndCanvas
+  private centerOfView?:                Point                                   
+  private zoom?:                        number  // zoom > 1: zoomed in ; z < 1: zommed out
+  private pickedActor:                  Actor | null | undefined                = undefined
+  public  readonly controlPanelWidth:   number                                  = cControlPanelWidth
 
   constructor(public sys: System) {
-    this.sysExecParms = {
-      run: {
-        intervalMillisecs:                      cIntervalMillisecs,
-        maxIterations:                          1000000,
-        maxMoveDistance:                        4,
-        minTriangleQuality:                     1,
-        boundaryMode:                           BoundaryMode.inelastic
-      },
-      display: {
-        showActorId:                            false,
-        showTriangle:                           true,
-        showActorTriangleQuality:               false,
-        showActorObservees:                     false,
-        showActorGroupIdAndQuality:             false,
-        showActorJourney:                       false,
-        showOneActorOnlyWithTheGivenAgIndex:    -1,
-      },
-      strategy: {
-        poorTriangleQualityThreshold:           0.5,
-        aimAtFartherVertexOnEnduredPoorQuality: false
-      }
+    this.sysDisplayParms = {
+      showActorId:                            false,
+      showTriangle:                           true,
+      showActorTriangleQuality:               false,
+      showActorObservees:                     false,
+      showActorGroupIdAndQuality:             false,
+      showActorJourney:                       false,
+      showOneActorOnlyWithTheGivenAgIndex:    -1,
     }
-    this.actionsPossible.set(cActPosStart)
+
+    effect(() => {
+//    console.log(`main-canvas #${this.id}.effect(#1): clock= ${this.clock()}; visualizing...`)
+      if (this.clock() == 0) return
+      this.visualize()
+    })
+
+    effect(() => {
+// const newCtx = this.canvasRef.nativeElement.getContext('2d')
+      console.log(`main-canvas #${this.id}.effect(#2): widgetWith= ${this.widgetWidth()}; visualizing...`)
+
+      this.widgetWidth() // trigger for this effect 
+      if (this.ctx) { 
+        this.handleCanvasResized(false)
+        this.visualize()
+      }
+    })
   }
 
-  ngOnInit() {
-    this.sysExecParms.run.boundaryMode = this.sysExecParms.run.boundaryMode
-    this.sys.updateExecParms(this.sysExecParms)
-    this.time.set(0)
-    this.timeSubscription?.unsubscribe()
-    this.runResumeButtonLabel = "Run"
-    this.actionsPossible.set(cActPosStart)
+  /*
+  ngOnInit(): void {
+      console.log(`main-canvas #${this.id}.ngOnInit(): done`)
   }
-
+*/
   ngAfterViewInit() {
-      if (!this.sys) throw Error("main-canvas.ngAfterViewInit(): this.sys is undefined.")
-      this.canvas  = this.canvasRef.nativeElement
-      if (!this.canvas) throw Error("main-canvas.ngAfterViewInit(): canvas is undefined.")
-      this.ctx = this.canvas.getContext('2d')
-      if (!this.ctx) throw Error('main-canvas.ngAfterViewInit(): could not get 2D context from canvas!')
+//    console.log(`main-canvas #${this.id}.ngAfterViewInit(): starting ...`)
+//      if (!this.sys) throw Error(`main-canvas #${this.id} .ngAfterViewInit(): this.sys is undefined.`)
+      const canvas: HTMLCanvasElement  = this.canvasRef.nativeElement
+//      if (this.isMainCanvas) this.mainCanvas!.set(canvas)  
+      this.ctx =canvas.getContext('2d')
+      if (!this.ctx) throw Error(`main-canvas #${this.id}.ngAfterViewInit(): could not get 2D context from canvas!`)
+//    this.mainCanvasSize!.set({ width: 111, height: 2222 })
 
-      window.addEventListener("resize", this.ctxHandleCanvasResized.bind(this))
-      this.ctxHandleCanvasResized()
+      window.addEventListener("resize", this.handleCanvasResized.bind(this, false))
+      this.handleCanvasResized(true)
 
-      this.canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
-      this.canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
-      window.addEventListener("resize", this.ctxHandleCanvasResized.bind(this))
+      canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
+      canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
 
-      this.sys.initialize(this.ctx, this.sysExecParms)
-      this.systemId.set(this.sys.id)
+      //this.canvasSizeDetermined.emit(this.ctxCanvasSize)
+
       this.home()
+      console.log(`main-canvas #${this.id}.ngAfterViewInit(): clearing canvas...`)
       this.clearCanvas()
       this.visualize()
-      this.actionsPossible.set(cActPosStart)
+      console.log(`main-canvas #${this.id}.ngAfterViewInit(): done`)
   }
 
   ngOnDestroy() {
       this.sys.stopIterating()
       this.sys.actGrps  = []
       this.sys.barriers = []
-      this.sys.time$    = undefined
+      this.sys.tact$    = undefined
+      console.log(`main-canvas #${this.id}.ngOnDestroy(): done`)
   }
 
   private home():void {
@@ -192,9 +168,9 @@ export class MainCanvas implements OnInit, AfterViewInit {
   }
 
   public visualize(): void {
-    if (!this.sysExecParms.display.showActorJourney) this.clearCanvas()
+    if (!this.sysDisplayParms.showActorJourney) this.clearCanvas()
     this.visualizeCanvasInReal()
-    this.sys.actGrps.forEach(ag => ag.visualize(this.ctx!, this.mbrc!.realToCanvas))
+    this.sys.actGrps.forEach(ag => ag.visualize(this.ctx!, this.mbrc!.realToCanvas, this.sysDisplayParms))
     this.sys.barriers.map(b => b.visualize(this.ctx!, this.mbrc!.realToCanvas))
   }
 
@@ -209,39 +185,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
       return this.sys.actGrps[agIdx].actors.length
   }
 
-  // ---------------------------------------------------------------------------------------
-  // button handlers
-  // ---------------------------------------------------------------------------------------
-
-  public runResumeIterationsHandler() {
-    this.updateExecParms()
-    this.timeSubscription = this.sys.runResumeIterating(this.ctx!)?.subscribe(() => {
-      this.time.update(t => t + 1)
-      this.visualize()
-      this.actionsPossible.set(cActPosRunning)
-    } )
-  }
-
-  /** stop button clicked */
-  public stopIterationsHandler() {
-    this.sys.stopIterating()
-    this.timeSubscription?.unsubscribe()
-    this.runResumeButtonLabel = "Resume"
-    this.actionsPossible.set(cActPosStopped)
-  }
-
-  /** reset button clicked */
-  public resetSystemHandler() {
-    this.updateExecParms()
-    this.reset()
-    this.time.set(0)
-    this.timeSubscription?.unsubscribe()
-    this.runResumeButtonLabel = "Run"
-    this.sys.initialize(this.ctx!, this.sysExecParms)
-    this.visualize()
-    this.actionsPossible.set(cActPosStart)
-  }
-
   /** home button clicked */
   public onHome() {
     this.home()
@@ -253,22 +196,6 @@ export class MainCanvas implements OnInit, AfterViewInit {
     this.centerOfView = this.sys.actGrps[0].centerPoint()
     this.setMapperBtwRealAndCanvas(this.ctx!)
     this.visualize()
-  }
-
-  // ---------------------------------------------------------------------------------------
-  // parameters inputs event handlers
-  // ---------------------------------------------------------------------------------------
-
-  /** update the system with the current execution parameters */
-  public updateExecParms(): void {
-    this.sys.actGrps.forEach(ag => ag.updateParameters(this.sysExecParms))
-    this.visualize()
-  }
-
-  /** handle toggled boundary mode */
-  public updateBoundaryMode(newBoundaryMode: BoundaryMode): void {
-    this.sysExecParms.run.boundaryMode = newBoundaryMode
-    this.sys.updateExecParms(this.sysExecParms)
   }
 
   // ---------------------------------------------------------------------------------------
@@ -327,23 +254,38 @@ export class MainCanvas implements OnInit, AfterViewInit {
         this.visualize()
     }
 
-    public reset(): void {
-        this.clearCanvas()
-    }
-
-    public handleWheelMotion(ctx: CanvasRenderingContext2D, motion: WheelMotion): void {
+      public handleWheelMotion(ctx: CanvasRenderingContext2D, motion: WheelMotion): void {
         this.zoom! *= motion == WheelMotion.up ? 2 : 0.5
         this.setMapperBtwRealAndCanvas(ctx)
-        this.reset()
+        this.clearCanvas()
         this.visualize()
     }
 
   // ---------------------------------------------------------------------------------------
-  // window event handlers
+  // other  event handlers
   // ---------------------------------------------------------------------------------------
 
-  public ctxHandleCanvasResized(): void {
-      this.ctx!.canvas.width  = window.innerWidth  - cLeftMargin  - cRightMargin
-      this.ctx!.canvas.height = window.innerHeight - cUpperMargin - cLowerMargin
+  public handleCanvasResized(informControlPanel: boolean): void {
+//    console.log(`main-canvas #${this.id}.handleCanvasResized(): starting ...`)
+      this.ctx!.canvas.width  = window.innerWidth * this.widgetWidth() / 100 - cLeftMargin  - cRightMargin - cControlPanelWidth
+      this.ctx!.canvas.height = window.innerHeight  - cUpperMargin - cLowerMargin
+      if (informControlPanel) this.canvasSizeDetermined.emit(this.ctxCanvasSize)
+//    console.log(`main-canvas #${this.id}.handleCanvasResized(): done`)
+
   }
+
+  private get ctxCanvasSize(): CanvasSize {
+      return {
+          width:  this.ctx!.canvas.width,
+          height: this.ctx!.canvas.height 
+      }
+  }
+
+  /** update the system with the current execution parameters */
+  public updateDisplayParms(): void {
+      this.visualize()
+  }
+
+
+
 }

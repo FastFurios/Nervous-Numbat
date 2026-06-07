@@ -9,15 +9,13 @@ import { RouterOutlet } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CommonModule } from '@angular/common'
 
-import { MainCanvas } from './main-canvas/main-canvas'
 import { System } from "./services/system"
 import { ActorGroupMode } from "./services/actorGroup"
-import { configAsJson } from "./services/json"
 import { now, randomInRange } from "./services/helpers"
-
-import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology } from "./services/json"
+import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology,configAsJson } from "./services/json"
 import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, ConfigBarrier, Configuration, cVirtualGridWidth, cVirtualGridHeight, CoordinateType } from "./services/api"
-import { Statistics } from "./statistics/statistics";
+import { Statistics } from "./statistics/statistics"
+import { ControlPanel } from "./control-panel/control-panel"
 
 // --------------------------------------------------------------------------------------
 //     Buttons activate / deactivate  
@@ -63,7 +61,7 @@ const cActPosConfigIsSetUp: ActionsPossible = {
 export interface SystemStructParms {
   numActGrps:         number
   numActorsPerActGrp: number
-  clustering:         number
+  clustering:         number  // 0.0..2.0 the higher the number the unequaliy distributed are the links amongst all actors
   startBoxMarginPct:  number  // 0..100 in %
 }
 
@@ -76,26 +74,25 @@ export const cGreyOut = "background-color: lightgrey; border-color: lightgrey;"
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainCanvas, Statistics, FormsModule, CommonModule, Statistics],
+  imports: [Statistics, FormsModule, CommonModule, Statistics, ControlPanel],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
   protected readonly title = signal('Nervous-Numbat');
-  public showCanvas : boolean             = false
-  public actorGroups: ConfigActorGroupDynamic[]  = []
-  public configuration: WritableSignal<Configuration | undefined> = signal(undefined)
-  public systemStructParms: SystemStructParms = {
-                                                    numActGrps:         1,
-                                                    numActorsPerActGrp: 25,
-                                                    clustering:         0,
-                                                    startBoxMarginPct:  10
+  public  showCanvas :       boolean                                   = false
+  private actorGroups:       ConfigActorGroupDynamic[]                 = []
+  private configuration:     WritableSignal<Configuration | undefined> = signal(undefined)
+  public  systemStructParms: SystemStructParms = {
+                                                      numActGrps:         1,
+                                                      numActorsPerActGrp: 25,
+                                                      clustering:         0,
+                                                      startBoxMarginPct:  10
                                                 }
-  public actionsPossible = signal(cActPosStart)
-  public configFilename:  string | undefined
-  public configurationId: string | undefined
-  public greyOut = cGreyOut
-///public version                = environment.version
+  public  actionsPossible                                              = signal(cActPosStart)
+  private configFilename:    string | undefined
+  public  configurationId:   string | undefined
+  public  greyOut                                                      = cGreyOut
 
   constructor(private sys: System) { 
     this.actionsPossible.set(cActPosStart)
@@ -131,13 +128,12 @@ export class App {
 
   /** upload system configuration json file */
   public onConfigFileSelected(e: Event): void { 
-    const input = e.target as HTMLInputElement;
+    const input = e.target as HTMLInputElement
     if (!input.files || input.files.length == 0) { console.warn('No file selected.'); return }
     const file = input.files[0]
     this.configFilename = file.name
     const reader = new FileReader()
     reader.readAsText(file)
-
     reader.onload = () => {
       (<HTMLInputElement>e.target).value = "" // clear the event input to allow event detection of re-selection of same file
       if (!reader.result) return
@@ -154,26 +150,21 @@ export class App {
   }
   
   private configurationFrom(jsonConfig: JsonConfiguration): Configuration {
-//  console.log(`app.configurationFrom() entered. `)
-    const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag, i))
-//  console.log("app.onConfigFileSelected(): configActGrps=")
-//  console.log(configActGrps)
+    const configActGrps = jsonConfig.actor_groups.map((jag, i) => this.configActorGroupFrom(jag))
     if (configActGrps.find(cag => cag == undefined)) {
         alert("A JSON file actor_group is invalid.")
     }  
     const maybeConfigBarriers: ConfigBarrier[] | undefined = jsonConfig.barrier_set?.barriers.map(jb => 
           new ConfigBarrier(new ConfigPoint(jb.from.x, jb.from.y, jsonConfig.barrier_set!.coordinate_type),
                             new ConfigPoint(jb.to.x,   jb.to.y,   jsonConfig.barrier_set!.coordinate_type)))
-//  console.log("app.configurationFrom(): Barriers:")
-//  console.log(maybeConfigBarriers)
     return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined), maybeConfigBarriers)
   }
 
-  private configActorGroupFrom(jag: JsonActorGroup, idx: number): ConfigActorGroupDynamic | ConfigActorGroupStaticBox | undefined {
+  private configActorGroupFrom(jag: JsonActorGroup): ConfigActorGroupDynamic | ConfigActorGroupStaticBox | undefined {
     switch (jag.creation_mode) {
       case "automatic" : { 
         this.systemStructParms.numActorsPerActGrp = (<JsonAutomaticTopology>jag.topology).number_actors
-        this.systemStructParms.clustering   = (<JsonAutomaticTopology>jag.topology).clustering
+        this.systemStructParms.clustering         = (<JsonAutomaticTopology>jag.topology).clustering
         const startBox = new ConfigBox(
             ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.lower_left), 
             ConfigPoint.newFromJson((<JsonAutomaticTopology>jag.topology).start_box.upper_right))  
@@ -181,7 +172,7 @@ export class App {
                                                            this.systemStructParms.numActorsPerActGrp, 
                                                            this.systemStructParms.clustering, 
                                                            ActorGroupMode.dynamic, 
-                                                           startBox); 
+                                                           startBox)
       }
       case "explicit" : {
         console.log(`app.configActorGroupFrom(): jag.topology[0].id= ${(<JsonExplicitTopology>jag.topology)[0].id}`)
@@ -209,14 +200,6 @@ export class App {
   //     Downloading a Configuration  
   // --------------------------------------------------------------------------------------
 
-  private downloadToFile(blob: Blob, fileExtension: string, configurationId: string): void {
-      const link = document.createElement("a")
-      link.href = URL.createObjectURL(blob)
-      link.download = `${configurationId}_${now()}.${fileExtension}`
-      link.click()
-      link.remove()
-  }
-    
   /** download configuration json file for the current system */
   public onDownload(): void { 
     const configuration = this.sys.exportedAsConfiguration()
@@ -235,6 +218,14 @@ export class App {
     this.downloadToFile(blob, "json", configuration.id)
   }
 
+  private downloadToFile(blob: Blob, fileExtension: string, configurationId: string): void {
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = `${configurationId}_${now()}.${fileExtension}`
+      link.click()
+      link.remove()
+  }
+    
   // --------------------------------------------------------------------------------------
   //     Randomize a Configuration  
   // --------------------------------------------------------------------------------------

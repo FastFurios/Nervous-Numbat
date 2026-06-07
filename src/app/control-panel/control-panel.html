@@ -1,0 +1,109 @@
+<div class="lineContainerLeftStart">
+    <div class="columnContainer" [style.min-width.px]="controlPanelWidth">>
+        main canvas size = {{mainCanvasSize?.width}} x {{mainCanvasSize?.height}} 
+        <div>Widgets: </div>
+        <form>
+            <label>
+                <input type="radio" name="secondary" [(ngModel)]="secondaryWidget" [value]="SecondaryWidget.none" (ngModelChange)="handleSecondaryWidgetDisplay()">
+                none
+            </label><br>
+            <label>
+                <input type="radio" name="secondary" [(ngModel)]="secondaryWidget" [value]="SecondaryWidget.canvas" (ngModelChange)="handleSecondaryWidgetDisplay()">
+                canvas
+            </label><br>
+            <label>
+                <input type="radio" name="secondary" [(ngModel)]="secondaryWidget" [value]="SecondaryWidget.statistics" (ngModelChange)="handleSecondaryWidgetDisplay()">
+                statistics
+            </label>
+        </form>
+        <div>
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().run_resume" [style]="!actionsPossible().run_resume ? greyOut : undefined" (click)="runResumeIterationsHandler()" (keyup.enter)="runResumeIterationsHandler()">
+                {{ runResumeButtonLabel }}
+            </button>
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().stop" [style]="!actionsPossible().stop ? greyOut : undefined" (click)="stopIterationsHandler()">
+                Stop
+            </button>
+            <button type="button" class="submitButton" [disabled]="!actionsPossible().reset" [style]="!actionsPossible().reset ? greyOut : undefined" (click)="resetSystemHandler()">
+                Reset
+            </button>
+        </div> 
+        <div>
+            #Tact: {{ tact$ | async }} 
+            #Iterations: {{ clock() }} 
+        </div>
+        <div>
+            <input type="number" 
+                class="inputFormNumber" 
+                min=1
+                id="intervalMillisecs" 
+                [(ngModel)]="sysRunParms.intervalMillisecs" (ngModelChange)="updateRunParms()">
+            <label for="intervalMillisecs">Iteration intervals [ms]</label>
+        </div>
+        <div class="lineContainerLeftStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min=1
+                id="maxIterations" 
+                [(ngModel)]="sysRunParms.maxIterations" (ngModelChange)="updateRunParms()">
+            <label for="intervalMillisecs">Stop after #iterations</label>
+        </div>
+        <div class="lineContainerLeftStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min=0
+                max=1
+                step=0.1
+                id="minTriangleQuality" 
+                [(ngModel)]="sysRunParms.minTriangleQuality" (ngModelChange)="updateRunParms()">
+            <label for="intervalMillisecs">Stop at max. quality</label>
+        </div>
+        <div class="lineContainerLeftStart">
+            <input type="number" 
+                class="inputFormNumber" 
+                min=1
+                id="maxMoveDistance" 
+                [(ngModel)]="sysRunParms.maxMoveDistance" (ngModelChange)="updateRunParms()">
+            <label for="intervalMillisecs">Max move distance</label>
+        </div>
+        <div class="lineContainerLeftStart">
+            <label class="switch">
+                <input type="checkbox" 
+                id="aimAtFartherVertexOnEnduredPoorQuality"
+                [(ngModel)]="sysRunParms.aimAtFartherVertexOnEnduredPoorQuality" (ngModelChange)="updateRunParms()">
+                <span class="slider round"></span>
+            </label>
+            Aim at alt.vertex on poor Quality
+        </div>
+        @if(sysRunParms.aimAtFartherVertexOnEnduredPoorQuality) {
+            <div class="lineContainerLeftStart">
+                <input type="number" 
+                    class="inputFormNumber" 
+                    min=0
+                    max=1
+                    step="0.1" 
+                    id="poorTriangleQualityThreshold" 
+                    [(ngModel)]="sysRunParms.poorTriangleQualityThreshold" (ngModelChange)="updateRunParms()">
+               <label for="poorTriangleQualityThreshold">Poor quality threshold</label>
+            </div>
+        }
+        
+        <div>Boundary:</div>
+        <form>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="sysRunParms.boundaryMode" [value]="BoundaryMode.inelastic" (ngModelChange)="updateBoundaryMode()">
+                inelastic
+            </label><br>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="sysRunParms.boundaryMode" [value]="BoundaryMode.rebound" (ngModelChange)="updateBoundaryMode()">
+                rebound
+            </label><br>
+            <label>
+                <input type="radio" name="mode" [(ngModel)]="sysRunParms.boundaryMode" [value]="BoundaryMode.boundless" (ngModelChange)="updateBoundaryMode()">
+                unlimited
+            </label>
+        </form>
+    </div>
+    <app-main-canvas [id]="0" [hasCanvas]="true" [isMainCanvas]="true" [clock]="clock" [widgetWidth] = "primaryWidgetWidth" (canvasSizeDetermined)="handleChildCanvasSizeEvent($event)"></app-main-canvas>        
+    @if (secondaryWidget == SecondaryWidget.canvas) {
+        <app-main-canvas [id]="1" [hasCanvas]="true" [isMainCanvas]="false" [clock]="clock" [widgetWidth] = "secondaryWidgetWidth"></app-main-canvas>
+    }

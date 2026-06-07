@@ -11,9 +11,9 @@ export const cActorPickMargin = 20
 export const cUpperMargin = 200
 export const cLowerMargin = 50
 export const cLeftMargin = 50
-export const cRightMargin = 200
+export const cRightMargin = 100
+export const cControlPanelWidth = 200
 export const cIntervalMillisecs = 30
-const cNumberActorsInActGrp = 20
 export const cShowActorId = false
 export const cShowActorTriangleQuality = false
 //export const cShowActorMode = false
@@ -25,6 +25,10 @@ export const cPowerCurveFactor = -0.8; if (cPowerCurveFactor > 0) throw Error("c
 export const cShowActorJourney = true
 export const cShowOneActorOnlyWithTheGivenAgIndex: number | undefined = 0
 export const cTextOffset = 10
+export const cDefaultCanvasWidth  = 1500
+export const cDefaultCanvasHeight =  800
+
+
 
     
     

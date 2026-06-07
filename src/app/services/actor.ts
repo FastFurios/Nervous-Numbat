@@ -2,14 +2,13 @@
 //      ACTOR
 // ****************************************************************************************
 
-import { CanvasObject, Point, Line, LineSegment, Box, Vector, Intersection, MapperRealToCanvas } from "./geometry"
+import { CanvasObjectDisplayParms, Point, Line, LineSegment, Box, Vector, Intersection, MapperRealToCanvas } from "./geometry"
 import { randomInRange } from "./helpers"
 import { RgbColor, cDefaultColor  } from "./color"
 import { ActorGroup } from "./actorGroup"
 import { Barrier } from "./barrier"
 import { Log } from "./log"
-import { SystemExecParms } from "../main-canvas/main-canvas"
-
+import { SystemRunParms, SystemDisplayParms } from "../control-panel/control-panel"
 
 export const cOpacity = 0.1
 export const cActorDotRadius = 2
@@ -25,7 +24,7 @@ enum Mode {
     aimForFartherVertex = "aim for farther vertex"
 }
 
-export class Actor implements CanvasObject {
+export class Actor implements CanvasObjectDisplayParms {
     public  p:                  Point 
     public  observee1:          Actor | undefined
     public  observee2:          Actor | undefined
@@ -34,13 +33,13 @@ export class Actor implements CanvasObject {
     private halo                    = Halo.off
     private mode                    = Mode.stickToCloserVertex
 
-    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, sysExecParms: SystemExecParms, color: RgbColor = cDefaultColor): Actor {
+    static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, sysExecParms: SystemRunParms, color: RgbColor = cDefaultColor): Actor {
         const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
         const y = randomInRange(startBox.lowerLeft.y, startBox.upperRight.y) 
-        return new Actor(ctx, id, new Point(x, y), sysExecParms, color)
+        return new Actor(id, new Point(x, y), sysExecParms, color)
     }
 
-    constructor(public ctx: CanvasRenderingContext2D, public id: string, p: Point, public sysExecParms: SystemExecParms, public color: RgbColor = cDefaultColor) {
+    constructor(public id: string, p: Point, public sysRunParms: SystemRunParms, public color: RgbColor = cDefaultColor) {
         this.p = p
 //      console.log(`Actor${this.id}.constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
     }
@@ -65,7 +64,7 @@ export class Actor implements CanvasObject {
                                 : closestVertex  
         }
         const vectorToVertex   = new Vector(targetVertex.x - this.p.x, targetVertex.y - this.p.y)
-        const scaleFactor      = vectorToVertex.length <= this.sysExecParms.run.maxMoveDistance ? 1 : this.sysExecParms.run.maxMoveDistance / vectorToVertex.length  
+        const scaleFactor      = vectorToVertex.length <= this.sysRunParms.maxMoveDistance ? 1 : this.sysRunParms.maxMoveDistance / vectorToVertex.length  
         const targetP          = this.p.add(vectorToVertex.scale(scaleFactor), barriers)
         const wayToTargetP     = new LineSegment(this.p, targetP)
         const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
@@ -75,7 +74,7 @@ export class Actor implements CanvasObject {
         return targetP
     }
     public newPosition(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
-        if (this.sysExecParms.strategy.aimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(this.sysExecParms.strategy.poorTriangleQualityThreshold)) {
+        if (this.sysRunParms.aimAtFartherVertexOnEnduredPoorQuality && this.triangleQualityLog.areTooManyLoggedQualitiesBelow(this.sysRunParms.poorTriangleQualityThreshold)) {
             this.mode = Mode.aimForFartherVertex 
             this.triangleQualityLog = new Log()
          } 
@@ -109,26 +108,26 @@ export class Actor implements CanvasObject {
     public haloStatus(): Halo {
         return this.halo
     }
-    private visualizeEdgesAndFillTriangle(m2c: MapperRealToCanvas): void {
+    private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas): void {
         //console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
 
         if (!this.observee1 || !this.observee2) return
         const cp  = m2c(this.p)
         const co1 = m2c(this.observee1.p)
         const co2 = m2c(this.observee2.p)
-        this.ctx.beginPath()
-        this.ctx.moveTo(co1.x, co1.y)
-        this.ctx.lineTo(cp.x, cp.y)
-        this.ctx.lineTo(co2.x, co2.y)
+        ctx.beginPath()
+        ctx.moveTo(co1.x, co1.y)
+        ctx.lineTo(cp.x, cp.y)
+        ctx.lineTo(co2.x, co2.y)
 
-        if (this.mode == Mode.aimForFartherVertex) this.ctx.setLineDash([10, 5]) // [line length, space length]
+        if (this.mode == Mode.aimForFartherVertex) ctx.setLineDash([10, 5]) // [line length, space length]
 
-        this.ctx.strokeStyle = this.color.rgbString
-        this.ctx.stroke();
-        this.ctx.setLineDash([])
-        this.ctx.closePath()
-        this.ctx.fillStyle = this.color.rgbWithOpacityString
-        this.ctx.fill()
+        ctx.strokeStyle = this.color.rgbString
+        ctx.stroke();
+        ctx.setLineDash([])
+        ctx.closePath()
+        ctx.fillStyle = this.color.rgbWithOpacityString
+        ctx.fill()
     }
     get triangleEdges(): [LineSegment, LineSegment, LineSegment]{
         if (!this.twoDefinedObservees) throw(`## Actor ${this.id} is missing defined obervees`)
@@ -163,21 +162,21 @@ export class Actor implements CanvasObject {
         const sumDelta = deltaAtoB + deltaBtoC + deltaCtoA
         return ((sumLen - sumDelta) / sumLen)**4
     }
-    public updateParameters(sep: SystemExecParms): void {
+    public updateRunParameters(srp: SystemRunParms): void {
 //      console.log(`actor.updateParameter(): intervall= ${this.sysExecParms.run.intervalMillisecs} millisecs`)
-        this.sysExecParms = sep
+        this.sysRunParms = srp
     }
 
-    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas): void {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, sysDisplayParms: SystemDisplayParms): void {
 //      console.log(`Actor${this.id}.visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         let actorLabel: string = ""
-        if (this.sysExecParms.display.showActorId)              actorLabel  = `${this.id}`
-        if (this.sysExecParms.display.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
-        if (this.sysExecParms.display.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
+        if (sysDisplayParms.showActorId)              actorLabel  = `${this.id}`
+        if (sysDisplayParms.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
+        if (sysDisplayParms.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
 
         this.p.visualize(ctx, m2c, this.color, this.halo, actorLabel)
 //      console.log(`Actor${this.id}.visualize(): this.sysExecParms.display.showTriangle= ${this.sysExecParms.display.showTriangle}`)
-        if (this.sysExecParms.display.showTriangle) this.visualizeEdgesAndFillTriangle(m2c)
+        if (sysDisplayParms.showTriangle) this.visualizeEdgesAndFillTriangle(ctx, m2c)
     }
     public toString(): string {
         return `${this.id}: ${this.p}; observees= ${this.observee1?.id}(${this.observee1?.p.x.toFixed(0)}, ${this.observee1?.p.y.toFixed(0)}) and ${this.observee2?.id}(${this.observee2?.p.x}, ${this.observee2?.p.y})` 

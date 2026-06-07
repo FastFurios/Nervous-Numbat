@@ -10,6 +10,7 @@ import { isBetween } from "./helpers"
 import { Halo, cActorDotRadius } from "./actor"
 import { cTextOffset } from "./parameters"
 import { Barrier } from "./barrier"
+import { SystemDisplayParms } from "../control-panel/control-panel"
 
 const cTolerance = 0.001
 export const cMinTriangleAltitude = 20
@@ -22,9 +23,15 @@ export type FromToPoints = {
     to:   Point
 }
 
-export interface CanvasObject {
+export interface CanvasObjectBasic {
 /*  ctx:                                                    CanvasRenderingContext2D */
     visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color?: RgbColor):   void
+    toString(): string
+}
+
+export interface CanvasObjectDisplayParms {
+/*  ctx:                                                    CanvasRenderingContext2D */
+    visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, sdp: SystemDisplayParms, color?: RgbColor):   void
     toString(): string
 }
 
@@ -87,7 +94,7 @@ export class Coordinate {
 // --------------------------------------------------------------------------------------
 //     POINT  
 // --------------------------------------------------------------------------------------
-export class Point extends Coordinate implements CanvasObject, Boxable {
+export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
     static boundaryMode: BoundaryMode = BoundaryMode.rebound
 
     constructor (/*public ctx: CanvasRenderingContext2D, */x: number, y: number, public id: string = "") { 
@@ -231,7 +238,7 @@ export class Point extends Coordinate implements CanvasObject, Boxable {
 // --------------------------------------------------------------------------------------
 //     BOX  
 // --------------------------------------------------------------------------------------
-export class Box implements CanvasObject, Boxable {
+export class Box implements CanvasObjectBasic, Boxable {
     static fromCanvas(ctx: CanvasRenderingContext2D): Box {
         return new Box("canvas", new Point(0, 0), new Point(ctx.canvas.width, ctx.canvas.height), cDefaultColor)
     }
@@ -376,7 +383,7 @@ export type Intersection     = { type:   IntersectionType,
                           p?:     Point,
                           p2?:    Point }
 
-export class Line implements CanvasObject {
+export class Line implements CanvasObjectBasic {
     static fromPointAndVector(p: Point, v: Vector, id: string = ""): Line {
         return new Line(p, p.addFree(v), id)
     }
