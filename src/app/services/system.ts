@@ -10,9 +10,6 @@ import { Barrier } from "./barrier"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 import { cDefaultCanvasWidth, cDefaultCanvasHeight } from "./parameters"
 
-
-
-
 const cCanvasBorderMargin = 5 
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
@@ -77,14 +74,14 @@ export class System {
     }
 
     public initialize(canvasSize: CanvasSize, systemRunParms: SystemRunParms): void {
-        console.log("System.initialize(): ...")
+//      console.log("System.initialize(): ...")
 //      if (this.configActGrps.length < 1) throw Error(`System.initialize(): too few actor groups (${this.configActGrps.length}).`)
         if (!systemRunParms)              throw Error("System.initialize(): missing systemExecParms.")
 
         this.stopIterating()
         this.barriers = []
 
-        console.log(`system.initialize(): found ${this.configActGrps.length} actor groups in configuration`)
+//      console.log(`system.initialize(): found ${this.configActGrps.length} actor groups in configuration`)
 
         this.actGrps = []
         for (let cag of this.configActGrps) {
@@ -137,8 +134,8 @@ export class System {
     public runResumeIterating(): Observable<number> /* | undefined */ {
 //      if (this.iterationMode == IterationMode.iterating) return undefined
         this.iterationMode = IterationMode.iterating
-        console.log(`system runResumeIterating(): actGrps[0]=`)
-        console.log(this.actGrps[0])
+//      console.log(`system runResumeIterating(): actGrps[0]=`)
+//      console.log(this.actGrps[0])
         
 // ! //      if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
         const tact$ = interval(this.intervalMillisecs)

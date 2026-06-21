@@ -29,9 +29,6 @@ type ActGrpStats = {
 // ****************************************************************************************
 
 export class ActorGroup implements CanvasObjectDisplayParms {
-    private showActorJourney: boolean 
-    private showOneActorOnlyWithTheGivenAgIndex: number
-    private showActorGroupIdAndQuality: boolean
     public  minTriangleQuality: number = 1
     public  log = new Log(1000)
     private calculatedNewPositions: Point[] = []
@@ -42,9 +39,6 @@ export class ActorGroup implements CanvasObjectDisplayParms {
     })
     
     constructor(public id: string, public actors: Actor[] = [], public mode: ActorGroupMode, public colorScheme?: ColorScheme) { 
-        this.showActorJourney = false
-        this.showOneActorOnlyWithTheGivenAgIndex = -1
-        this.showActorGroupIdAndQuality = false
         this.updateActGrpStats()
     }
     public covers(p: Point): boolean {
@@ -58,13 +52,16 @@ export class ActorGroup implements CanvasObjectDisplayParms {
 //      console.log(`ActorGroup: "${this.id}".visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
 //      console.log(`ActorGroup: "${this.id}".visualize(): this.showActorJourney= ${this.showActorJourney}`)
         
-        if (this.showActorJourney && this.showOneActorOnlyWithTheGivenAgIndex >= 0) {
-            this.actors[this.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(ctx, m2c, sdp)
+        if (sdp.showActorJourney && sdp.showOneActorOnlyWithTheGivenAgIndex >= 0) {
+            this.actors[sdp.showOneActorOnlyWithTheGivenAgIndex || 0].visualize(ctx, m2c, sdp)
             return
         }
         this.actors.forEach(a => a.visualize(ctx, m2c, sdp))
-        if (!this.showActorGroupIdAndQuality) return 
-        this.visualizeIdAndQuality(ctx, m2c)
+        if (sdp.showActorGroupIdAndQuality) {
+//          console.log(`ActorGroup.visualize(): sdp=`)
+//          console.log(sdp)
+            this.visualizeIdAndQuality(ctx, m2c)
+        }
     }
     public updateActGrpStats(): void {
         const _expanse = this.expanse(this.centerPoint())
