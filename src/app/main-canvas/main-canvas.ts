@@ -73,7 +73,7 @@ export class MainCanvas implements AfterViewInit {
   @Input() public hasCanvas:            boolean                               = false
   @Input() public isMainCanvas:         boolean                               = false
   @Input() public clock!:               Signal<number>  
-  @Input() public widgetWidth!:     Signal<number>  
+  @Input() public widgetWidth!:         Signal<number>  
   @Output() canvasSizeDetermined                                              = new EventEmitter<CanvasSize>();
   
 //public  BoundaryMode                                                        = BoundaryMode 
@@ -124,17 +124,17 @@ export class MainCanvas implements AfterViewInit {
   ngAfterViewInit() {
 //    console.log(`main-canvas #${this.id}.ngAfterViewInit(): starting ...`)
 //      if (!this.sys) throw Error(`main-canvas #${this.id} .ngAfterViewInit(): this.sys is undefined.`)
-      const canvas: HTMLCanvasElement  = this.canvasRef.nativeElement
+      this.canvas = this.canvasRef.nativeElement
 //      if (this.isMainCanvas) this.mainCanvas!.set(canvas)  
-      this.ctx =canvas.getContext('2d')
+      this.ctx = this.canvas.getContext('2d')
       if (!this.ctx) throw Error(`main-canvas #${this.id}.ngAfterViewInit(): could not get 2D context from canvas!`)
 //    this.mainCanvasSize!.set({ width: 111, height: 2222 })
 
       window.addEventListener("resize", this.handleCanvasResized.bind(this, false))
       this.handleCanvasResized(true)
 
-      canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
-      canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
+      this.canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
+      this.canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
 
       //this.canvasSizeDetermined.emit(this.ctxCanvasSize)
 
@@ -203,6 +203,7 @@ export class MainCanvas implements AfterViewInit {
   // ---------------------------------------------------------------------------------------
 
   public ctxHandleMouseDown(event: MouseEvent): void {
+      console.log(`MainCanvas.ctxhandleMouseDown(event= ${event}): canvas= ${this.canvas}`)
       event.preventDefault()
       const clickedPointInReal = this.mbrc!.canvasToReal(new Point(event.offsetX, event.offsetY, "clicked"))
       if (this.actorSelected(this.ctx!, clickedPointInReal)) {
