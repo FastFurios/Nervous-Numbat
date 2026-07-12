@@ -24,19 +24,17 @@ export type FromToPoints = {
 }
 
 export interface CanvasObjectBasic {
-/*  ctx:                                                    CanvasRenderingContext2D */
     visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color?: RgbColor):   void
     toString(): string
 }
 
 export interface CanvasObjectDisplayParms {
-/*  ctx:                                                    CanvasRenderingContext2D */
     visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, sdp: SystemDisplayParms, color?: RgbColor):   void
     toString(): string
 }
 
 export interface Boxable {
-    boxAround():                                            Box
+    boxAround(): Box
 }
 
 
@@ -69,7 +67,7 @@ function xMin(p1: Point, p2: Point): number { return p1.x < p2.x ? p1.x : p2.x }
 function xMax(p1: Point, p2: Point): number { return p1.x > p2.x ? p1.x : p2.x }
 function yMin(p1: Point, p2: Point): number { return p1.y < p2.y ? p1.y : p2.y }
 function yMax(p1: Point, p2: Point): number { return p1.y > p2.y ? p1.y : p2.y }
-
+ 
 type Collision = {
     barrier:        Barrier,
     intersecType:   IntersectionType
@@ -109,36 +107,50 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
             point:          iSec.p,
             distance:       iSec.p ? this.distanceTo(iSec.p) : undefined
         }
-//      console.log(`Geometry.Point.barrierCollision(): returning=`)
-//      console.log(aux)
+/*
+        if (pGross.x < 0 || pGross.x > 838 || pGross.y < 0 || pGross.y > 588) {
+            console.log(`Geometry.Point.barrierCollision(): this= ${this}, pGross= ${pGross}: returning interection aux=`)
+            console.log(aux)
+        }
+*/
         return aux
     }
 
     private nearestCollisionPoint(bs: Barrier[], pGross: Point): Collision | undefined {
         // barriers in the neigborhood: 
-        const nearbyBarriers: Barrier[] = bs.filter(
+        const nearbyBarriers: Barrier[] = bs .filter(
             (b => !(
                    xMax(b.base, b.p2) < xMin(this, pGross)
                 || xMin(b.base, b.p2) > xMax(this, pGross)
                 || yMax(b.base, b.p2) < yMin(this, pGross)
                 || yMin(b.base, b.p2) > yMax(this, pGross)
-            )))  // all barriers that are entirely beyond the box area of this ans pGross
-//      console.log(`Geometry.Point.nearestCollisionPoint(): nearbyBarriers=`)
+            )))  // all barriers that aren't entirely beyond the box area of this and pGross
+
+            //      console.log(`Geometry.Point.nearestCollisionPoint(): nearbyBarriers=`)
 //      console.log(nearbyBarriers)
         // check nearby barriers and see if they are in our way:
         const barriersCollisions: Collision[] = nearbyBarriers
             .map(b => this.barrierCollision(b, pGross))
             .filter((bc: Collision) => bc.intersecType != "none")
-        if (barriersCollisions.length < 1) { 
-//          console.log(`Geometry.Point.nearestCollisionPoint(): no collision`)
+/*        if (pGross.x < 0 || pGross.x > 838 || pGross.y < 0 || pGross.y > 588) {
+//          console.log(`Geometry.Point.nearestCollisionPoint(): this= ${this} pGross= ${pGross}, nearbyBarriers=`)
+//          console.log(nearbyBarriers)
+            console.log(`Geometry.Point.nearestCollisionPoint(): this= ${this} pGross= ${pGross}, barriersCollisions=`)
+            console.log(barriersCollisions)
+        }*/
+         if (barriersCollisions.length < 1) { 
+//            console.log(`Geometry.Point.nearestCollisionPoint(): no collision`)
             return undefined
         }
-//      console.log(`Geometry.Point.nearestCollisionPoint(): barriersCollisions=`)
+//      console.log(`Geometry.Point.nearestCollisionPoint(): pGross= ${pGross}: barriersCollisions=`)
 //      console.log(barriersCollisions)
         // we have at least one barrier collision. Find the closest one. That's the point we are going to be deflected from.    
+//      console.log(`Geometry.Point.nearestCollisionPoint(): ${barriersCollisions.length} collision(s):`)
+//      barriersCollisions.forEach(bc => console.log(bc))
+        
         const nearestBarrierCollision = barriersCollisions.reduce((bc1: Collision, bc2: Collision) => bc1.distance! < bc2.distance! ? bc1 : bc2)
         // now we know from which barrier at what point we are going to deflect    
-//      console.log(`Geometry.Point.nearestCollisionPoint(): nearestBarrierCollision=`)
+//      console.log(`Geometry.Point.nearestCollisionPoint(): pGross= ${pGross}: nearestBarrierCollision=`)
 //      console.log(nearestBarrierCollision)
 
 //      nearestBarrierCollision.point!.visualize((p: Point) => p, new RgbColor(255, 0, 0), Halo.on)        
@@ -152,24 +164,28 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
        private addBarrierSensitive(vec: Vector, bs: Barrier[], boundaryMode: BoundaryMode): Point {  // result is within the canvas boundaries
 //      console.log(`## Geometry.Point.addBarrierUnelastic() #############`)
         const pGross = this.addFree(vec)  // if we had no barriers in our way
+
         const nearestCollision = this.nearestCollisionPoint(bs, pGross) // where do we hit into the first barrier on our way?
         if (!nearestCollision) { // our way is free
 //          console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision?.intersecType == "none"`)
+            //if (pGross.x < 0 || pGross.x > 838 || pGross.y < 0 || pGross.y > 588) console.log(`Geometry.Point.addBarrierSensitive(): this: Point= ${this} pGross= ${pGross} out of canvas, but no barrier hit!?!`)
             return pGross
         }
         // from here on we know we hit a barrier
-  //    console.log(`Geometry.Point.addBarrierUnelastic(): nearestCollision=`)
-  //    console.log(nearestCollision)
+
+        let aux: Point | undefined
 
         if (nearestCollision!.barrier.isVertical)
-             return boundaryMode == BoundaryMode.inelastic 
+             aux = boundaryMode == BoundaryMode.inelastic 
                 ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, 0), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby 
                 : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)
-        if (nearestCollision!.barrier.isHorizontal)
-             return boundaryMode == BoundaryMode.inelastic 
+        else if (nearestCollision!.barrier.isHorizontal)
+             aux =  boundaryMode == BoundaryMode.inelastic 
                 ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(0, -vec.dy), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby
                 : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)        
-        throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
+        else throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
+
+        return aux!
     }
     
     public add(vec: Vector, bs: Barrier[]): Point {  // alias
@@ -205,33 +221,31 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
         return new Point(this.x * factor, this.y * factor, this.id)
     }
     public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
-//      console.log(`Point(${this.x.toFixed(0)} / ${this.y.toFixed(0)}).visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
-        /*this.*/ctx.beginPath()
+        ctx.beginPath()
         const cp = m2c(this)
-        /*this.*/ctx.arc(cp.x, cp.y, cActorDotRadius, 0, 2 * Math.PI)
+        ctx.arc(cp.x, cp.y, cActorDotRadius, 0, 2 * Math.PI)
         if (halo == Halo.off) {
-            /*this.*/ctx.strokeStyle = color.rgbString
-            /*this.*/ctx.stroke()
+            ctx.strokeStyle = color.rgbString
+            ctx.stroke()
         }
         else {
-//          if (halo == Halo.on) console.log(`visualizing point p= ${this}`)
-            /*this.*/ctx.strokeStyle = new RgbColor(255, 0, 0).rgbString
-            /*this.*/ctx.lineWidth = 10
-            /*this.*/ctx.stroke()
-            /*this.*/ctx.lineWidth = 1
-            /*this.*/ctx.strokeStyle = color.rgbString
+            ctx.strokeStyle = new RgbColor(255, 0, 0).rgbString
+            ctx.lineWidth = 10
+            ctx.stroke()
+            ctx.lineWidth = 1
+            ctx.strokeStyle = color.rgbString
         }
-        /*this.*/ctx.fillStyle = color.rgbString
-        /*this.*/ctx.fill()
-        /*this.*/ctx.closePath
+        ctx.fillStyle = color.rgbString
+        ctx.fill()
+        ctx.closePath
         if (label != "") {
-            /*this.*/ctx.font = "12px Arial"
-            const textPos = new Point(/*this.ctx, */this.x, this.y)
-            /*this.*/ctx.fillText(`${label} (${this.x.toFixed(0)}/${this.y.toFixed(0)})`, m2c(textPos).x, m2c(textPos).y + cTextOffset)
+            ctx.font = "12px Arial"
+            const textPos = new Point(this.x, this.y)
+            ctx.fillText(`${label} (${this.x.toFixed(0)}/${this.y.toFixed(0)})`, m2c(textPos).x, m2c(textPos).y + cTextOffset)
         }
     }
     public override toString(): string {
-        return `Point ${this.id}: (${this.x.toFixed(0)}, ${this.y.toFixed(0)})`
+        return `Point ${this.id}: (${this.x.toFixed(2)}, ${this.y.toFixed(2)})`
     }
 }
 
@@ -479,15 +493,19 @@ export class LineSegment extends Line implements Boxable {
                         from.y < to.y ? Math.ceil(from.y)  : Math.floor(from.y))
     }
 }
-
+/*
     public override touches(p: Point): boolean {
-//      console.log(`Line Segment: ${this}: touches(p=${p})`)
-//      console.log(`\tsuper.touches(p): ${super.touches(p)} `)
-//      console.log(`\tthis.boxAround(): ${this.boxAround()} `)
-//      console.log(`\tp.isIn(this.boxAround(): ${p.isIn(this.boxAround())} `)
+        if (false && Math.round(p.x) == 300) {
+            console.log(`__LineSegment.touches(): ${this}: touches(p=${p})`)
+            console.log(`__LineSegment.touches(): super.touches(p): ${super.touches(p)} `)
+            console.log(`__LineSegment.touches(): this.boxAround(): ${this.boxAround()} `)
+            console.log(`__LineSegment.touches(): ${p}.isIn(this.boxAround(): ${p.isIn(this.boxAround())} `)
+        }
         return super.touches(p) && p.isIn(this.boxAround())       
+//      return super.touches(p) && p.isIn(this.boxAround())       
 //      return super.touches(p) && p.isInBox(this.base, this.p2)       
     }
+*/
     public boxAround(): Box {
         const xMin = Math.min(this.base.x, this.p2.x)
         const xMax = Math.max(this.base.x, this.p2.x)
@@ -495,27 +513,37 @@ export class LineSegment extends Line implements Boxable {
         const yMax = Math.max(this.base.y, this.p2.y)
         const lowerLeft  = new Point(xMin, yMin)
         const upperRight = new Point(xMax, yMax)
-        return new Box(`Box of ${this.id}`, lowerLeft, upperRight)
+        return new Box(`${this.id}`, lowerLeft, upperRight)
     }
-/*    
-    private touches(p: Point): boolean {
+    
+    public override touches(p: Point): boolean {
         return (UnitVector.newFromVector(p.vectorTo(this.base).inverted).isEqual(
                 UnitVector.newFromVector(p.vectorTo(this.p2))))
     }
-*/    
+    
     public override intersects(l: Line): Intersection {
+        if (this.base.y == 0.46 || this.base.x == 300) console.log(`Geometry.LineSegment.intersects(): lineSegment [${this.base} to ${this.p2}] ...`)
         const lineIntersection = super.intersects(l)
+        if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): super.intersects(l)=`)
+        if (this.base.y == 0.46 || this.base.x == 300) console.log(lineIntersection)
 //      console.log(`Geometry.LineSegment.intersects(): lineIntersection=`)
 //      console.log(lineIntersection)
         if (lineIntersection.type == "none") {
+            if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): intersection == "none" }, returning { type: "none" }`)
             return  { type: "none" }
         }
-        if (lineIntersection.type == "point")
+        if (lineIntersection.type == "point") {
+            if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): intersection is "point" }`)
             if (this.touches(lineIntersection.p!)) {
+                if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): this touches intersection point" }`)
 //              console.log(`Geometry.LineSegment.intersects(): this.touches(lineIntersection= ${lineIntersection}`)
+                if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): intersection is "point"; returning intersection=" }`)
+                if (this.base.y == 0.46 || this.base.x == 300) console.log(lineIntersection)
                 return lineIntersection // the line cuts within the boundaries of this line segment 
             }
             else {
+                if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): this does not touch the intersection point" }`)
+                if (this.base.y == 0.46 || this.base.x == 300) console.log(`__Geometry.LineSegment.intersects(): returning  type: "none" }`)
 /*
                 console.log(`Geometry.LineSegment.intersects(): this Line Segment does not touch Point intersection point p`)
                 console.log(`this line segment=`)
@@ -525,6 +553,7 @@ export class LineSegment extends Line implements Boxable {
 */
                 return { type: "none" } // the line misses the line segment
             }
+        }
         return { type: "cover", p: this.base, p2: this.p2} // the line segment resides on the line 
     }
 

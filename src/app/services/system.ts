@@ -10,7 +10,7 @@ import { Barrier } from "./barrier"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 import { cDefaultCanvasWidth, cDefaultCanvasHeight } from "./parameters"
 
-const cCanvasBorderMargin = 5 
+const cCanvasBorderMargin = 0
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
 
@@ -106,8 +106,8 @@ export class System {
 
         // add any in-field barriers
 
-//      console.log("System.initialize(): this.configBarriers:")
-//      console.log(this.barriers)
+      console.log("System.initialize(): this.configBarriers:")
+      console.log(this.barriers)
         this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(this.mappedConfigPointOntoCanvas(canvasSize, cb.from), this.mappedConfigPointOntoCanvas(canvasSize, cb.to))))
 //      console.log("System.initialize(): this.barriers:")
 //      console.log(this.barriers)

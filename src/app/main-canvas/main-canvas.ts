@@ -9,45 +9,7 @@ import { Actor } from "../services/actor"
 import { cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin, cControlPanelWidth } from "../services/parameters"
 import { SystemDisplayParms, CanvasSize } from '../control-panel/control-panel'
 
-/*
-// ---------------------------------------------------------------------------------------
-//      SYSTEM EXECUTION PARAMETERS
-// ---------------------------------------------------------------------------------------
-
-type SystemExecParmsRun = {
-  intervalMillisecs:  number
-  maxIterations:      number
-  maxMoveDistance:    number
-  minTriangleQuality: number
-  boundaryMode:       BoundaryMode
-}
-
-type _SystemExecParmsDisplay = {
-  showActorId:                          boolean
-  showTriangle:                         boolean
-  showActorTriangleQuality:             boolean
-  showActorObservees:                   boolean
-  showActorGroupIdAndQuality:           boolean
-  showActorJourney:                     boolean
-  showOneActorOnlyWithTheGivenAgIndex:  number
-//focusAndFollowActGrp0:                boolean
-}
-
-export type SystemExecParmsStrategy = {
-  poorTriangleQualityThreshold:           number
-  aimAtFartherVertexOnEnduredPoorQuality: boolean
-}
-
-export interface SystemExecParms {
-  run:      SystemExecParmsRun 
-  display:  SystemExecParmsDisplay
-  strategy: SystemExecParmsStrategy
- }
-export interface SystemUiReferences {
-    time: number,
-    ctx:  CanvasRenderingContext2D | null
-}
-*/
+const cZoomFactor = 1.1
 
 type RunResumeButtonLabel = "Run" | "Resume"
 
@@ -150,7 +112,7 @@ export class MainCanvas implements AfterViewInit {
       this.sys.actGrps  = []
       this.sys.barriers = []
       this.sys.tact$    = undefined
-      console.log(`main-canvas #${this.id}.ngOnDestroy(): done`)
+//    console.log(`main-canvas #${this.id}.ngOnDestroy(): done`)
   }
 
   private home():void {
@@ -256,7 +218,7 @@ export class MainCanvas implements AfterViewInit {
     }
 
       public handleWheelMotion(ctx: CanvasRenderingContext2D, motion: WheelMotion): void {
-        this.zoom! *= motion == WheelMotion.up ? 2 : 0.5
+        this.zoom! *= motion == WheelMotion.up ? cZoomFactor : 1 / cZoomFactor
         this.setMapperBtwRealAndCanvas(ctx)
         this.clearCanvas()
         this.visualize()
