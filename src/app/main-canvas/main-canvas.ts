@@ -78,27 +78,16 @@ export class MainCanvas implements AfterViewInit {
     })
   }
 
-  /*
-  ngOnInit(): void {
-      console.log(`main-canvas #${this.id}.ngOnInit(): done`)
-  }
-*/
   ngAfterViewInit() {
-//    console.log(`main-canvas #${this.id}.ngAfterViewInit(): starting ...`)
-//      if (!this.sys) throw Error(`main-canvas #${this.id} .ngAfterViewInit(): this.sys is undefined.`)
       this.canvas = this.canvasRef.nativeElement
-//      if (this.isMainCanvas) this.mainCanvas!.set(canvas)  
       this.ctx = this.canvas.getContext('2d')
       if (!this.ctx) throw Error(`main-canvas #${this.id}.ngAfterViewInit(): could not get 2D context from canvas!`)
-//    this.mainCanvasSize!.set({ width: 111, height: 2222 })
 
       window.addEventListener("resize", this.handleCanvasResized.bind(this, false))
       this.handleCanvasResized(true)
 
       this.canvas.onmousedown = this.ctxHandleMouseDown.bind(this)
       this.canvas.addEventListener("wheel", this.ctxHandleWheelScroll.bind(this))
-
-      //this.canvasSizeDetermined.emit(this.ctxCanvasSize)
 
       this.home()
       console.log(`main-canvas #${this.id}.ngAfterViewInit(): clearing canvas...`)
@@ -112,7 +101,6 @@ export class MainCanvas implements AfterViewInit {
       this.sys.actGrps  = []
       this.sys.barriers = []
       this.sys.tact$    = undefined
-//    console.log(`main-canvas #${this.id}.ngOnDestroy(): done`)
   }
 
   private home():void {
@@ -138,7 +126,7 @@ export class MainCanvas implements AfterViewInit {
 
   public  visualizeCanvasInReal(): void {
       const canvasLowerLeft  = new Point(0, 0, "Canvas-lower-left")
-      const canvasUpperRight = new Point(this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")//      const canvasBoxScaled = new Box(ctx!, "canvas-scaled", canvasLowerLeftScaled, canvasUpperRightScaled, new RgbColor(0, 0, 255))
+      const canvasUpperRight = new Point(this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")
       const canvasBox = new Box("canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
       canvasBox.visualize(this.ctx!, this.mbrc!.realToCanvas)
   }
@@ -229,11 +217,9 @@ export class MainCanvas implements AfterViewInit {
   // ---------------------------------------------------------------------------------------
 
   public handleCanvasResized(informControlPanel: boolean): void {
-//    console.log(`main-canvas #${this.id}.handleCanvasResized(): starting ...`)
       this.ctx!.canvas.width  = window.innerWidth * this.widgetWidth() / 100 - cLeftMargin  - cRightMargin - cControlPanelWidth
       this.ctx!.canvas.height = window.innerHeight  - cUpperMargin - cLowerMargin
       if (informControlPanel) this.canvasSizeDetermined.emit(this.ctxCanvasSize)
-//    console.log(`main-canvas #${this.id}.handleCanvasResized(): done`)
 
   }
 

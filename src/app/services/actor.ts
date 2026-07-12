@@ -82,95 +82,6 @@ export class Actor implements CanvasObjectDisplayParms {
         return aux 
     }        
     public setPosition(p: Point): void {
-        if (this.id == "R0") {    
-        /*
-            console.log("----------- check line segment intersection of 2 horizonal line segments ---------")
-            console.log(new LineSegment(new Point(0,588), new Point(838, 588)).intersectsLineSegment(new LineSegment(new Point(0, 0), new Point(588, 0))))
-            console.log("----------- check line segment intersection of 2  vertical line segments ---------")
-            console.log(new LineSegment(new Point(838, 0), new Point(838, 588)).intersectsLineSegment(new LineSegment(new Point(0, 0), new Point(0, 588))))
-            console.log("----------- check line segment intersection of a horizontal line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(0, 100), new Point(838, -100)).intersectsLineSegment(new LineSegment(new Point(0, 0), new Point(588, 0))))
-            console.log("----------- check line segment intersection of a vertical line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(-838, 0), new Point(838, 588)).intersectsLineSegment(new LineSegment(new Point(0, 0), new Point(0, 588))))
-
-            console.log("----------- check line segment intersection of 2 horizonal line segments ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(588, 0)).intersectsLineSegment(new LineSegment(new Point(0,588), new Point(838, 588))))
-            console.log("----------- check line segment intersection of 2  vertical line segments ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(0, 588)).intersectsLineSegment(new LineSegment(new Point(838, 0), new Point(838, 588))))
-            console.log("----------- check line segment intersection of a horizontal line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(588, 0)).intersectsLineSegment(new LineSegment(new Point(0, 100), new Point(838, -100))))
-            console.log("----------- check line segment intersection of a vertical line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(0, 588)).intersectsLineSegment(new LineSegment(new Point(-838, 0), new Point(838, 588))))
-
-            console.log("----------- check line intersection of 2 horizonal line segments ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(588, 0)).intersects(new LineSegment(new Point(0,588), new Point(838, 588))))
-            console.log("----------- check line intersection of 2  vertical line segments ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(0, 588)).intersects(new LineSegment(new Point(838, 0), new Point(838, 588))))
-            console.log("----------- check line intersection of a horizontal line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(588, 0)).intersects(new LineSegment(new Point(0, 100), new Point(838, -100))))
-            console.log("----------- check line intersection of a vertical line segment with a skewed line segment ---------")
-            console.log(new LineSegment(new Point(0, 0), new Point(0, 588)).intersects(new LineSegment(new Point(-838, 0), new Point(838, 588))))
-
-            console.log("----------- check line intersection of 2 horizonal lines ---------")
-            console.log(new Line(new Point(0, 0), new Point(588, 0)).intersects(new Line(new Point(0,588), new Point(838, 588))))
-            console.log("----------- check line intersection of 2  vertical lines ---------")
-            console.log(new Line(new Point(0, 0), new Point(0, 588)).intersects(new Line(new Point(838, 0), new Point(838, 588))))
-            console.log("----------- check line intersection of a horizontal line with a skewed line---------")
-            console.log(new Line(new Point(0, 0), new Point(588, 0)).intersects(new Line(new Point(0, 100), new Point(838, -100))))
-            console.log("----------- check line intersection of a vertical line with a skewed line---------")
-            console.log(new Line(new Point(0, 0), new Point(0, 588)).intersects(new Line(new Point(-838, 0), new Point(838, 588))))
-            console.log("----------- check line intersection of 2 line segments ---------")
-*/
-/*
-            console.log(`Actor${this.id}.setPosition(): new LineSegment(new Point(  0, 0.46), new Point(588, 0.46)).intersectsLineSegment(new LineSegment(new Point(300, 1), new Point(300, -1))):`)
-            const aux1 = new LineSegment(new Point(  0, 0.46), 
-                                            new Point(588, 0.46))
-                        .intersectsLineSegment(
-                            new LineSegment(new Point(300, 1), 
-                                            new Point(300, -1)))
-            console.log(aux1)
-
-            console.log(`Actor${this.id}.setPosition(): new LineSegment(new Point(300, 1), new Point(300, -1)).intersectsLineSegment(new LineSegment(new Point(  0, 0.46), new Point(588, 0.46))):`)
-            const aux2 = new LineSegment(new Point(300, 1), 
-                                            new Point(300, -1))
-                        .intersectsLineSegment(
-                            new LineSegment(new Point(  0, 0.46), 
-                                            new Point(588, 0.46)))
-            console.log(aux2)
-*/
-/*
-            const aux2 = new LineSegment(new Point(  0, 0.47), 
-                                            new Point(588, 0.47))
-                        .intersectsLineSegment(
-                            new LineSegment(new Point(300, 1), 
-                                            new Point(301, -1)))
-            console.log(`Actor${this.id}.constructor(): Actor ${this.id}: test of intersectsLineSegment(): aux2=`)
-            console.log(aux2)
-
-            const aux3 = new LineSegment(new Point(300, 1), 
-                                            new Point(301, -1))
-                        .intersectsLineSegment(
-                            new LineSegment(new Point(  0, 0.46), 
-                                            new Point(588, 0.46)))
-            console.log(`Actor${this.id}.constructor(): Actor ${this.id}: test of intersectsLineSegment(): aux3=`)
-            console.log(aux3)
-            
-            const aux4 = new LineSegment(new Point(300, 1), 
-                                            new Point(301, -1))
-                        .intersectsLineSegment(
-                            new LineSegment(new Point(  0, 0.47), 
-                                            new Point(588, 0.47)))
-            console.log(`Actor${this.id}.constructor(): Actor ${this.id}: test of intersectsLineSegment(): aux4=`)
-            console.log(aux4)
-
-            throw Error (`Actor.setPosition(): ### aborted`)
-*/
-        }
-/*
-        if (p.x < 0 || p.x > 838 || p.y < 0 || p.y > 588) {
-            throw Error (`Actor.setPosition(): old= ${this.p}, new= ${p} crossing canvas boundaries!`)
-        } 
-*/
         this.triangleQualityLog.push(this.triangleQuality)
         this.p = p 
     }  
@@ -183,10 +94,8 @@ export class Actor implements CanvasObjectDisplayParms {
         this.observee1      = restOfActors1[randomInRange(0, restOfActors1.length)]
         const restOfActors2 = restOfActors1.filter(a => a !== this.observee1)
         this.observee2      = restOfActors2[randomInRange(0, restOfActors2.length)]
-//      console.log(`${this.id}: just assigned observees ${this.observee1.id} and ${this.observee2.id}}`)
     }
     public isFrozen(): boolean {
-//      return this.triangleQualityLog.avgStandardDeviation < 0.01 // cStandardDeviationThreshold
         return this.triangleQualityLog.lastLoggedQuality ? this.triangleQualityLog.lastLoggedQuality > 0.98 : false
     }
     public turnHaloOn(): void {
@@ -199,8 +108,6 @@ export class Actor implements CanvasObjectDisplayParms {
         return this.halo
     }
     private visualizeEdgesAndFillTriangle(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas): void {
-        //console.log(`Actor${this.id}.visualizeEdgesAndFillTriangle(): observees= ${this.observee1?.id} and ${this.observee2?.id}`)
-
         if (!this.observee1 || !this.observee2) return
         const cp  = m2c(this.p)
         const co1 = m2c(this.observee1.p)
@@ -253,19 +160,16 @@ export class Actor implements CanvasObjectDisplayParms {
         return ((sumLen - sumDelta) / sumLen)**4
     }
     public updateRunParameters(srp: SystemRunParms): void {
-//      console.log(`actor.updateParameter(): intervall= ${this.sysExecParms.run.intervalMillisecs} millisecs`)
         this.sysRunParms = srp
     }
 
     public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, sysDisplayParms: SystemDisplayParms): void {
-//      console.log(`Actor${this.id}.visualize(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
         let actorLabel: string = ""
         if (sysDisplayParms.showActorId)              actorLabel  = `${this.id}`
         if (sysDisplayParms.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
         if (sysDisplayParms.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
 
         this.p.visualize(ctx, m2c, this.color, this.halo, actorLabel)
-//      console.log(`Actor${this.id}.visualize(): this.sysExecParms.display.showTriangle= ${this.sysExecParms.display.showTriangle}`)
         if (sysDisplayParms.showTriangle) this.visualizeEdgesAndFillTriangle(ctx, m2c)
     }
     public toString(): string {
