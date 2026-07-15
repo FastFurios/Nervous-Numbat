@@ -46,7 +46,6 @@ export class Actor implements CanvasObjectDisplayParms {
 
     constructor(public id: string, p: Point, public sysRunParms: SystemRunParms, public color: RgbColor = cDefaultColor) {
         this.p = p
-//      console.log(`Actor${this.id}.constructor(): ctx dimension is ${this.ctx.canvas.width} x ${this.ctx.canvas.height}`)
     }
     private get twoDefinedObservees(): boolean {
         return this.observee1 != undefined && this.observee2 != undefined
@@ -57,7 +56,7 @@ export class Actor implements CanvasObjectDisplayParms {
     }
     private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
         this.debugTrail = []
-        this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
+//      this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
         let targetVertex: Point
         if (this.observee1!.p.equalsTo(this.observee2!.p))
             targetVertex = this.observee1!.p
@@ -89,14 +88,16 @@ export class Actor implements CanvasObjectDisplayParms {
         return aux 
     }        
     public setPosition(p: Point): void {
-        this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
+//      this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
         this.triangleQualityLog.push(this.triangleQuality)
         this.p = p 
+/*
         if (false || p.x < 0 || p.x > 969 || p.y < 0 || p.y > 680) {
             console.log(`Actor= ${this.id}.setPosition(): out of boundaries`)
             console.log(this.debugTrail)
             throw Error("###################")
         }
+*/
     }  
     public assign2SpecificObservees(a1: Actor, a2: Actor): void {
         this.observee1      = a1
