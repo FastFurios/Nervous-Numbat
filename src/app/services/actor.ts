@@ -24,6 +24,9 @@ enum Mode {
     aimForFartherVertex = "aim for farther vertex"
 }
 
+export type DebugTrail = string[]
+
+
 export class Actor implements CanvasObjectDisplayParms {
     public  p:                  Point 
     public  observee1:          Actor | undefined
@@ -32,6 +35,8 @@ export class Actor implements CanvasObjectDisplayParms {
     private triangleQualityLog: Log = new Log()
     private halo                    = Halo.off
     private mode                    = Mode.stickToCloserVertex
+
+    private debugTrail: DebugTrail  = []
 
     static newRandomizedActor(ctx: CanvasRenderingContext2D, id: string, startBox: Box, sysExecParms: SystemRunParms, color: RgbColor = cDefaultColor): Actor {
         const x = randomInRange(startBox.lowerLeft.x, startBox.upperRight.x) 
@@ -51,11 +56,13 @@ export class Actor implements CanvasObjectDisplayParms {
         return new LineSegment(this.observee1!.p, this.observee2!.p)
     }
     private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
+        this.debugTrail = []
+        this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
         let targetVertex: Point
         if (this.observee1!.p.equalsTo(this.observee2!.p))
             targetVertex = this.observee1!.p
         else {
-            const twoVertices   = this.observeesEdge.equilateralVertices
+            const twoVertices   = this.observeesEdge.equilateralVertices(this.debugTrail)
             const closestVertex = this.p.closerTo(twoVertices)
             const fartherVertex = closestVertex == twoVertices[0] ? twoVertices[1] : twoVertices[0]
             targetVertex = this.mode == Mode.aimForFartherVertex
@@ -65,9 +72,9 @@ export class Actor implements CanvasObjectDisplayParms {
         }
         const vectorToVertex   = new Vector(targetVertex.x - this.p.x, targetVertex.y - this.p.y)
         const scaleFactor      = vectorToVertex.length <= this.sysRunParms.maxMoveDistance ? 1 : this.sysRunParms.maxMoveDistance / vectorToVertex.length  
-        const targetP          = this.p.add(vectorToVertex.scale(scaleFactor), barriers)
+        const targetP          = this.p.add(vectorToVertex.scale(scaleFactor), barriers, this.debugTrail)
         const wayToTargetP     = new LineSegment(this.p, targetP)
-        const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge)
+        const wayIntersectsObserveesEdge = wayToTargetP.intersects(this.observeesEdge, this.debugTrail)
         if (wayIntersectsObserveesEdge.type != "none") { // my move crosses the observees line
             this.mode = Mode.stickToCloserVertex
         }
@@ -82,8 +89,14 @@ export class Actor implements CanvasObjectDisplayParms {
         return aux 
     }        
     public setPosition(p: Point): void {
+        this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
         this.triangleQualityLog.push(this.triangleQuality)
         this.p = p 
+        if (false || p.x < 0 || p.x > 969 || p.y < 0 || p.y > 680) {
+            console.log(`Actor= ${this.id}.setPosition(): out of boundaries`)
+            console.log(this.debugTrail)
+            throw Error("###################")
+        }
     }  
     public assign2SpecificObservees(a1: Actor, a2: Actor): void {
         this.observee1      = a1
@@ -134,10 +147,10 @@ export class Actor implements CanvasObjectDisplayParms {
     }
     public covers(p: Point): boolean {
         if (!this.observee1 || !this.observee2) return false
-        const verticalThruP = Line.fromPointAndVector(new Point(p.x, 0), new Vector(0, 1))
+        const verticalThruP = Line.fromPointAndVector(new Point(p.x, 0), new Vector(0, 1), undefined, this.debugTrail)
         const edgeIntersecs: Intersection[] = []
         for (let e of this.triangleEdges) {
-            const is: Intersection = e.intersects(verticalThruP)
+            const is: Intersection = e.intersects(verticalThruP, this.debugTrail)
             if (is.type == "point") edgeIntersecs.push(is)  // && is.p?.isInBox(e.base, e.p2) 
         }
         if (edgeIntersecs.length != 2) return false
@@ -169,7 +182,7 @@ export class Actor implements CanvasObjectDisplayParms {
         if (sysDisplayParms.showActorTriangleQuality) actorLabel += ` ${(this.triangleQuality * 100).toFixed(0)}%` 
         if (sysDisplayParms.showActorObservees)       actorLabel += `=> ${this.observee1?.id} and ${this.observee2?.id}`
 
-        this.p.visualize(ctx, m2c, this.color, this.halo, actorLabel)
+        this.p.visualize(ctx, m2c, this.color, this.debugTrail, this.halo, actorLabel)
         if (sysDisplayParms.showTriangle) this.visualizeEdgesAndFillTriangle(ctx, m2c)
     }
     public toString(): string {

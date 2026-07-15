@@ -1,0 +1,7 @@
+[
+    "Actor= R57.newPositionTowardsVertex(): ...",
+    "Actor= : Geometry.add(): ...",
+    "Actor= : Geometry.addBarrierSensitive(): ...",
+    "Actor= : Geometry.addBarrierSensitive(): no collision detected",
+    "Actor= R57.setPosition(): to Point : (1066.59, -0.06)"
+]

@@ -7,13 +7,16 @@
 
 import { cDefaultColor, RgbColor } from "./color"
 import { isBetween } from "./helpers"
-import { Halo, cActorDotRadius } from "./actor"
+import { Halo, cActorDotRadius, DebugTrail } from "./actor"
 import { cTextOffset } from "./parameters"
 import { Barrier } from "./barrier"
 import { SystemDisplayParms } from "../control-panel/control-panel"
 
-const cTolerance = 0.001
+const cTolerance = 0.01
+const cMinBarrierOffset = 2
+const cMinRebound       = 5
 export const cMinTriangleAltitude = 20
+
 
 type  Infinite           = undefined
 const infinite: Infinite = undefined
@@ -24,7 +27,7 @@ export type FromToPoints = {
 }
 
 export interface CanvasObjectBasic {
-    visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color?: RgbColor):   void
+    visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor, debugTrail: DebugTrail):   void
     toString(): string
 }
 
@@ -49,11 +52,11 @@ export function canvasCenter(ctx: CanvasRenderingContext2D): Point {
     return new Point(ctx.canvas.width / 2, ctx.canvas.height / 2)
 }
 
-export function mapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D, center: Point, scaleFactor: number): MapperBtwRealAndCanvas {
+export function mapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D, center: Point, scaleFactor: number, debugTrail: DebugTrail): MapperBtwRealAndCanvas {
     const shiftVector: Vector = center.scaledBy(scaleFactor).vectorTo(canvasCenter(ctx)) 
     return {
-        realToCanvas: (rp: Point) => rp.scaledBy(scaleFactor).addFree(shiftVector), 
-        canvasToReal: (cp: Point) => cp.addFree(shiftVector.inverted).scaledBy(1 / scaleFactor)
+        realToCanvas: (rp: Point) => rp.scaledBy(scaleFactor).addFree(shiftVector, debugTrail), 
+        canvasToReal: (cp: Point) => cp.addFree(shiftVector.inverted, debugTrail).scaledBy(1 / scaleFactor)
     }
 }
 
@@ -68,15 +71,24 @@ function xMax(p1: Point, p2: Point): number { return p1.x > p2.x ? p1.x : p2.x }
 function yMin(p1: Point, p2: Point): number { return p1.y < p2.y ? p1.y : p2.y }
 function yMax(p1: Point, p2: Point): number { return p1.y > p2.y ? p1.y : p2.y }
  
-type Collision = {
+type _Collision = {
     barrier:        Barrier,
     intersecType:   IntersectionType
     point?:         Point,
     distance?:      number
 }
 
-const cMinBarrierOffset = 2
-const cMinRebound       = 5
+class Collision {
+    constructor (public barrier:        Barrier,
+                 public intersecType:   IntersectionType,
+                 public point?:         Point,
+                 public distance?:      number) {}
+
+    public toString(): string {
+        return `Collision ${this.intersecType} into ${this.barrier} at ${this.point} ${this.distance} away)`
+    }           
+}
+
 
 // --------------------------------------------------------------------------------------
 //     COORDINATE  
@@ -99,18 +111,19 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
         super(x, y)
     }
 
-    private barrierCollision(b: Barrier, pGross: Point): Collision {
-        const iSec: Intersection = b.intersectsLineSegment(new LineSegment(this, pGross))
-        const aux =  {
-            barrier:        b,
-            intersecType:   iSec.type,
-            point:          iSec.p,
-            distance:       iSec.p ? this.distanceTo(iSec.p) : undefined
-        }
+    private barrierCollision(b: Barrier, pGross: Point, debugTrail: DebugTrail): Collision {
+        const iSec: Intersection = b.intersectsLineSegment(new LineSegment(this, pGross), debugTrail)
+        const aux =  new Collision(
+            b,
+            iSec.type,
+            iSec.p,
+            iSec.p ? this.distanceTo(iSec.p) : undefined
+        )
+        debugTrail.push(`__Geometry.Point.barrierCollision() for pGross= ${pGross}:  ${aux}`)
         return aux
     }
 
-    private nearestCollisionPoint(bs: Barrier[], pGross: Point): Collision | undefined {
+    private nearestCollisionPoint(bs: Barrier[], pGross: Point, debugTrail: DebugTrail): Collision | undefined {
         // barriers in the neigborhood: 
         const nearbyBarriers: Barrier[] = bs .filter(
             (b => !(
@@ -119,53 +132,64 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
                 || yMax(b.base, b.p2) < yMin(this, pGross)
                 || yMin(b.base, b.p2) > yMax(this, pGross)
             )))  // all barriers that aren't entirely beyond the box area of this and pGross
+        debugTrail.push(`__Geometry.Point.nearestCollisionPoint(): nearbyBarriers= ${nearbyBarriers}`)
 
         // check nearby barriers and see if they are in our way:
         const barriersCollisions: Collision[] = nearbyBarriers
-            .map(b => this.barrierCollision(b, pGross))
+            .map(b => this.barrierCollision(b, pGross, debugTrail))
             .filter((bc: Collision) => bc.intersecType != "none")
-         if (barriersCollisions.length < 1) { 
+        if (barriersCollisions.length < 1) { 
+            debugTrail.push(`__Geometry.Point.nearestCollisionPoint(): no barriersCollisions`)
             return undefined
         }
         // we have at least one barrier collision. Find the closest one. That's the point we are going to be deflected from.    
         
         const nearestBarrierCollision = barriersCollisions.reduce((bc1: Collision, bc2: Collision) => bc1.distance! < bc2.distance! ? bc1 : bc2)
         // now we know from which barrier at what point we are going to deflect    
+        debugTrail.push(`__Geometry.Point.nearestCollisionPoint(): nearestBarrierCollision= ${nearestBarrierCollision}`)
         return nearestBarrierCollision    
     }
 
-    public addFree(vec: Vector): Point {
+    public addFree(vec: Vector, debugTrail: DebugTrail): Point {
         return new Point(this.x + vec.dx, this.y + vec.dy)
     }
 
-       private addBarrierSensitive(vec: Vector, bs: Barrier[], boundaryMode: BoundaryMode): Point {  // result is within the canvas boundaries
-        const pGross = this.addFree(vec)  // if we had no barriers in our way
+    private addBarrierSensitive(vec: Vector, bs: Barrier[], boundaryMode: BoundaryMode, debugTrail: DebugTrail): Point {  // result is within the canvas boundaries
+        const pGross = this.addFree(vec, debugTrail)  // if we had no barriers in our way
+        debugTrail.push(`__Geometry.Point.addBarrierSensitive(${vec}): pGross= ${pGross}`)
 
-        const nearestCollision = this.nearestCollisionPoint(bs, pGross) // where do we hit into the first barrier on our way?
+        const nearestCollision = this.nearestCollisionPoint(bs, pGross, debugTrail) // where do we hit into the first barrier on our way?
         if (!nearestCollision) { // our way is free
+            debugTrail.push(`__Geometry.Point.addBarrierSensitive(): no collision detected`)
             return pGross
         }
         // from here on we know we hit a barrier
+        debugTrail.push(`__Geometry.Point.addBarrierSensitive(): collision detected at ${nearestCollision.point}`)
 
         let aux: Point | undefined
 
-        if (nearestCollision!.barrier.isVertical)
+        if (nearestCollision!.barrier.isVertical) {
+             debugTrail.push(`__Geometry.Point.addBarrierSensitive(): vertical barrier hit`)
              aux = boundaryMode == BoundaryMode.inelastic 
-                ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, 0), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby 
-                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)
-        else if (nearestCollision!.barrier.isHorizontal)
+                ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, 0), cMinBarrierOffset), debugTrail) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby 
+                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(-vec.dx, vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic, debugTrail)
+        } else if (nearestCollision!.barrier.isHorizontal) {
+             debugTrail.push(`__Geometry.Point.addBarrierSensitive(): horizontal barrier hit`)
              aux =  boundaryMode == BoundaryMode.inelastic 
-                ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(0, -vec.dy), cMinBarrierOffset)) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby
-                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic)        
-        else throw Error(`Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
+                ? nearestCollision!.point!.addFree(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(0, -vec.dy), cMinBarrierOffset), debugTrail) // rebound just a little bit from the collision point so the new point is not on the barrier but nearby
+                : nearestCollision!.point!.addBarrierSensitive(Vector.newVectorfromUnitVectorAndDistance(new UnitVector(vec.dx, -vec.dy), Math.max(vec.length - nearestCollision.distance!, cMinRebound)), bs, BoundaryMode.inelastic, debugTrail)        
+        } else throw Error(`__Geometry.Point.addBarrierElastic(): barrier ${nearestCollision!.barrier} is neither vertical nor horizontal`)
 
         return aux!
     }
     
-    public add(vec: Vector, bs: Barrier[]): Point {  // alias
-        if (Point.boundaryMode == BoundaryMode.boundless) 
-            return this.addFree(vec)
-        return this.addBarrierSensitive(vec, bs, Point.boundaryMode)
+    public add(vec: Vector, bs: Barrier[], debugTrail: DebugTrail): Point {  // alias
+        if (Point.boundaryMode == BoundaryMode.boundless) { 
+            debugTrail.push(`__Geometry.Point ${this}.add(vec= ${vec}): returning p-new= ${this.addFree(vec, debugTrail)}`)
+            return this.addFree(vec, debugTrail)
+        }
+        debugTrail.push(`__Geometry.Point ${this}.add(vec= ${vec}): returning p-new= ${this.addBarrierSensitive(vec, bs, Point.boundaryMode, debugTrail)}`)
+        return this.addBarrierSensitive(vec, bs, Point.boundaryMode, debugTrail)
     }
     public vectorTo(c: Coordinate): Vector {
         return new Vector(c.x - this.x, c.y - this.y)
@@ -194,7 +218,7 @@ export class Point extends Coordinate implements CanvasObjectBasic, Boxable {
     public scaledBy(factor: number): Point {
         return new Point(this.x * factor, this.y * factor, this.id)
     }
-    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor, halo: Halo = Halo.off, label?: string): void {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor, debugTrail: DebugTrail, halo: Halo = Halo.off, label?: string): void {
         ctx.beginPath()
         const cp = m2c(this)
         ctx.arc(cp.x, cp.y, cActorDotRadius, 0, 2 * Math.PI)
@@ -306,7 +330,7 @@ export class Vector {
         return new Vector(this.dy, -this.dx)
     }
     public toString(): string {
-        return `Vector (${this.dx.toFixed(0)}, ${this.dy.toFixed(0)}), length= ${this.length.toFixed(0)}}`
+        return `Vector (${this.dx.toFixed(2)}, ${this.dy.toFixed(2)}), length= ${this.length.toFixed(2)}}`
     }
 }
 
@@ -343,11 +367,11 @@ export class UnitVector extends Vector {
     override get perpendicular(): UnitVector {
         return UnitVector.newFromVector(new Vector(this.dx, this.dy).perpendicular)
     }
-    public isEqual(uv: UnitVector): boolean {
-        return Math.abs(uv.dx - this.dx) < cTolerance && Math.abs(uv.dy - this.dy) < cTolerance 
+    public isEqual(uv: UnitVector, tolerance: number): boolean {
+        return Math.abs(uv.dx - this.dx) < tolerance && Math.abs(uv.dy - this.dy) < tolerance 
     }
-    public isEqualInOneOfBothDirection(uv: UnitVector): boolean {
-        return uv.isEqual(this) || uv.inverted.isEqual(this) 
+    public isEqualInOneOfBothDirection(uv: UnitVector, tolerance: number): boolean {
+        return uv.isEqual(this, tolerance) || uv.inverted.isEqual(this, tolerance) 
     }
     public override toString(): string {
         return `UnitVector= (${this.dx.toPrecision(2)}, ${this.dy.toPrecision(2)})`
@@ -363,8 +387,8 @@ export type Intersection     = { type:   IntersectionType,
                           p2?:    Point }
 
 export class Line implements CanvasObjectBasic {
-    static fromPointAndVector(p: Point, v: Vector, id: string = ""): Line {
-        return new Line(p, p.addFree(v), id)
+    static fromPointAndVector(p: Point, v: Vector, id: string = "", debugTrail: DebugTrail): Line {
+        return new Line(p, p.addFree(v, debugTrail), id)
     }
     public uv: UnitVector
 
@@ -374,14 +398,14 @@ export class Line implements CanvasObjectBasic {
     get perpendicular(): UnitVector {
         return this.uv.perpendicular
     }
-    public parallel(p: Point, id: string = ""): Line {
-        return Line.fromPointAndVector(p, this.uv, id)
+    public parallel(p: Point, id: string = "", debugTrail: DebugTrail): Line {
+        return Line.fromPointAndVector(p, this.uv, id, debugTrail)
     }
     public isParallel(l: Line): boolean {
-        return this.uv.isEqualInOneOfBothDirection(l.uv)
+        return this.uv.isEqualInOneOfBothDirection(l.uv, 0)
     }
-    public touches(p: Point): boolean {
-        const aux = UnitVector.newFromVector(p.vectorTo(this.base)).isEqualInOneOfBothDirection(this.uv)
+    public touches(p: Point, tolerance: number): boolean {
+        const aux = UnitVector.newFromVector(p.vectorTo(this.base)).isEqualInOneOfBothDirection(this.uv, tolerance)
         return aux 
     }
     get isVertical(): boolean {
@@ -390,24 +414,24 @@ export class Line implements CanvasObjectBasic {
     get isHorizontal(): boolean {
         return Math.abs(this.uv.dy) < cTolerance
     }
-    public intersects(l: Line): Intersection  {
-        if (l.uv.isEqualInOneOfBothDirection(this.uv))  // is a parallel line 
-            if (this.touches(l.base)) // one on the other
+    public intersects(l: Line, debugTrail: DebugTrail): Intersection  {
+        if (l.uv.isEqualInOneOfBothDirection(this.uv, 0))  // is a parallel line 
+            if (this.touches(l.base, 0)) // one on the other
                 return { type: "cover" }
             else
                 return { type: "none"}
         if (this.isVertical)
-            return { type: "point", p: l.base.addFree(l.uv.scale((this.base.x - l.base.x) / l.uv.dx)) }
+            return { type: "point", p: l.base.addFree(l.uv.scale((this.base.x - l.base.x) / l.uv.dx), debugTrail) }
         if (this.isHorizontal)
-            return { type: "point", p: l.base.addFree(l.uv.scale((this.base.y - l.base.y) / l.uv.dy)) }
+            return { type: "point", p: l.base.addFree(l.uv.scale((this.base.y - l.base.y) / l.uv.dy), debugTrail) }
         // from here on we know that this this line is neither vertical nor horizontal and l is not parallel 
         const kx = (l.base.x - this.base.x) / this.uv.dx
         const ky = (l.base.y - this.base.y) / this.uv.dy
         const qx = l.uv.dx / this.uv.dx
         const qy = l.uv.dy / this.uv.dy
-        return { type: "point", p: l.base.addFree(l.uv.scale((ky - kx) / (qx - qy))) }
+        return { type: "point", p: l.base.addFree(l.uv.scale((ky - kx) / (qx - qy)), debugTrail) }
     }
-    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor): void {
+    public visualize(ctx: CanvasRenderingContext2D, m2c: MapperRealToCanvas, color: RgbColor, debugTrail: DebugTrail): void {
         const cbase = m2c(this.base)
         ctx.beginPath()
         if (this.isVertical) {
@@ -421,8 +445,8 @@ export class Line implements CanvasObjectBasic {
         else {
             const lowerLine = new Line(new Point(0, 0), new Point(ctx.canvas.width, 0), "lower")
             const upperLine = new Line(new Point(0, ctx.canvas.height), new Point(ctx.canvas.width, ctx.canvas.height), "upper")
-            const boundaryIntersectionLower  = Line.fromPointAndVector(m2c(this.base), this.uv).intersects(lowerLine)                
-            const boundaryIntersectionUpper  = Line.fromPointAndVector(m2c(this.base), this.uv).intersects(upperLine) 
+            const boundaryIntersectionLower  = Line.fromPointAndVector(m2c(this.base), this.uv, undefined, debugTrail).intersects(lowerLine, debugTrail)                
+            const boundaryIntersectionUpper  = Line.fromPointAndVector(m2c(this.base), this.uv, undefined, debugTrail).intersects(upperLine, debugTrail) 
             ctx.moveTo(boundaryIntersectionLower.p!.x, boundaryIntersectionLower.p!.y)
             ctx.lineTo(boundaryIntersectionUpper.p!.x, boundaryIntersectionUpper.p!.y)
         }
@@ -468,11 +492,11 @@ export class LineSegment extends Line implements Boxable {
     
     public override touches(p: Point): boolean {
         return (UnitVector.newFromVector(p.vectorTo(this.base).inverted).isEqual(
-                UnitVector.newFromVector(p.vectorTo(this.p2))))
+                UnitVector.newFromVector(p.vectorTo(this.p2)), cTolerance))
     }
     
-    public override intersects(l: Line): Intersection {
-        const lineIntersection = super.intersects(l)
+    public override intersects(l: Line, debugTrail: DebugTrail): Intersection {
+        const lineIntersection = super.intersects(l, debugTrail)
         if (lineIntersection.type == "none") {
             return  { type: "none" }
         }
@@ -487,8 +511,9 @@ export class LineSegment extends Line implements Boxable {
         return { type: "cover", p: this.base, p2: this.p2} // the line segment resides on the line 
     }
 
-    public intersectsLineSegment(ls: LineSegment): Intersection {
-        const lineIntersection = this.intersects(ls) // see if the line on which ls resides cuts this line segment 
+    public intersectsLineSegment(ls: LineSegment, debugTrail: DebugTrail): Intersection {
+        const lineIntersection = this.intersects(ls, debugTrail) // see if the line on which ls resides cuts this line segment 
+        debugTrail.push(`__Geometry.LineSegment ${this} .intersectsLineSegment(ls= ${ls}): lineIntersection.type= ${lineIntersection.type}`)
         if (lineIntersection.type == "none") 
             return  { type: "none" }
         if (lineIntersection.type == "point")
@@ -500,14 +525,14 @@ export class LineSegment extends Line implements Boxable {
         return { type: "none" }
     }
     
-    get equilateralVertices(): [Point, Point] {
+    equilateralVertices(debugTrail: DebugTrail): [Point, Point] {
         const altitude = Math.sqrt(3)/2 * this.length
         if (this.isVertical) 
-            return [this.middle.addFree(new Vector(altitude, 0)), this.middle.addFree(new Vector(-altitude, 0))]  
+            return [this.middle.addFree(new Vector(altitude, 0), debugTrail), this.middle.addFree(new Vector(-altitude, 0), debugTrail)]  
         if (this.isHorizontal)
-            return [this.middle.addFree(new Vector(0, altitude)), this.middle.addFree(new Vector(0, -altitude))]  
-        const v0: Point = this.middle.addFree(this.perpendicular.scale( Math.max(altitude, cMinTriangleAltitude)))
-        const v1: Point = this.middle.addFree(this.perpendicular.scale(-Math.max(altitude, cMinTriangleAltitude)))
+            return [this.middle.addFree(new Vector(0, altitude), debugTrail), this.middle.addFree(new Vector(0, -altitude), debugTrail)]  
+        const v0: Point = this.middle.addFree(this.perpendicular.scale( Math.max(altitude, cMinTriangleAltitude)), debugTrail)
+        const v1: Point = this.middle.addFree(this.perpendicular.scale(-Math.max(altitude, cMinTriangleAltitude)), debugTrail)
         return [v0, v1]
     }
 

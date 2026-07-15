@@ -110,7 +110,7 @@ export class MainCanvas implements AfterViewInit {
   }
 
   public setMapperBtwRealAndCanvas(ctx: CanvasRenderingContext2D): void {
-      this.mbrc = mapperBtwRealAndCanvas(ctx!, this.centerOfView!, this.zoom!) 
+      this.mbrc = mapperBtwRealAndCanvas(ctx!, this.centerOfView!, this.zoom!, []) 
   }
 
   public clearCanvas(): void {
