@@ -195,7 +195,7 @@ export class MainCanvas implements AfterViewInit {
 
     public handleActorMove(ctx: CanvasRenderingContext2D, x: number, y: number): void {
         if (!this.pickedActor) return
-        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(x, y)))
+        this.pickedActor.setPosition(this.mbrc!.canvasToReal(new Point(x, y)), [])
         this.visualize()
     }
 

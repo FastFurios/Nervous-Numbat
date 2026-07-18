@@ -133,7 +133,7 @@ export class System {
                 this.tact$ = undefined
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.barriers))
-            this.actGrps.forEach(ag => ag.moveActors())
+            this.actGrps.forEach(ag => ag.moveActors(this.barriers))
         })
         return tact$
     }

@@ -9,6 +9,7 @@ import { Actor } from "./actor"
 import { Barrier } from "./barrier"
 import { Log } from "./log"
 import { SystemRunParms, SystemDisplayParms } from '../control-panel/control-panel'
+import { bootstrapApplication } from '@angular/platform-browser'
 
 
 export enum ActorGroupMode {
@@ -141,10 +142,10 @@ export class ActorGroup implements CanvasObjectDisplayParms {
         for (let a of this.actors)
             this.calculatedNewPositions.push(a.newPosition(otherActGrps, barriers))
     }
-    public moveActors(): void {
+    public moveActors(bs: Barrier[]): void {
         if (this.mode != ActorGroupMode.dynamic) return
         for (let i = 0; i < this.actors.length; i++) {
-            this.actors[i].setPosition(this.calculatedNewPositions[i])
+            this.actors[i].setPosition(this.calculatedNewPositions[i], bs)
         }
         this.updateActGrpStats()
     }

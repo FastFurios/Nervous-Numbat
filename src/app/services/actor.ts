@@ -56,7 +56,7 @@ export class Actor implements CanvasObjectDisplayParms {
     }
     private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
         this.debugTrail = []
-//      this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
+      this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
         let targetVertex: Point
         if (this.observee1!.p.equalsTo(this.observee2!.p))
             targetVertex = this.observee1!.p
@@ -87,12 +87,15 @@ export class Actor implements CanvasObjectDisplayParms {
         const aux = this.newPositionTowardsVertex(otherActGrps, barriers)
         return aux 
     }        
-    public setPosition(p: Point): void {
-//      this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
+    public setPosition(p: Point, bs: Barrier[]): void {
+      this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
         this.triangleQualityLog.push(this.triangleQuality)
         this.p = p 
+
 /*
-        if (false || p.x < 0 || p.x > 969 || p.y < 0 || p.y > 680) {
+        const maxX = bs.map(b => Math.max(b.base.x, b.p2.x)).reduce((a, b) => Math.max(a, b))
+        const maxY = bs.map(b => Math.max(b.base.y, b.p2.y)).reduce((a, b) => Math.max(a, b))
+        if (false || p.x < 0 || p.x > maxX || p.y < 0 || p.y > maxY) {
             console.log(`Actor= ${this.id}.setPosition(): out of boundaries`)
             console.log(this.debugTrail)
             throw Error("###################")
