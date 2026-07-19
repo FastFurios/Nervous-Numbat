@@ -12,7 +12,6 @@ import { SystemRunParms, SystemDisplayParms } from "../control-panel/control-pan
 
 export const cOpacity = 0.1
 export const cActorDotRadius = 2
-//const cContextMargin = 0.4
 
 export enum Halo {
     on  = "on",
@@ -55,8 +54,8 @@ export class Actor implements CanvasObjectDisplayParms {
         return new LineSegment(this.observee1!.p, this.observee2!.p)
     }
     private newPositionTowardsVertex(otherActGrps: ActorGroup[], barriers: Barrier[]): Point {
-        this.debugTrail = []
-      this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
+        //this.debugTrail = []
+        //this.debugTrail.push(`Actor= ${this.id} at ${this.p} newPositionTowardsVertex(): ...`)
         let targetVertex: Point
         if (this.observee1!.p.equalsTo(this.observee2!.p))
             targetVertex = this.observee1!.p
@@ -88,7 +87,7 @@ export class Actor implements CanvasObjectDisplayParms {
         return aux 
     }        
     public setPosition(p: Point, bs: Barrier[]): void {
-      this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
+        //this.debugTrail.push(`Actor= ${this.id}.setPosition(): to ${p}`)
         this.triangleQualityLog.push(this.triangleQuality)
         this.p = p 
 
