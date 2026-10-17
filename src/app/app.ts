@@ -14,7 +14,6 @@ import { ActorGroupMode } from "./services/actorGroup"
 import { now, randomInRange } from "./services/helpers"
 import { JsonConfiguration, JsonActorGroup, JsonAutomaticTopology, JsonExplicitTopology,configAsJson } from "./services/json"
 import { ConfigPoint, ConfigBox, ConfigActor, ConfigActorGroupDynamic, ConfigActorGroupStaticBox, ConfigBarrier, Configuration, cVirtualGridWidth, cVirtualGridHeight, CoordinateType } from "./services/api"
-import { Statistics } from "./statistics/statistics"
 import { ControlPanel } from "./control-panel/control-panel"
 
 // --------------------------------------------------------------------------------------
@@ -74,7 +73,7 @@ export const cGreyOut = "background-color: lightgrey; border-color: lightgrey;"
 
 @Component({
   selector: 'app-root',
-  imports: [Statistics, FormsModule, CommonModule, Statistics, ControlPanel],
+  imports: [FormsModule, CommonModule, ControlPanel],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

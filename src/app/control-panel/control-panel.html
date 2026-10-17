@@ -28,7 +28,6 @@
             </button>
         </div> 
         <div>
-            #Tact: {{ tact$ | async }} 
             #Iterations: {{ clock() }} 
         </div>
         <div>
@@ -106,4 +105,7 @@
     <app-main-canvas [id]="0" [hasCanvas]="true" [isMainCanvas]="true" [clock]="clock" [widgetWidth] = "primaryWidgetWidth" (canvasSizeDetermined)="handleChildCanvasSizeEvent($event)"></app-main-canvas>        
     @if (secondaryWidget == SecondaryWidget.canvas) {
         <app-main-canvas [id]="1" [hasCanvas]="true" [isMainCanvas]="false" [clock]="clock" [widgetWidth] = "secondaryWidgetWidth"></app-main-canvas>
+    }
+    @if (secondaryWidget == SecondaryWidget.statistics) {
+        <app-statistics [clock]="clock" [widgetWidth]="secondaryWidgetWidth"></app-statistics>
     }

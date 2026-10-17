@@ -1,17 +1,43 @@
-<h2>Statistics</h2>
-<table>
-    <tr>
-        <th>Id</th>
-        <th>Quality</th>
-        <th>Performance</th>
-    </tr>
-    @for (ag of sys.actGrps; track ag.id) {
-        <tr>
-            <td>{{ag.id}}</td>
-            <td class="right">{{(ag.actGrpStats().avgTriangleQuality * 100).toFixed(0)}}%</td>
-            <td class="right">{{ag.actGrpStats().performance.toFixed(0)}}</td>
-        </tr>
+<div class="statistics" [style.width.px]="cssWidth()">
+    <div class="header">
+        <h3>{{ kpi() == "performance" ? "Performance" : "Quality" }} per iteration step</h3>
+        <div class="kpiToggle">
+            <label><input type="radio" name="kpi" [checked]="kpi() == 'performance'" (change)="selectKpi('performance')"> performance</label>
+            <label><input type="radio" name="kpi" [checked]="kpi() == 'quality'"     (change)="selectKpi('quality')"> quality</label>
+        </div>
+    </div>
+    @if (sys.dynamicActGrps.length > 1) {
+        <div class="legend">
+            @for (ag of sys.dynamicActGrps; track ag.id; let g = $index) {
+                <span><span class="swatch" [style.background-color]="seriesColor(g)"></span>{{ag.id}}</span>
+            }
+        </div>
     }
-</table>
-
-
+    <div class="plot">
+        <canvas #perfCanvas (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()"></canvas>
+        @if (tooltip(); as tt) {
+            <div class="tooltip" [style.left.px]="tt.alignRight ? null : tt.x + 12" [style.right.px]="tt.alignRight ? cssWidth() - tt.x + 12 : null">
+                <div class="tooltipTitle">Step {{tt.step}}</div>
+                @for (row of tt.rows; track row.id) {
+                    <div class="tooltipRow"><span class="swatch" [style.background-color]="row.color"></span>{{row.id}}<span class="value">{{row.value}}</span></div>
+                }
+            </div>
+        }
+    </div>
+    <table>
+        <tr>
+            <th></th>
+            <th>Id</th>
+            <th>Quality</th>
+            <th>Performance</th>
+        </tr>
+        @for (ag of sys.dynamicActGrps; track ag.id; let g = $index) {
+            <tr>
+                <td><span class="swatch" [style.background-color]="seriesColor(g)"></span></td>
+                <td>{{ag.id}}</td>
+                <td class="right">{{percent(ag.actGrpStats().avgTriangleQuality)}}</td>
+                <td class="right">{{compact(ag.actGrpStats().performance)}}</td>
+            </tr>
+        }
+    </table>
+</div>

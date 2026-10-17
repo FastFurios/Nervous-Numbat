@@ -10,6 +10,7 @@ import { cUpperMargin, cLowerMargin, cLeftMargin, cRightMargin, cActorPickMargin
 import { SystemDisplayParms, CanvasSize } from '../control-panel/control-panel'
 
 const cZoomFactor = 1.1
+const cHomeFitFactor = 0.95  // share of the canvas the world box fills after "home", leaves a small margin around the border barriers
 
 type RunResumeButtonLabel = "Run" | "Resume"
 
@@ -62,8 +63,8 @@ export class MainCanvas implements AfterViewInit {
 
     effect(() => {
 //    console.log(`main-canvas #${this.id}.effect(#1): clock= ${this.clock()}; visualizing...`)
-      if (this.clock() == 0) return
-      this.visualize()
+      this.clock() // trigger for this effect
+      if (this.ctx) this.visualize()
     })
 
     effect(() => {
@@ -71,8 +72,9 @@ export class MainCanvas implements AfterViewInit {
       console.log(`main-canvas #${this.id}.effect(#2): widgetWith= ${this.widgetWidth()}; visualizing...`)
 
       this.widgetWidth() // trigger for this effect 
-      if (this.ctx) { 
+      if (this.ctx) {
         this.handleCanvasResized(false)
+        this.home() // widget layout changed: fit the world box into the resized canvas again
         this.visualize()
       }
     })
@@ -96,16 +98,16 @@ export class MainCanvas implements AfterViewInit {
       console.log(`main-canvas #${this.id}.ngAfterViewInit(): done`)
   }
 
-  ngOnDestroy() {
-      this.sys.stopIterating()
-      this.sys.actGrps  = []
-      this.sys.barriers = []
-      this.sys.tact$    = undefined
-  }
-
+  /** fit the world box into the canvas */
   private home():void {
-    this.centerOfView = canvasCenter(this.ctx!)
-    this.zoom         = 1
+    const ws = this.sys.worldSize
+    if (!ws) {
+      this.centerOfView = canvasCenter(this.ctx!)
+      this.zoom         = 1
+    } else {
+      this.centerOfView = this.sys.worldCenter!
+      this.zoom         = cHomeFitFactor * Math.min(this.ctx!.canvas.width / ws.width, this.ctx!.canvas.height / ws.height)
+    }
     this.setMapperBtwRealAndCanvas(this.ctx!)
   }
 
@@ -124,9 +126,11 @@ export class MainCanvas implements AfterViewInit {
     this.sys.barriers.map(b => b.visualize(this.ctx!, this.mbrc!.realToCanvas))
   }
 
+  /** draws the world box, i.e. the area enclosed by the canvas border barriers; its size is fixed at system initialization and independent of this canvas' current size */
   public  visualizeCanvasInReal(): void {
+      const worldSize        = this.sys.worldSize ?? { width: this.ctx!.canvas.width, height: this.ctx!.canvas.height }
       const canvasLowerLeft  = new Point(0, 0, "Canvas-lower-left")
-      const canvasUpperRight = new Point(this.ctx!.canvas.width, this.ctx!.canvas.height, "Canvas-upper-right")
+      const canvasUpperRight = new Point(worldSize.width, worldSize.height, "Canvas-upper-right")
       const canvasBox = new Box("canvas", canvasLowerLeft, canvasUpperRight, new RgbColor(0, 0, 255))
       canvasBox.visualize(this.ctx!, this.mbrc!.realToCanvas)
   }
@@ -220,6 +224,7 @@ export class MainCanvas implements AfterViewInit {
       this.ctx!.canvas.width  = window.innerWidth * this.widgetWidth() / 100 - cLeftMargin  - cRightMargin - cControlPanelWidth
       this.ctx!.canvas.height = window.innerHeight  - cUpperMargin - cLowerMargin
       if (informControlPanel) this.canvasSizeDetermined.emit(this.ctxCanvasSize)
+      if (this.mbrc) this.setMapperBtwRealAndCanvas(this.ctx!) // mapper depends on the canvas center, so it is stale after a resize
 
   }
 

@@ -1,16 +1,17 @@
-import { Injectable } from '@angular/core'
+import { Injectable, signal } from '@angular/core'
 import { Observable, Subscription, from, interval } from 'rxjs'
 
 import { CanvasSize, SystemRunParms } from "../control-panel/control-panel"
 import { Point } from "./geometry"
 import { ColorSchemes } from "./color"
 import { Actor } from "./actor"
-import { ActorGroup } from "./actorGroup"
+import { ActorGroup, ActorGroupMode } from "./actorGroup"
 import { Barrier } from "./barrier"
 import { Configuration, ConfigActorGroupDynamic, ConfigActorGroup, ConfigPoint, ConfigBarrier, cVirtualGridHeight, cVirtualGridWidth, CoordinateType } from "./api"
 import { cDefaultCanvasWidth, cDefaultCanvasHeight } from "./parameters"
 
 const cCanvasBorderMargin = 0
+const cMaxKpiHistorySamples = 2000   // when exceeded, every 2nd sample is dropped and the sampling stride doubles; keeps memory and drawing effort bounded
 
 // --- ITERATION CONTROL ----------------------------------------------------------------------
 
@@ -38,7 +39,14 @@ export class System {
     public  tact$?:                 Observable<void>
     private tactSubscription?:      Subscription 
     public  doneIterations:         number                                  = 0
+    public  worldSize?:             CanvasSize                              // size of the world in real coordinates, i.e. the box spanned by the border barriers; set once at initialize
+    /** number of completed iteration steps; the one and only clock all views redraw on. Notifies on every set, so re-setting 0 after a reset triggers a redraw as well */
+    public  readonly step                                                   = signal(0, { equal: () => false })
     private iterationMode:          IterationMode                           = IterationMode.paused
+    public  perfHistory:            number[][]                              = []  // perfHistory[i][g] = performance of dynamic actor group g at step i * kpiHistoryStride
+    public  qualityHistory:         number[][]                              = []  // qualityHistory[i][g] = avg. triangle quality (0..1) of dynamic actor group g at step i * kpiHistoryStride
+    public  kpiHistoryStride:       number                                  = 1
+    public  perfHistoryMax:         number                                  = 0   // biggest performance value recorded so far
     private showActorJourney:       boolean                                 = false
     public  colorSchemes                                                    = new ColorSchemes(1)  // 1 as default
                                  
@@ -77,6 +85,7 @@ export class System {
         if (!systemRunParms)              throw Error("System.initialize(): missing systemExecParms.")
 
         this.stopIterating()
+        this.worldSize = { ...canvasSize }
         this.barriers = []
 
         this.actGrps = []
@@ -103,6 +112,30 @@ export class System {
       console.log("System.initialize(): this.configBarriers:")
       console.log(this.barriers)
         this.configBarriers?.forEach(cb =>this.barriers.push(new Barrier(this.mappedConfigPointOntoCanvas(canvasSize, cb.from), this.mappedConfigPointOntoCanvas(canvasSize, cb.to))))
+
+        this.perfHistory       = []
+        this.qualityHistory    = []
+        this.kpiHistoryStride  = 1
+        this.perfHistoryMax    = 0
+        this.recordKpis(0)
+        this.step.set(0)
+    }
+
+    public get dynamicActGrps(): ActorGroup[] {
+        return this.actGrps.filter(ag => ag.mode == ActorGroupMode.dynamic)
+    }
+
+    private recordKpis(step: number): void {
+        if (step % this.kpiHistoryStride != 0) return
+        const perfs = this.dynamicActGrps.map(ag => ag.actGrpStats().performance)
+        this.perfHistory.push(perfs)
+        this.qualityHistory.push(this.dynamicActGrps.map(ag => ag.actGrpStats().avgTriangleQuality))
+        this.perfHistoryMax = Math.max(this.perfHistoryMax, ...perfs)
+        if (this.perfHistory.length > cMaxKpiHistorySamples) {
+            this.perfHistory       = this.perfHistory.filter((_, i) => i % 2 == 0)
+            this.qualityHistory    = this.qualityHistory.filter((_, i) => i % 2 == 0)
+            this.kpiHistoryStride *= 2
+        }
     }
 
     public updateRunParms(srp: SystemRunParms): void {
@@ -122,7 +155,7 @@ export class System {
         this.tact$ = undefined
     }
 
-    public runResumeIterating(): Observable<number> /* | undefined */ {
+    public runResumeIterating(): void {
         this.iterationMode = IterationMode.iterating
         
 // ! //      if (this.actGrps[0].isFrozen()) throw(`${this.actGrps[0].id} is frozen.`)
@@ -131,11 +164,17 @@ export class System {
             if (this.iterationMode != IterationMode.iterating || now > this.maxIterations!) { 
                 this.tactSubscription?.unsubscribe()
                 this.tact$ = undefined
+                return
             }
             this.actGrps.forEach(ag => ag.calculateNewActorPositions(this.actGrps.filter(ag2 => ag2 != ag), this.barriers))
             this.actGrps.forEach(ag => ag.moveActors(this.barriers))
+            this.recordKpis(this.step() + 1)
+            this.step.update(s => s + 1)
         })
-        return tact$
+    }
+
+    public get worldCenter(): Point | undefined {
+        return this.worldSize ? new Point(this.worldSize.width / 2, this.worldSize.height / 2) : undefined
     }
 
     private nearbyActorsInRange(p: Point, margin: number): Actor[] {

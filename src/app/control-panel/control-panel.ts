@@ -1,13 +1,13 @@
 import { Component, OnInit, signal, Signal, WritableSignal, computed, ViewChildren, QueryList } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
-import { Observable, Subscription } from 'rxjs'
 
 import { cGreyOut } from '../app'
 import { System } from "../services/system"
 import { BoundaryMode } from "../services/geometry"
 import { cIntervalMillisecs, cControlPanelWidth } from "../services/parameters"
 import { MainCanvas } from '../main-canvas/main-canvas'
+import { Statistics } from '../statistics/statistics'
 
 // ---------------------------------------------------------------------------------------
 //      SYSTEM EXECUTION PARAMETERS
@@ -98,16 +98,14 @@ type RunResumeButtonLabel = "Run" | "Resume"
 
 @Component({
   selector: 'app-control-panel',
-  imports: [FormsModule, CommonModule, MainCanvas],
+  imports: [FormsModule, CommonModule, MainCanvas, Statistics],
   templateUrl: './control-panel.html',
   styleUrl: './control-panel.css',
 })
 export class ControlPanel implements OnInit {
 //@ViewChildren(MainCanvas) canvasList!: QueryList<MainCanvas>                // lists all canvases of the child components; required to determine the main component canvas which is then used to translate relative to real coordinates at system initialization
   public  mainCanvasSize?:      CanvasSize
-  public  tact$:                Observable<number> | undefined       
-  public  tactSubscription?:    Subscription
-  public  clock:                WritableSignal<number>                        = signal(0)
+  public  clock!:               Signal<number>                                // = sys.step: views redraw after each completed iteration step
   public  primaryWidgetWidth:   WritableSignal<number>                        = signal(100) // %
   public  secondaryWidgetWidth: Signal<number>                                = computed(() => 100 - this.primaryWidgetWidth())
 
@@ -124,6 +122,7 @@ export class ControlPanel implements OnInit {
   public  readonly controlPanelWidth:    number                               = cControlPanelWidth
 
   constructor(public sys: System) {
+    this.clock = sys.step
     this.sysRunParms = {
         intervalMillisecs:                      cIntervalMillisecs,
         maxIterations:                          1000000,
@@ -167,18 +166,13 @@ export class ControlPanel implements OnInit {
 
   public runResumeIterationsHandler() {
     this.updateRunParms()
-    this.tact$ = this.sys.runResumeIterating() // starts with 0 whenever the Run/resume button is clicked
-    this.tactSubscription = this.tact$.subscribe(
-      () => this.clock.update(t => t + 1)
-    )
+    this.sys.runResumeIterating()
     this.actionsPossible.set(cActPosRunning)
 //  console.log(`ControlPanel.runResumeIterationsHandler(): done.`)
   }
 
   /** stop button clicked */
   public stopIterationsHandler() {
-    this.tactSubscription?.unsubscribe()
-    this.tact$ = undefined
     this.sys.stopIterating()
     this.runResumeButtonLabel = "Resume"
     this.actionsPossible.set(cActPosStopped)
@@ -189,10 +183,8 @@ export class ControlPanel implements OnInit {
   public resetSystemHandler() {
 //  console.log(`ControlPanel.resetSystemHandler(): starting ...`)
     this.updateRunParms()
-//  this.clock.set(0)
-    this.sys.initialize(this.mainCanvasSize!, this.sysRunParms)
+    this.sys.initialize(this.mainCanvasSize!, this.sysRunParms) // resets sys.step, which triggers visualizing in kids via effect there
     this.runResumeButtonLabel = "Run"
-    this.clock.set(-1) // trigger visualizing in kids via effect there
 //  this.visualize()
     this.actionsPossible.set(cActPosStart)
 //  console.log(`ControlPanel.resetSystemHandler(): done.`)
