@@ -7,7 +7,7 @@ configurations/_work
 .github/workflows/_scrap
 
 #Source Code
-**/*.spec.ts
+*.spec.ts
 
 # Compiled output
 /dist
