@@ -154,8 +154,8 @@ export class App {
         alert("A JSON file actor_group is invalid.")
     }  
     const maybeConfigBarriers: ConfigBarrier[] | undefined = jsonConfig.barrier_set?.barriers.map(jb => 
-          new ConfigBarrier(new ConfigPoint(jb.from.x, jb.from.y, jsonConfig.barrier_set!.coordinate_type),
-                            new ConfigPoint(jb.to.x,   jb.to.y,   jsonConfig.barrier_set!.coordinate_type)))
+          new ConfigBarrier(new ConfigPoint(jb.from.x, jb.from.y, jb.from.coordType ?? jsonConfig.barrier_set!.coordinate_type),
+                            new ConfigPoint(jb.to.x,   jb.to.y,   jb.to.coordType   ?? jsonConfig.barrier_set!.coordinate_type)))
     return new Configuration(jsonConfig.id, configActGrps.filter(cag => cag != undefined), maybeConfigBarriers)
   }
 
@@ -177,12 +177,12 @@ export class App {
         console.log(`app.configActorGroupFrom(): jag.topology[0].id= ${(<JsonExplicitTopology>jag.topology)[0].id}`)
         const cas = (<JsonExplicitTopology>jag.topology).map(ja => 
           new ConfigActor(ja.id, 
-                          ja.x || randomInRange(0, cVirtualGridWidth), 
-                          ja.y || randomInRange(0, cVirtualGridHeight), 
+                          ja.x ?? randomInRange(0, cVirtualGridWidth), 
+                          ja.y ?? randomInRange(0, cVirtualGridHeight), 
                           jag.coordinate_type, 
                           ja.observee1, 
                           ja.observee2)) 
-        return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode, jag.coordinate_type)
+        return new ConfigActorGroupDynamic(jag.id, cas, jag.iteration_mode ?? ActorGroupMode.dynamic, jag.coordinate_type)
       } 
       case "obstacle" : {
         return new ConfigActorGroupStaticBox(jag.id, 

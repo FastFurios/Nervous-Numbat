@@ -36,7 +36,7 @@ export class ConfigPoint { // virtual grid
   } 
 
   public coordType: CoordinateType
-  constructor (public x: number, public y: number, coordType: JsonCoordType) {
+  constructor (public x: number, public y: number, coordType?: JsonCoordType) {
     this.coordType = coordType == "real" ? CoordinateType.real : CoordinateType.relative 
   }
   public toString(): string {

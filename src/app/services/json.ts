@@ -8,8 +8,8 @@ export type Creation_Mode = "automatic" | "explicit" | "obstacle"
 
 export interface JsonActor {
   id:         string
-  x:          number
-  y:          number
+  x?:         number
+  y?:         number
   observee1:  string
   observee2:  string
 }
@@ -21,7 +21,7 @@ export type JsonCoordType        = "real" | "relative"
 export interface JsonActorGroup {
   id:                 string
   creation_mode:      Creation_Mode
-  iteration_mode:     ActorGroupMode
+  iteration_mode?:    ActorGroupMode     // defaults to dynamic
   coordinate_type:    CoordinateType,   // either % of initial canvas or absolute, real coordinates 
   topology?:          JsonExplicitTopology | JsonAutomaticTopology
   obstacle?:          JsonObstacle       
@@ -30,7 +30,7 @@ export interface JsonActorGroup {
 export interface JsonPoint { 
   x:                  number
   y:                  number 
-  coordType:          JsonCoordType
+  coordType?:         JsonCoordType     // for barriers: overrides the barrier set's coordinate_type
 }
 
 export interface JsonBox {
