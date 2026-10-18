@@ -1,5 +1,9 @@
 # NervousNumbat
 
+A browser simulation of "The Systemic Triangle Exercise", a team-building game in which every participant tries to form an equilateral triangle with two others they have secretly chosen.
+
+**Try it live:** https://orange-sea-0f19d4d10.2.azurestaticapps.net
+
 ## The Idea
 The idea for this project came to me during a team exercise at a company offsite. Called "The Systemic Triangle Exercise", it aims to show team members that a team is a dynamic system made up of its individual members and the relationships and dependencies between them. I was intrigued by the evolving dynamics and by how unpredictable the final result is when the motion gradually comes to a halt.
 
@@ -23,6 +27,18 @@ This exercise is easy to run and shows clearly the relationships at work within 
 I asked the facilitator how long it typically takes for the exercise to come to a standstill. She said 5 to 10 minutes. After thinking about it for a while, I began to wonder whether that could really be true. I suspected that a standstill is only reached because people neglect precision in forming equilateral triangles; after all, humans have a limited ability to measure distances and angles exactly without tools. In fact, it quickly became clear that, in most cases, the chosen structure of hidden relationships between participants makes it impossible for all triangles to reach a perfect equilateral shape at the same time.
 
 Driven by my fascination with dynamic systems and the emergent behaviour they sometimes produce, I developed "Nervous Numbat", an app that simulates the systemic triangle exercise. I hope you have fun playing around with it and trying out randomized or self-defined structures (via JSON file input).
+
+## Getting Started
+You can use the app directly via the [live version](https://orange-sea-0f19d4d10.2.azurestaticapps.net). To run it locally you need [Node.js](https://nodejs.org/) 20.19 or newer.
+
+```bash
+git clone https://github.com/FastFurios/Nervous-Numbat.git
+cd Nervous-Numbat
+npm install
+npx ng serve
+```
+
+Then open http://localhost:4200/ in your browser. To create a production build in `dist/Nervous-Numbat/browser`, run `npx ng build`.
 
 ## The App
 Here is a short description of the app and how to use it.
@@ -168,3 +184,6 @@ A Barrier Set is a list of vertical or horizontal line segments that Actors cann
   ]
 }
 ```
+
+## License
+This project is licensed under the [MIT License](LICENSE).
