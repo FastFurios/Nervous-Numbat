@@ -50,3 +50,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Windows download markers (WSL)
+*:Zone.Identifier
