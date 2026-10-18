@@ -1,6 +1,6 @@
 # NervousNumbat
 
-## The idea
+## The Idea
 The idea for this project came to me during a team exercise at a company offsite. Called "The Systemic Triangle Exercise", it aims to show team members that a team is a dynamic system made up of its individual members and the relationships and dependencies between them. I was intrigued by the evolving dynamics and by how unpredictable the final result is when the motion gradually comes to a halt.
 
 Here is a concise description of the exercise, taken from https://www.ihrprojekt.at/de/blog/erfahrungsschatz/84-teambuilding-spiele-systemische-dreiecksuebung:
@@ -24,7 +24,7 @@ I asked the facilitator how long it typically takes for the exercise to come to 
 
 Driven by my fascination with dynamic systems and the emergent behaviour they sometimes produce, I developed "Nervous Numbat", an app that simulates the systemic triangle exercise. I hope you have fun playing around with it and trying out randomized or self-defined structures (via JSON file input).
 
-## The app
+## The App
 Here is a short description of the app and how to use it.
 
 ## General Terminology
